@@ -33,7 +33,7 @@ public partial class NDD_NDDeMandate : System.Web.UI.Page
         }
     }
 
-    /// <summary>Approved billers, shown as "name — product (RC number)".</summary>
+    /// <summary>Approved billers, shown as "name \u2014 product (RC number)".</summary>
     private void LoadBillers()
     {
         ddlBiller.Items.Clear();
@@ -47,7 +47,7 @@ public partial class NDD_NDDeMandate : System.Web.UI.Page
             string text = Col(r.Row, "name");
             string product = Col(r.Row, "productName");
             string rc = Col(r.Row, "rcNumber");
-            if (product != "") text += " — " + product;
+            if (product != "") text += " \u2014 " + product;
             if (rc != "") text += " (" + rc + ")";
             ddlBiller.Items.Add(new ListItem(text, id));
         }

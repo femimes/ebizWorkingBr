@@ -1,375 +1,374 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="eChannelsRequest.aspx.cs" Inherits="Request_eChannelsRequest" %>
-<%@ Register assembly="DevExpress.Web.v19.1, Version=19.1.4.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" namespace="DevExpress.Web" tagprefix="dx" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeFile="eChannelsRequest.aspx.cs" Inherits="Request_eChannelsRequest" MaintainScrollPositionOnPostback="true" %>
 
- 
-<%--<!DOCTYPE html>--%>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head id="Head1" runat="server">
-    <title></title>
-    <link href="../Styles/SiteAll.css" rel="stylesheet" type="text/css" />
-    <script type="text/javascript">
-
-        function ctrlGrid_SelectionChanged(s, e) {
-
-
-            s.GetSelectedFieldValues("remSeqNo", GetSelectedFieldValuesCallback);
-
-        }
-
-        function GetSelectedFieldValuesCallback(values) {
-            selList.Visible = true;
-            selList.BeginUpdate();
-
-            try {
-                selList.ClearItems();
-
-                for (var i = 0; i < values.length; i++) {
-                    selList.AddItem(values[i].toString());
-                }
-            } finally {
-                selList.EndUpdate();
-            }
-            document.getElementById("selCount").innerHTML = ctrlGrid.GetSelectedRowCount();
-            //           selList.Visible = false;
-        }
-
-
-
-   </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>eRequest booking</title>
+    <link rel="shortcut icon" href="/Resources/images/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style type="text/css">
-        .auto-style1 {
-            width: 100px;
+        :root {
+            --brand: #0F4C81; --brand-dark: #0a355a;
+            --ink: #14212e; --muted: #5d6b7a;
+            --line: #e1e8ef; --field: #d3dce6;
+            --page: #f4f7fa; --surface: #ffffff; --tint: #eaf1f8;
+            --ok: #1b6e3c; --ok-bg: #e6f4ea;
+            --bad: #b3261e; --bad-bg: #fdeceb;
+            --ring: rgba(15, 76, 129, .22);
         }
-        </style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 24px;
+            font-family: "Plus Jakarta Sans", "Segoe UI", Roboto, Arial, sans-serif;
+            font-size: 13px; color: var(--ink); background: var(--page);
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 1100px; margin: 0 auto; }
+
+        .page-head {
+            margin: 0 0 16px; padding: 20px 22px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-left: 4px solid var(--brand); border-radius: 12px;
+        }
+        .page-head h1 { margin: 0 0 2px; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+        .page-head p { margin: 0; font-size: 12px; color: var(--muted); }
+
+        .notice, .alert { display: block; margin-bottom: 12px; padding: 12px 14px; border-radius: 8px; line-height: 1.5; word-break: break-word; }
+        .notice { font-weight: 600; color: var(--ok); background: var(--ok-bg); border-left: 4px solid var(--ok); }
+        .alert { font-weight: 500; color: var(--bad); background: var(--bad-bg); border-left: 4px solid var(--bad); }
+        .notice:empty, .alert:empty { display: none; }
+
+        .card { margin-bottom: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .card-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+            padding: 14px 20px; border-bottom: 1px solid var(--line);
+        }
+        .card-head h2 { margin: 0; font-size: 14px; font-weight: 700; }
+        .card-head .sub { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .card-body { padding: 18px 20px; }
+
+        /* ---------- Forms ---------- */
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+        .form-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+        .form-hint { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); }
+        .form-control, input.form-control, select.form-control {
+            display: block; width: 100%; height: 36px; padding: 0 10px;
+            font: inherit; font-size: 13px; color: var(--ink); background-color: var(--surface);
+            border: 1.5px solid var(--field); border-radius: 9px; outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .form-control:hover { border-color: #aebbc9; }
+        .form-control:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--ring); }
+        textarea.form-control { height: auto; min-height: 72px; padding: 8px 10px; resize: vertical; }
+        select.form-control {
+            appearance: none; -webkit-appearance: none; padding-right: 34px; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%235d6b7a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+        }
+        .inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .inline .form-control { flex: 1 1 180px; width: auto; }
+        .field-error { display: block; margin-top: 5px; font-size: 12px; font-weight: 500; color: var(--bad); }
+        .lookup { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--brand); }
+        .lookup:empty { display: none; }
+
+        .check { display: inline-flex; align-items: center; gap: 9px; }
+        .check input[type="checkbox"] { width: 17px; height: 17px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+        .check label { cursor: pointer; font-weight: 500; }
+        .check-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .check-list .check {
+            padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px;
+            transition: border-color .15s ease, background-color .15s ease;
+        }
+        .check-list .check:hover { border-color: #aebbc9; }
+        .check-list .check:has(input:checked) { border-color: var(--brand); background: var(--tint); }
+        .check.danger input[type="checkbox"] { accent-color: var(--bad); }
+        .check.danger:has(input:checked) label { color: var(--bad); }
+
+        /* ---------- Grids ---------- */
+        .table-wrap { overflow-x: auto; }
+        table.data-grid { width: 100%; border: 0; border-collapse: collapse; }
+        table.data-grid th, table.data-grid td { padding: 10px 14px; text-align: left; vertical-align: middle; border-top: 1px solid var(--line); }
+        table.data-grid tr.grid-head th {
+            border-top: 0; background: #f8fafc; white-space: nowrap;
+            font-size: 11px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        table.data-grid tr.grid-head a { color: var(--muted); text-decoration: none; }
+        table.data-grid tr.grid-head a:hover { color: var(--brand); }
+        table.data-grid tr:hover td { background: #f8fafc; }
+        table.data-grid tr.is-selected td, table.data-grid tr.grid-edit td { background: var(--tint); }
+        table.data-grid .c { text-align: center; }
+        table.data-grid .nowrap { white-space: nowrap; }
+        table.data-grid .strong { font-weight: 600; }
+        table.data-grid .muted { color: var(--muted); }
+        table.data-grid .actions { white-space: nowrap; text-align: right; }
+        table.data-grid .form-control { min-width: 140px; height: 34px; }
+        table.data-grid input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--brand); cursor: pointer; vertical-align: middle; }
+
+        .pill { display: inline-block; padding: 3px 9px; font-size: 11px; font-weight: 600; border-radius: 999px; white-space: nowrap; }
+        .pill.on { color: var(--ok); background: var(--ok-bg); }
+        .pill.off { color: var(--muted); background: #eef2f6; }
+
+        .link-btn {
+            display: inline-block; margin-left: 4px; padding: 6px 12px; border: 0; cursor: pointer;
+            font: inherit; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 8px;
+        }
+        .link-btn.edit, .link-btn.cancel { color: var(--brand); background: var(--tint); }
+        .link-btn.edit:hover, .link-btn.cancel:hover { background: #dbe7f3; }
+        .link-btn.save { color: #fff; background: var(--brand); }
+        .link-btn.save:hover { background: var(--brand-dark); }
+        .link-btn.delete { color: var(--bad); background: var(--bad-bg); }
+        .link-btn.delete:hover { background: #f9d9d6; }
+
+        table.data-grid tr.grid-pager td { padding: 12px; text-align: center; background: var(--surface); }
+        table.data-grid tr.grid-pager:hover td { background: var(--surface); }
+        table.data-grid tr.grid-pager table { margin: 0 auto; }
+        table.data-grid tr.grid-pager table td { padding: 0; border: 0; }
+        table.data-grid tr.grid-pager a,
+        table.data-grid tr.grid-pager span {
+            display: inline-block; min-width: 30px; margin: 0 2px; padding: 5px 8px;
+            font-weight: 600; text-decoration: none; border-radius: 7px;
+        }
+        table.data-grid tr.grid-pager a { color: var(--brand); }
+        table.data-grid tr.grid-pager a:hover { background: var(--tint); }
+        table.data-grid tr.grid-pager span { color: #fff; background: var(--brand); }
+        .empty { padding: 28px; text-align: center; color: var(--muted); }
+
+        /* ---------- Buttons ---------- */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            height: 36px; padding: 0 16px; font: inherit; font-size: 13px; font-weight: 600;
+            text-decoration: none; white-space: nowrap; border: 1.5px solid transparent;
+            border-radius: 9px; cursor: pointer; transition: background-color .15s ease, border-color .15s ease;
+        }
+        .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
+        .btn-primary { color: #fff; background: var(--brand); }
+        .btn-primary:hover { background: var(--brand-dark); }
+        .btn-secondary { color: var(--ink); background: var(--surface); border-color: var(--field); }
+        .btn-secondary:hover { background: #f1f5f9; }
+        .btn-danger { color: var(--bad); background: var(--surface); border-color: #f0c4c0; }
+        .btn-danger:hover { background: var(--bad-bg); }
+        .btn-link { color: var(--brand); background: none; padding: 0 6px; }
+        .btn-link:hover { text-decoration: underline; }
+        .text-link { font-weight: 600; color: var(--brand); text-decoration: none; white-space: nowrap; }
+        .text-link:hover { text-decoration: underline; }
+
+        .action-bar {
+            position: sticky; bottom: 0; z-index: 5;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 12px 20px; background: var(--surface);
+            border: 1px solid var(--line); border-radius: 12px;
+            box-shadow: 0 -6px 18px rgba(20, 33, 46, .06);
+        }
+        .action-bar .count {
+            display: inline-flex; align-items: center; gap: 6px; margin-right: 6px;
+            padding: 6px 12px; font-weight: 600; color: var(--brand);
+            background: var(--tint); border-radius: 999px;
+        }
+        .action-bar .spacer { flex: 1; }
+        .form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+        @media (max-width: 760px) {
+            body { padding: 14px; }
+            .form-grid, .form-grid.cols-3, .check-list { grid-template-columns: 1fr; }
+            .card-body { padding: 14px; }
+            .action-bar .spacer { display: none; }
+            .action-bar .btn { flex: 1 1 auto; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+        /* ---------- Extras ---------- */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        .stat { padding: 12px 14px; background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; }
+        .stat .label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+        .stat input.stat-value {
+            display: block; width: 100%; margin-top: 4px; padding: 0; border: 0; background: transparent;
+            font: inherit; font-size: 18px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; outline: none;
+        }
+        .stat.key { background: var(--tint); border-color: #c9dbee; }
+        .stat.good input.stat-value { color: var(--ok); }
+        .stat.bad input.stat-value { color: var(--bad); }
+        .scroll-y { max-height: 520px; overflow: auto; }
+        table.data-grid .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        table.data-grid thead th, table.data-grid tr.grid-head th { position: sticky; top: 0; z-index: 1; }
+        .busy-overlay {
+            position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+            background: rgba(244, 247, 250, .8); font-weight: 600; color: var(--brand);
+        }
+        .busy-overlay.show { display: flex; }
+        .busy-overlay .spinner {
+            width: 28px; height: 28px; margin-right: 12px; border-radius: 50%;
+            border: 3px solid #c9dbee; border-top-color: var(--brand); animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 760px) { .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .schedule-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+        .schedule-every { display: inline-flex; align-items: center; gap: 8px; }
+        .schedule-every .form-control { width: auto; min-width: 130px; }
+        .schedule-info { margin: 10px 0 0; }
+    </style>
+    <style type="text/css">
+        .pill.bad { color: var(--bad); background: var(--bad-bg); }
+        .page-head .back { display: inline-block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--brand); text-decoration: none; }
+        .page-head .back:hover { text-decoration: underline; }
+        .req { color: var(--bad); }
+        .readonly { background-color: #f8fafc !important; color: var(--muted); }
+        .details { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; margin: 0; }
+        .details dt, .details dd { margin: 0; padding: 9px 0; border-top: 1px solid var(--line); }
+        .details dt { font-size: 12px; font-weight: 600; color: var(--muted); }
+        .details dd { font-weight: 500; word-break: break-word; }
+        .details dt:first-of-type, .details dt:first-of-type + dd { border-top: 0; }
+        @media (max-width: 760px) { .details { grid-template-columns: 1fr; } .details dd { border-top: 0; padding-top: 0; } }
+    </style>
+    <style type="text/css">
+        .wrap { max-width: 1440px; }
+        .data-grid td .form-control { min-width: 120px; padding: 6px 8px; font-size: 13px; }
+        .data-grid td textarea.form-control { min-width: 180px; min-height: 52px; resize: vertical; }
+        .data-grid td input[type="date"].form-control { min-width: 140px; }
+        .data-grid tr.group-start td { border-top: 2px solid #c9d3e3; }
+        .data-grid td.branch .same { visibility: hidden; }
+        .validator { color: #b42318; font-size: 12px; display: block; margin-top: 4px; }
+    </style>
 </head>
 <body>
-     <form id="form1" runat="server">
-    <div>
-    
-        <table style="width:100%;">
-           
-           
-             <tr> 
-                <td colspan="3">
-                    <table class="auto-style1">
-                        <tr><td colspan="4" >
+    <form id="form1" runat="server">
+    <div class="wrap">
 
-                      <b>eRequest Booking</b> <font color="Red"><asp:Literal ID="Literal1" runat="server"></asp:Literal></font>
-                    <asp:TextBox ID="txtref_no" runat="server" Visible="false"></asp:TextBox>
-                            </td></tr>
-                        <tr><td style="white-space:nowrap">eRequest Type:</td>
-                            <td colspan="3" >
-      <dx:ASPxComboBox ID="drpBatchRefNo" runat="server" EnableIncrementalFiltering="True" EnableSynchronization="False" IncrementalFilteringMode="StartsWith" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua"    ShowShadow="False" SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" DataSourceID="SqlDataRequestType" ValueField="CardTypeCode" AutoPostBack="True">
-                    <LoadingPanelImage Url="~/App_Themes/Aqua/Editors/Loading.gif">
-                    </LoadingPanelImage>
-                    <DropDownButton>
-                        <Image>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtDropDownHover_Aqua" PressedCssClass="dxEditors_edtDropDownPressed_Aqua" />
-                        </Image>
-                    </DropDownButton>
-                    <ValidationSettings>
-                        <ErrorFrameStyle ImageSpacing="1px">
-                            <ErrorTextPaddings PaddingLeft="1px" />
-                        </ErrorFrameStyle>
-                    </ValidationSettings>
+        <header class="page-head">
+            <h1>eRequest booking</h1>
+            <p>Card and e-channel requests sent in from the remote channels for your branch. Choose the request type, give the batch a title and card dates, check or correct each customer's details in the list, tick the requests and click <strong>Book selection</strong>. <strong>Drop selection</strong> rejects the ticked requests.</p>
+        </header>
+
+        <div class="notice" role="status"><asp:Literal ID="litResult" runat="server" /></div>
+        <div class="alert" role="alert"><asp:Literal ID="Literal1" runat="server" /></div>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Batch details</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="field">
+                        <asp:Label runat="server" AssociatedControlID="drpBatchRefNo" CssClass="form-label">eRequest type <span class="req">*</span></asp:Label>
+                        <asp:DropDownList ID="drpBatchRefNo" runat="server" CssClass="form-control" AutoPostBack="true" CausesValidation="false"
+                            OnSelectedIndexChanged="drpBatchRefNo_SelectedIndexChanged" />
+                        <asp:RequiredFieldValidator runat="server" ControlToValidate="drpBatchRefNo" InitialValue="" ValidationGroup="book" CssClass="validator" Display="Dynamic" ErrorMessage="Choose the request type." />
+                    </div>
+                    <div class="field">
+                        <asp:Label runat="server" AssociatedControlID="txtTitle" CssClass="form-label">Request title <span class="req">*</span></asp:Label>
+                        <asp:TextBox ID="txtTitle" runat="server" CssClass="form-control" MaxLength="100" placeholder="Enter request title" />
+                        <asp:RequiredFieldValidator runat="server" ControlToValidate="txtTitle" ValidationGroup="book" CssClass="validator" Display="Dynamic" ErrorMessage="Title is required." />
+                    </div>
+                    <div class="field">
+                        <asp:Label runat="server" AssociatedControlID="dateIssue" CssClass="form-label">Issue date <span class="req">*</span></asp:Label>
+                        <asp:TextBox ID="dateIssue" runat="server" CssClass="form-control" TextMode="Date" />
+                        <asp:RequiredFieldValidator runat="server" ControlToValidate="dateIssue" ValidationGroup="book" CssClass="validator" Display="Dynamic" ErrorMessage="Issue date is required." />
+                    </div>
+                    <div class="field">
+                        <asp:Label runat="server" AssociatedControlID="dateexpiry" CssClass="form-label">Expiry date <span class="req">*</span></asp:Label>
+                        <asp:TextBox ID="dateexpiry" runat="server" CssClass="form-control" TextMode="Date" />
+                        <asp:RequiredFieldValidator runat="server" ControlToValidate="dateexpiry" ValidationGroup="book" CssClass="validator" Display="Dynamic" ErrorMessage="Expiry date is required." />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Requests waiting <span class="sub"><asp:Literal ID="litTotal" runat="server" /></span></h2>
+            </div>
+            <div class="table-wrap">
+                <asp:GridView ID="ctrlGrid" runat="server" AutoGenerateColumns="False" CssClass="data-grid" GridLines="None" UseAccessibleHeader="True"
+                    DataKeyNames="remSeqNo,accountNo" OnRowDataBound="ctrlGrid_RowDataBound">
+                    <HeaderStyle CssClass="grid-head" />
+                    <EmptyDataTemplate><div class="empty">No requests are waiting for this request type.</div></EmptyDataTemplate>
                     <Columns>
-                        <dx:ListBoxColumn Caption="eRequestType Code" FieldName="CardTypeCode" />
-                        <dx:ListBoxColumn Caption="eRequestType Description" FieldName="CardTypeDesc" />
+                        <asp:TemplateField ItemStyle-CssClass="c" HeaderStyle-CssClass="c">
+                            <HeaderTemplate><input type="checkbox" id="chkAll" title="Select or unselect all rows" onclick="selectAllRows(this.checked);" /></HeaderTemplate>
+                            <ItemTemplate><asp:CheckBox ID="chkSelect" runat="server" CssClass="row-select" ToolTip="Select this request" /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Branch" ItemStyle-CssClass="branch nowrap">
+                            <ItemTemplate><asp:Label ID="lblBranch" runat="server" Text='<%# Eval("BranchName") %>' CssClass="strong" /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:BoundField DataField="remSeqNo" HeaderText="Track ID" ItemStyle-CssClass="nowrap muted" />
+                        <asp:BoundField DataField="accountNo" HeaderText="Account no" ItemStyle-CssClass="nowrap" />
+                        <asp:TemplateField HeaderText="Display name">
+                            <ItemTemplate><asp:TextBox ID="tatAccountDesc" runat="server" CssClass="form-control" MaxLength="25" Text='<%# Eval("AccountDesc") %>' placeholder="Name on card" /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:BoundField DataField="ProdName" HeaderText="Product" ItemStyle-CssClass="muted" />
+                        <asp:TemplateField HeaderText="Date of birth">
+                            <ItemTemplate><asp:TextBox ID="ASPxDateEdit1" runat="server" CssClass="form-control" TextMode="Date" Text='<%# DateInput(Eval("DOB")) %>' /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Address">
+                            <ItemTemplate><asp:TextBox ID="tatAddress" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2" Text='<%# Eval("Address") %>' placeholder="Customer address" /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="City">
+                            <ItemTemplate><asp:TextBox ID="TxtCity" runat="server" CssClass="form-control" Text='<%# Eval("city") %>' /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Phone no">
+                            <ItemTemplate><asp:TextBox ID="ASPxTextBox4" runat="server" CssClass="form-control" TextMode="Phone" Text='<%# Eval("PhoneNo") %>' /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:BoundField DataField="PostStatusDesc" HeaderText="Transaction status" ItemStyle-CssClass="nowrap muted" />
+                        <asp:BoundField DataField="AccountStatusDesc" HeaderText="Account status" ItemStyle-CssClass="nowrap muted" />
                     </Columns>
-                                   <ItemStyle Wrap="True" />
-                </dx:ASPxComboBox>
-                       
+                </asp:GridView>
+            </div>
+        </section>
 
-                            </td></tr>
-                        <tr >
-            <td style="text-align: right;white-space:nowrap"  >
-                Request Title:</td>
-            <td  colspan="3" style="text-align: left; white-space:nowrap"  >
-                <dx:aspxtextbox ID="txtTitle" runat="server" Width="100%" 
-                    CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua" 
-                    SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" 
-                    NullText="Enter Request Title" RightToLeft="False">
-                    <ValidationSettings Display="Dynamic" ErrorDisplayMode="ImageWithTooltip" SetFocusOnError="True">
-                        <ErrorFrameStyle ImageSpacing="4px">
-                            <ErrorTextPaddings PaddingLeft="4px" />
-                        </ErrorFrameStyle>
-                        <RequiredField ErrorText="Title is required" IsRequired="True" />
-                    </ValidationSettings>
-                   
-                </dx:aspxtextbox>
-            </td>
-            <td  colspan="1" rowspan="6" style="text-align: left">
-                &nbsp;</td>
-        </tr>
-                        <tr >
-            <td style="text-align: right; white-space:nowrap"  >
-                 Issue Date:</td>
-            <td align="center" colspan="1" style="height: 30px; text-align: left; width: 289px;">
-               <dx:aspxdateedit ID="dateIssue" runat="server"   DisplayFormatString="D"
-                    EditFormat="Custom" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" 
-                    CssPostfix="Aqua" ShowShadow="False" 
-                    SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" 
-                    NullText="Select Card Issue Date">
-                    <DropDownButton>
-                      
-                    </DropDownButton>
-                    <CalendarProperties>
-                        <HeaderStyle Spacing="1px" />
-                        <FooterStyle Spacing="17px" />
-                    </CalendarProperties>
-                    <ValidationSettings  Display="Dynamic" ErrorDisplayMode="ImageWithTooltip" SetFocusOnError="True">
-                        <ErrorFrameStyle ImageSpacing="4px">
-                            <ErrorTextPaddings PaddingLeft="4px" />
-                        </ErrorFrameStyle>
-                        <RequiredField ErrorText="Issue Date is required" IsRequired="True" />
-                    </ValidationSettings>
-                </dx:aspxdateedit>
-            </td>
-            <td align="right" nowrap >
-                Expiry Date:</td>
-            <td align="left" colspan="1" nowrap>
-                <dx:aspxdateedit ID="dateexpiry" runat="server"  DisplayFormatString="D"
-                    EditFormat="Custom" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" 
-                    CssPostfix="Aqua" ShowShadow="False" 
-                    SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" 
-                    NullText="Select Card Expiry Date">
-                    <DropDownButton>
-                        <Image>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtDropDownHover_Aqua" PressedCssClass="dxEditors_edtDropDownPressed_Aqua" />
-                        </Image>
-                    </DropDownButton>
-                    <CalendarProperties>
-                        <HeaderStyle Spacing="1px" />
-                        <FooterStyle Spacing="17px" />
-                    </CalendarProperties>
-                    <ValidationSettings Display="Dynamic" ErrorDisplayMode="ImageWithTooltip" SetFocusOnError="True">
-                        <ErrorFrameStyle ImageSpacing="4px">
-                            <ErrorTextPaddings PaddingLeft="4px" />
-                        </ErrorFrameStyle>
-                        <RequiredField ErrorText="Expiry Date is required" IsRequired="True" />
-                    </ValidationSettings>
-                </dx:aspxdateedit>
-            </td>
-        </tr>
-                        </table>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="3">
-                    <dx:ASPxGridView ID="ctrlGrid" runat="server" AutoGenerateColumns="False" 
-                        ClientIDMode="AutoID" DataSourceID="SqlDataSource1"
-                        KeyFieldName="remSeqNo" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua"
-                        width="100%" >
-                        <SettingsPager    PageSize ="2000" Position="TopAndBottom" 
-                            SEOFriendly="CrawlerOnly">
-                        </SettingsPager>
-                        <Settings ShowGroupPanel="True" ShowVerticalScrollBar="True"  ShowHorizontalScrollBar="False"
-                            UseFixedTableLayout="True" VerticalScrollBarStyle="Standard"   />
-                             
-                            <Columns>
-                              <dx:GridViewCommandColumn ShowSelectCheckbox="True" VisibleIndex="0" Width ="30px" FixedStyle="Left"  >
-                                    <HeaderTemplate>
-                                     <dx:ASPxCheckBox ID="SelectAllCheckBox" runat="server" ToolTip="Select/Unselect all rows on the page"
-                                            ClientSideEvents-CheckedChanged="function(s, e) { ctrlGrid.SelectAllRowsOnPage(s.GetChecked()); }" />
-                                    </HeaderTemplate>
-                                    <HeaderStyle HorizontalAlign="Center" />
-                                </dx:GridViewCommandColumn>
-                         
-                             
-                             <dx:GridViewDataTextColumn FieldName="remSeqNo" VisibleIndex="0" Name="remSeqNo" Caption=" TrackID" Width ="150px" FixedStyle="Left"  >
-                            </dx:GridViewDataTextColumn>
-                             
-                                   <dx:GridViewDataTextColumn Caption="Account No" FieldName="accountNo" VisibleIndex="1" Width="120px">
-                                  <%--  <DataItemTemplate><div class="auto-style9">
-                                    <asp:CheckBox ID="CheckBox1"    ToolTip='<%# Eval("AccountNo") %>'   runat="server" Text ='<%# Eval("AccountNo") %>' />
-                                   </div> </DataItemTemplate>--%>
-                               <%--     <HeaderTemplate>
-                                    <asp:CheckBox ID="CheckBox2" runat="server"  AutoPostBack="true"   Text="Account No" /> 
-                                    </HeaderTemplate>--%>
-                                </dx:GridViewDataTextColumn>
-                                 <dx:GridViewDataTextColumn Caption="Date of Birth" FieldName="DOB" 
-                            VisibleIndex="3" ReadOnly="True" Width="100px">
-                            <DataItemTemplate>
-                                <dx:ASPxDateEdit ID="ASPxDateEdit1" runat="server" PopupVerticalAlign="Above" Value='<%# Eval("DOB") %>' Width="100%" AutoResizeWithContainer="True">
-                                    <Paddings Padding="0px" />
-                                </dx:ASPxDateEdit>
-                            </DataItemTemplate>
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Display Name" FieldName="AccountDesc" 
-                            VisibleIndex="1" Width="150px" ReadOnly="True">
-                            <DataItemTemplate>
-                                <%--<dx:ASPxLabel ID="ASPxTextBox2" runat="server" MaxLength="25" Text='<%# Eval("AccountDesc") %>' ToolTip ='<%# Eval("remSeqNo") %>' 
-                                    Width="100%" Visible="false">
-                                </dx:ASPxLabel>--%>
-                                  <dx:ASPxMemo ID="tatAccountDesc" runat="server" MaxLength="25"  Text='<%# Eval("AccountDesc") %>'  ToolTip ='<%# Eval("remSeqNo") %>'    NullText="Account Name/ Description" MaskSettings-ShowHints="True" Width="100%">
-                                                </dx:ASPxMemo>
-                            </DataItemTemplate>
-                            <HeaderStyle Wrap="False" />
-                        </dx:GridViewDataTextColumn>
-                                
-                                <dx:GridViewDataTextColumn FieldName="BranchName"   Caption= "Branch" VisibleIndex="23" Width="150px">
-                                </dx:GridViewDataTextColumn>
-                            <dx:GridViewDataTextColumn VisibleIndex="4" Width ="200px" Caption="Address">
+        <div class="action-bar">
+            <span class="count"><span id="selCount">0</span> selected</span>
+            <asp:Button ID="BtnApprove" runat="server" Text="Book selection" CssClass="btn btn-primary" ValidationGroup="book" OnClick="BtnApprove_Click"
+                OnClientClick="if (typeof(Page_ClientValidate) == 'function' && !Page_ClientValidate('book')) return false; return confirmAction('Book {n} request(s) into a new batch?');" />
+            <asp:Button ID="btnDisApprove" runat="server" Text="Drop selection" CssClass="btn btn-danger" CausesValidation="false" OnClick="btnDisApprove_Click"
+                OnClientClick="return confirmAction('Drop {n} request(s)? They will be marked as rejected.');" />
+            <span class="spacer"></span>
+            <asp:Button ID="btncancel" runat="server" Text="Cancel" CssClass="btn btn-secondary" CausesValidation="false" OnClick="btncancel_Click" />
+        </div>
 
-                                <DataItemTemplate>
-                                    <table style="width:100%;">
-                                        <tr>
-                                            <td>
-                                                
-                                                  <dx:ASPxMemo ID="tatAddress" runat="server" CommandName='<%# Eval("remSeqNo") %>'  NullText="Address of Customer" Text='<%# Eval("Address") %>' MaskSettings-ShowHints="True">
-                                                </dx:ASPxMemo>
-
-                                            </td>
-                                            <td>
-                                                &nbsp;</td>
-                                            <td>
-                                                &nbsp;</td>
-                                        </tr>
-                                    </table>
-                                </DataItemTemplate>
-                            </dx:GridViewDataTextColumn>
-                                  <dx:GridViewDataTextColumn Caption="Product" FieldName="ProdName" VisibleIndex="2" Width="100px">
-                        </dx:GridViewDataTextColumn>
-                         
-                        <dx:GridViewDataTextColumn Caption="City" FieldName="city" VisibleIndex="5" 
-                            Width="100px" ReadOnly="True">
-                            <DataItemTemplate>
-                                <dx:ASPxTextbox ID="TxtCity" runat="server" Text='<%# Eval("city") %>' Width="100%">
-                                </dx:ASPxTextbox>
-                              </DataItemTemplate>
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Book Bal" FieldName="Book Bal" 
-                            VisibleIndex="18" Visible="False" Width="60px">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="PhoneNo" VisibleIndex="7" 
-                            FieldName="PhoneNo" Width="150px">
-                         <DataItemTemplate>
-                                <dx:ASPxTextBox ID="ASPxTextBox4" runat="server" Text='<%# Eval("PhoneNo") %>' Width="100%">
-                                </dx:ASPxTextBox>
-                            </DataItemTemplate>
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Cleared Bal" FieldName="Cleared Bal" 
-                            VisibleIndex="14" Visible="False" Width="100px">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Transaction Status" 
-                            FieldName="PostStatusDesc" VisibleIndex="19" Width="120px">
-                        </dx:GridViewDataTextColumn>
-                        
-                        <dx:GridViewDataTextColumn Caption="Account Status" FieldName="AccountStatusDesc" 
-                            VisibleIndex="21" Width="100px">
-                        </dx:GridViewDataTextColumn>
-                        </Columns>
-                                <settingsbehavior allowfocusedrow="True"  
-                                                enablerowhottrack="True" AutoExpandAllGroups="True" /> 
-                                   <settings showfilterbar="Visible" showgrouppanel="True" />
-                                        <GroupSummary>
-                                                <dx:ASPxSummaryItem DisplayFormat="Total ={0}"  
-                                                    SummaryType="Count" />
-                                            </GroupSummary>
-
-<SettingsBehavior AllowFocusedRow="True" AutoExpandAllGroups="True" EnableRowHotTrack="True"></SettingsBehavior>
-
-<Settings ShowGroupPanel="True" ShowFilterBar="Visible"></Settings>
-                          <Images SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css">
-                            <LoadingPanelOnStatusBar Url="~/App_Themes/Aqua/GridView/gvLoadingOnStatusBar.gif">
-                            </LoadingPanelOnStatusBar>
-                            <LoadingPanel Url="~/App_Themes/Aqua/GridView/Loading.gif">
-                            </LoadingPanel>
-                        </Images>
-                        
-                        <SettingsLoadingPanel ImagePosition="Top" />
-                        <ClientSideEvents SelectionChanged="ctrlGrid_SelectionChanged"  />
-                    </dx:ASPxGridView>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <table  >
-                        <tr>
-                            <td align="right" class="style2">
-                                <dx:ASPxButton ID="BtnApprove" runat="server" Text="Book Selection" 
-                                    Width="175px" OnClick="BtnApprove_Click" >
-                                </dx:ASPxButton>
-                            </td>
-                            <td align="left" class="style2">
-                                <dx:ASPxButton ID="btnDisApprove" runat="server" Text="Drop Selection" 
-                                    Width="175px" OnClick="btnDisApprove_Click" >
-                                </dx:ASPxButton>
-                            </td>
-                            <td align="left" class="style2">
-                                <dx:ASPxButton ID="btncancel" runat="server" Text="Cancel" OnClick="btncancel_Click" 
-                                   Width="175px"  >
-                                </dx:ASPxButton>
-                            </td>
-                             <td align="left" class="style2">
-                               
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                &nbsp;</td>
-                            <td>
-                                &nbsp;</td>
-                            <td>
-                                &nbsp;</td>  
-                            <td>
-                                &nbsp;</td>
-                        </tr>
-                    </table>
-                </td>
-                <td>
-                    &nbsp;</td>
-            </tr>
-            <tr>
-                <td>
-                    &nbsp;
-                      <div class="TopPadding">
-                                    Selected count: <span id="selCount" style="font-weight: bold">0</span>
-                                </div>
-                       <dx:ASPxListBox ID="ASPxListBox1" ClientInstanceName="selList" runat="server" 
-                                              Height="0px"  ReadOnly ="True"  Width="20px"
-                                    CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua" 
-                                       
-                                    SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css"  >
-                                    <LoadingPanelImage Url="~/App_Themes/Aqua/Editors/Loading.gif">
-                                    </LoadingPanelImage>
-                                    <ValidationSettings>
-                                        <ErrorFrameStyle ImageSpacing="4px">
-                                            <ErrorTextPaddings PaddingLeft="4px" />
-                                        </ErrorFrameStyle>
-                                    </ValidationSettings>
-                                </dx:ASPxListBox>
-                              
-                    </td>
-                <td class="style1">
-                    &nbsp;</td>
-                <td>
-                    &nbsp;</td>
-            </tr>
-        </table>
-    
+        <div id="busy" class="busy-overlay"><span class="spinner"></span>Saving&hellip;</div>
     </div>
-    <asp:SqlDataSource ID="SqlDataSource1" runat="server" 
-        ConnectionString="<%$ ConnectionStrings:EazyConnect %>" 
-        SelectCommand="SpCardRemoteRequestAllApprType" SelectCommandType="StoredProcedure">
-         <SelectParameters>
-         <asp:ControlParameter ControlID="txtUserID" Name="userId" Type="String" PropertyName="Text"   />
-          <asp:ControlParameter ControlID="txtlocation"  Name="locationID" PropertyName="Text" Type="String" />
-
-         <asp:Parameter DefaultValue="5" Name="status" Type="Int32" />
-     <asp:ControlParameter ControlID="drpBatchRefNo"  Name="requestType" PropertyName="Value" Type="String" />
-        </SelectParameters>
-    </asp:SqlDataSource>
-     <asp:TextBox ID="txtUserID" runat="server" Visible="False"></asp:TextBox>
-     <asp:TextBox ID="txtlocation" runat="server" Visible="False"></asp:TextBox>
-    &nbsp;<asp:SqlDataSource ID="SqlDataRequestType" runat="server" 
-        ConnectionString="<%$ ConnectionStrings:EazyConnect %>" 
-        SelectCommand="SpCardRemoteReqSel" SelectCommandType="StoredProcedure">
-         <SelectParameters>
-             <asp:Parameter DefaultValue="5" Name="status" Type="Int32" />
-        </SelectParameters>
-    </asp:SqlDataSource>
+    <script type="text/javascript">
+        (function () {
+            function rowBoxes() {
+                return document.querySelectorAll('#<%= ctrlGrid.ClientID %> .row-select input[type="checkbox"]');
+            }
+            function refresh() {
+                var boxes = rowBoxes(), n = 0;
+                for (var i = 0; i < boxes.length; i++) {
+                    var tr = boxes[i].closest('tr');
+                    if (boxes[i].checked) { n++; if (tr) tr.classList.add('is-selected'); }
+                    else if (tr) { tr.classList.remove('is-selected'); }
+                }
+                var c = document.getElementById('selCount');
+                if (c) c.textContent = n;
+                var all = document.getElementById('chkAll');
+                if (all) { all.checked = boxes.length > 0 && n === boxes.length; all.indeterminate = n > 0 && n < boxes.length; }
+                return n;
+            }
+            window.selectAllRows = function (checked) {
+                var boxes = rowBoxes();
+                for (var i = 0; i < boxes.length; i++) { boxes[i].checked = checked; }
+                refresh();
+            };
+            window.confirmAction = function (question) {
+                var n = refresh();
+                if (n === 0) { alert('Tick at least one row first.'); return false; }
+                if (!confirm(question.replace('{n}', n))) return false;
+                document.getElementById('busy').classList.add('show');
+                return true;
+            };
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.closest && e.target.closest('.row-select')) { refresh(); }
+            });
+            refresh();
+        })();
+    </script>
     </form>
 </body>
 </html>

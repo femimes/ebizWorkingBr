@@ -1,287 +1,309 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="PinUpload.aspx.cs" Inherits="Request_PinUpload" %>
-<%@ Register Assembly="DevExpress.Web.v19.1, Version=19.1.4.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a"
-    Namespace="DevExpress.Web" TagPrefix="dx" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeFile="PinUpload.aspx.cs" Inherits="Request_PinUpload" %>
 
-
- 
 <!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head id="Head1" runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Card PIN upload</title>
+    <link rel="shortcut icon" href="/Resources/images/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style type="text/css">
+        :root {
+            --brand: #0F4C81; --brand-dark: #0a355a;
+            --ink: #14212e; --muted: #5d6b7a;
+            --line: #e1e8ef; --field: #d3dce6;
+            --page: #f4f7fa; --surface: #ffffff; --tint: #eaf1f8;
+            --ok: #1b6e3c; --ok-bg: #e6f4ea;
+            --bad: #b3261e; --bad-bg: #fdeceb;
+            --ring: rgba(15, 76, 129, .22);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 24px;
+            font-family: "Plus Jakarta Sans", "Segoe UI", Roboto, Arial, sans-serif;
+            font-size: 13px; color: var(--ink); background: var(--page);
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 1100px; margin: 0 auto; }
 
-<html xmlns="http://www.w3.org/1999/xhtml">
- <head>
-        
-            <meta charset="utf-8" />
-            <%--<title>ABBEY - Mortgage Bank</title>--%>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
-            <meta content="Themesbrand" name="author" />
-    
-            <link href="https://fonts.googleapis.com/css?family=Nunito:400,600,700&display=swap" rel="stylesheet">
-            <link rel="stylesheet" href= "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
-            <!-- App favicon -->
-            <link rel="shortcut icon" href="../Resources/images/favicon.ico">
-    
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css" rel="stylesheet"/>
-    
-            <!--Chartist Chart CSS -->
-            <link href="../Resources/libs/chartist/chartist.min.css" rel="stylesheet" type="text/css" /> 
-            <!-- plugin css -->
-            <link href="../Resources/libs/admin-resources/jquery.vectormap/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" /> 
-            <!-- DataTables -->
-            <link href="../Resources/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css" />
-    
-            <!-- Bootstrap Css -->
-            <link href="../Resources/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
-            <!-- Icons Css -->
-            <link href="../Resources/css/icons.min.css" rel="stylesheet" type="text/css" />
-            <!-- App Css-->
-            <link href="../Resources/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
-            <link href="../Resources/css/customstyle.css" rel="stylesheet" type="text/css" />
-            <link href="../Resources/css/style.css" rel="stylesheet" type="text/css" />
-                 <link href="../Resources/style.scss" rel="stylesheet" type="text/css" />
-     <link href="../Resources/css/SpecialSelect.css" rel="stylesheet" type="text/css" />
+        .page-head {
+            margin: 0 0 16px; padding: 20px 22px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-left: 4px solid var(--brand); border-radius: 12px;
+        }
+        .page-head h1 { margin: 0 0 2px; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+        .page-head p { margin: 0; font-size: 12px; color: var(--muted); }
 
-        </head>
+        .notice, .alert { display: block; margin-bottom: 12px; padding: 12px 14px; border-radius: 8px; line-height: 1.5; word-break: break-word; }
+        .notice { font-weight: 600; color: var(--ok); background: var(--ok-bg); border-left: 4px solid var(--ok); }
+        .alert { font-weight: 500; color: var(--bad); background: var(--bad-bg); border-left: 4px solid var(--bad); }
+        .notice:empty, .alert:empty { display: none; }
 
+        .card { margin-bottom: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .card-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+            padding: 14px 20px; border-bottom: 1px solid var(--line);
+        }
+        .card-head h2 { margin: 0; font-size: 14px; font-weight: 700; }
+        .card-head .sub { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .card-body { padding: 18px 20px; }
 
-    <body data-topbar="dark">
- <form id="form1" runat="server" >
+        /* ---------- Forms ---------- */
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+        .form-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+        .form-hint { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); }
+        .form-control, input.form-control, select.form-control {
+            display: block; width: 100%; height: 36px; padding: 0 10px;
+            font: inherit; font-size: 13px; color: var(--ink); background-color: var(--surface);
+            border: 1.5px solid var(--field); border-radius: 9px; outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .form-control:hover { border-color: #aebbc9; }
+        .form-control:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--ring); }
+        textarea.form-control { height: auto; min-height: 72px; padding: 8px 10px; resize: vertical; }
+        select.form-control {
+            appearance: none; -webkit-appearance: none; padding-right: 34px; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%235d6b7a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+        }
+        .inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .inline .form-control { flex: 1 1 180px; width: auto; }
+        .field-error { display: block; margin-top: 5px; font-size: 12px; font-weight: 500; color: var(--bad); }
+        .lookup { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--brand); }
+        .lookup:empty { display: none; }
 
-              <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
-      
-      
-        <!--CSS Spinner-->
-        <div class="spinner-wrapper">
-            <!-- <div class="spinner"></div>
-            <div class="title-text">
-                    <h5>Welcome to Jubilee-Life <br>
-                    <span>Online Banking</span></h5>
-            </div> -->
-            <div class="spinner">
-                <div class="bounce1 spinner-bonce"></div>
-                <div class="bounce2 spinner-bonce"></div>
-                <div class="bounce3 spinner-bonce"></div>
-                <!-- <div class="title-text">
-                        <h5>Welcome to Abbey <br>
-                        <span>Mortgage Bank PLC.</span></h5>
-                </div> -->
+        .check { display: inline-flex; align-items: center; gap: 9px; }
+        .check input[type="checkbox"] { width: 17px; height: 17px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+        .check label { cursor: pointer; font-weight: 500; }
+        .check-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .check-list .check {
+            padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px;
+            transition: border-color .15s ease, background-color .15s ease;
+        }
+        .check-list .check:hover { border-color: #aebbc9; }
+        .check-list .check:has(input:checked) { border-color: var(--brand); background: var(--tint); }
+        .check.danger input[type="checkbox"] { accent-color: var(--bad); }
+        .check.danger:has(input:checked) label { color: var(--bad); }
+
+        /* ---------- Grids ---------- */
+        .table-wrap { overflow-x: auto; }
+        table.data-grid { width: 100%; border: 0; border-collapse: collapse; }
+        table.data-grid th, table.data-grid td { padding: 10px 14px; text-align: left; vertical-align: middle; border-top: 1px solid var(--line); }
+        table.data-grid tr.grid-head th {
+            border-top: 0; background: #f8fafc; white-space: nowrap;
+            font-size: 11px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        table.data-grid tr.grid-head a { color: var(--muted); text-decoration: none; }
+        table.data-grid tr.grid-head a:hover { color: var(--brand); }
+        table.data-grid tr:hover td { background: #f8fafc; }
+        table.data-grid tr.is-selected td, table.data-grid tr.grid-edit td { background: var(--tint); }
+        table.data-grid .c { text-align: center; }
+        table.data-grid .nowrap { white-space: nowrap; }
+        table.data-grid .strong { font-weight: 600; }
+        table.data-grid .muted { color: var(--muted); }
+        table.data-grid .actions { white-space: nowrap; text-align: right; }
+        table.data-grid .form-control { min-width: 140px; height: 34px; }
+        table.data-grid input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--brand); cursor: pointer; vertical-align: middle; }
+
+        .pill { display: inline-block; padding: 3px 9px; font-size: 11px; font-weight: 600; border-radius: 999px; white-space: nowrap; }
+        .pill.on { color: var(--ok); background: var(--ok-bg); }
+        .pill.off { color: var(--muted); background: #eef2f6; }
+
+        .link-btn {
+            display: inline-block; margin-left: 4px; padding: 6px 12px; border: 0; cursor: pointer;
+            font: inherit; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 8px;
+        }
+        .link-btn.edit, .link-btn.cancel { color: var(--brand); background: var(--tint); }
+        .link-btn.edit:hover, .link-btn.cancel:hover { background: #dbe7f3; }
+        .link-btn.save { color: #fff; background: var(--brand); }
+        .link-btn.save:hover { background: var(--brand-dark); }
+        .link-btn.delete { color: var(--bad); background: var(--bad-bg); }
+        .link-btn.delete:hover { background: #f9d9d6; }
+
+        table.data-grid tr.grid-pager td { padding: 12px; text-align: center; background: var(--surface); }
+        table.data-grid tr.grid-pager:hover td { background: var(--surface); }
+        table.data-grid tr.grid-pager table { margin: 0 auto; }
+        table.data-grid tr.grid-pager table td { padding: 0; border: 0; }
+        table.data-grid tr.grid-pager a,
+        table.data-grid tr.grid-pager span {
+            display: inline-block; min-width: 30px; margin: 0 2px; padding: 5px 8px;
+            font-weight: 600; text-decoration: none; border-radius: 7px;
+        }
+        table.data-grid tr.grid-pager a { color: var(--brand); }
+        table.data-grid tr.grid-pager a:hover { background: var(--tint); }
+        table.data-grid tr.grid-pager span { color: #fff; background: var(--brand); }
+        .empty { padding: 28px; text-align: center; color: var(--muted); }
+
+        /* ---------- Buttons ---------- */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            height: 36px; padding: 0 16px; font: inherit; font-size: 13px; font-weight: 600;
+            text-decoration: none; white-space: nowrap; border: 1.5px solid transparent;
+            border-radius: 9px; cursor: pointer; transition: background-color .15s ease, border-color .15s ease;
+        }
+        .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
+        .btn-primary { color: #fff; background: var(--brand); }
+        .btn-primary:hover { background: var(--brand-dark); }
+        .btn-secondary { color: var(--ink); background: var(--surface); border-color: var(--field); }
+        .btn-secondary:hover { background: #f1f5f9; }
+        .btn-danger { color: var(--bad); background: var(--surface); border-color: #f0c4c0; }
+        .btn-danger:hover { background: var(--bad-bg); }
+        .btn-link { color: var(--brand); background: none; padding: 0 6px; }
+        .btn-link:hover { text-decoration: underline; }
+        .text-link { font-weight: 600; color: var(--brand); text-decoration: none; white-space: nowrap; }
+        .text-link:hover { text-decoration: underline; }
+
+        .action-bar {
+            position: sticky; bottom: 0; z-index: 5;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 12px 20px; background: var(--surface);
+            border: 1px solid var(--line); border-radius: 12px;
+            box-shadow: 0 -6px 18px rgba(20, 33, 46, .06);
+        }
+        .action-bar .count {
+            display: inline-flex; align-items: center; gap: 6px; margin-right: 6px;
+            padding: 6px 12px; font-weight: 600; color: var(--brand);
+            background: var(--tint); border-radius: 999px;
+        }
+        .action-bar .spacer { flex: 1; }
+        .form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+        @media (max-width: 760px) {
+            body { padding: 14px; }
+            .form-grid, .form-grid.cols-3, .check-list { grid-template-columns: 1fr; }
+            .card-body { padding: 14px; }
+            .action-bar .spacer { display: none; }
+            .action-bar .btn { flex: 1 1 auto; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+        /* ---------- Extras ---------- */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        .stat { padding: 12px 14px; background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; }
+        .stat .label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+        .stat input.stat-value {
+            display: block; width: 100%; margin-top: 4px; padding: 0; border: 0; background: transparent;
+            font: inherit; font-size: 18px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; outline: none;
+        }
+        .stat.key { background: var(--tint); border-color: #c9dbee; }
+        .stat.good input.stat-value { color: var(--ok); }
+        .stat.bad input.stat-value { color: var(--bad); }
+        .scroll-y { max-height: 520px; overflow: auto; }
+        table.data-grid .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        table.data-grid thead th, table.data-grid tr.grid-head th { position: sticky; top: 0; z-index: 1; }
+        .busy-overlay {
+            position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+            background: rgba(244, 247, 250, .8); font-weight: 600; color: var(--brand);
+        }
+        .busy-overlay.show { display: flex; }
+        .busy-overlay .spinner {
+            width: 28px; height: 28px; margin-right: 12px; border-radius: 50%;
+            border: 3px solid #c9dbee; border-top-color: var(--brand); animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 760px) { .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .schedule-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+        .schedule-every { display: inline-flex; align-items: center; gap: 8px; }
+        .schedule-every .form-control { width: auto; min-width: 130px; }
+        .schedule-info { margin: 10px 0 0; }
+    </style>
+    <style type="text/css">
+        .pill.bad { color: var(--bad); background: var(--bad-bg); }
+        .page-head .back { display: inline-block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--brand); text-decoration: none; }
+        .page-head .back:hover { text-decoration: underline; }
+        .req { color: var(--bad); }
+        .readonly { background-color: #f8fafc !important; color: var(--muted); }
+        .details { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; margin: 0; }
+        .details dt, .details dd { margin: 0; padding: 9px 0; border-top: 1px solid var(--line); }
+        .details dt { font-size: 12px; font-weight: 600; color: var(--muted); }
+        .details dd { font-weight: 500; word-break: break-word; }
+        .details dt:first-of-type, .details dt:first-of-type + dd { border-top: 0; }
+        @media (max-width: 760px) { .details { grid-template-columns: 1fr; } .details dd { border-top: 0; padding-top: 0; } }
+    </style>
+    <style type="text/css">
+        .upload-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+        @media (max-width: 860px) { .upload-layout { grid-template-columns: 1fr; } }
+        .file-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .file-row .form-control { flex: 1 1 260px; }
+        .summary p { margin: 0 0 8px; }
+        .summary .error { color: var(--bad); font-weight: 600; }
+        table.import-grid caption { text-align: left; font-weight: 600; padding: 12px 14px; color: var(--muted); }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+    <div class="wrap">
+
+        <header class="page-head">
+            <h1>Card PIN upload</h1>
+            <p>Upload a .txt or .csv file of card numbers and PINs. <strong>Import</strong> reads the file and lists what was found; check the list, then click <strong>Commit records</strong> to save it as a new batch.</p>
+        </header>
+
+        <div class="alert" role="alert"><asp:Label ID="errMsg" runat="server" /></div>
+
+        <div class="upload-layout">
+            <div>
+                <section class="card">
+                    <div class="card-head">
+                        <h2>File</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="file-row">
+                            <asp:FileUpload ID="Filphoto" runat="server" CssClass="form-control" accept=".txt,.csv" />
+                            <asp:Button ID="btnImport" runat="server" CssClass="btn btn-secondary" Text="Import" OnClick="btnImport_Click" />
+                        </div>
+                        <asp:DropDownList ID="offr2" runat="server" CssClass="form-control" Visible="false" />
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="table-wrap">
+                        <asp:DataGrid ID="DataGrid1" runat="server" CssClass="data-grid import-grid" GridLines="None" Caption="Import details" CaptionAlign="Top" Width="100%">
+                            <HeaderStyle CssClass="grid-head" />
+                            <PagerStyle CssClass="grid-pager" Mode="NumericPages" />
+                        </asp:DataGrid>
+                    </div>
+                </section>
+
+                <div class="action-bar">
+                    <asp:Button ID="Button3" runat="server" CssClass="btn btn-primary" Text="Commit records" OnClick="Button3_Click"
+                        OnClientClick="if (!confirm('Commit the imported records?')) return false; document.getElementById('busy').classList.add('show'); return true;" />
+                    <span class="spacer"></span>
+                    <asp:Button ID="Button4" runat="server" CausesValidation="False" Text="New records" CssClass="btn btn-secondary" OnClick="Button4_Click" />
+                </div>
             </div>
+
+            <section class="card">
+                <div class="card-head">
+                    <h2>Summary</h2>
+                </div>
+                <div class="card-body summary">
+                    <p><asp:Label ID="txtref_no" runat="server" CssClass="strong" /></p>
+                    <p><asp:Label ID="lbldebit" runat="server" CssClass="error" Visible="false" /></p>
+                    <p><asp:Label ID="Label1" runat="server" Visible="false" /></p>
+                    <p><asp:Label ID="lblAvailBal" runat="server" Visible="false" /></p>
+                </div>
+            </section>
         </div>
 
-        <!-- Begin page -->
-        <div id="layout-wrapper">
-             
-        <div class="container-fluid">
+        <div id="busy" class="busy-overlay"><span class="spinner"></span>Saving&hellip;</div>
+    </div>
 
-                        <!-- start page title -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="page-title-box d-flex align-items-center justify-content-between">
-                                    <h4 class="mb-0 font-size-18">PINs Uploads (Cards)</h4>
-
-                                    <div class="page-title-right">
-                                        <ol class="breadcrumb m-0">
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">Menu</a></li>
-                                            <li class="breadcrumb-item"><a href="javascript: void(0);">PINs Uploads</a></li>
-                                            <li class="breadcrumb-item active">Cards Uploads <asp:Label ID="lblAccountNo" runat="server" Visible="False"></asp:Label></li>
-                                        </ol>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                        <!-- end page title -->
-                               <asp:Label ID="errMsg" runat="server" CssClass="error"></asp:Label>
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="card ">
-                                    <div class="card-body" > 
-                                         <div class="row">
-                                            <div class="col-md-12 ">
-                                                  <div class="form-group row">
-                                                     <div class="col-md-8">
-                                                   <asp:FileUpload ID="Filphoto" runat="server" CssClass="form-control" Width="100%"  />
-
-                                                                 </div> 
-                                                      <div class="text-right"> 
-
-                                                       <asp:Button ID="btnImport" runat="server" CssClass="btn btn-primary ml-2" Text="Import" OnClick="btnImport_Click" />
-
-                                                      </div>
-                                                      </div>
-                                                   
-                                                    <div class="form-group row">
-                                                 
-
-                                                    </div>
-                                                         <div class="form-group row "  > 
-                                                             <div class="col-md-8">
-                                                  <%--<asp:Textbox  ID="txtRemarks" runat="server" CssClass="form-control" TextMode="MultiLine"  Width="100%"  />--%>  
-                                                            <asp:DropDownList ID="offr2" runat="server" CssClass="form-control" Visible="false">
-            </asp:DropDownList>
-                                                                 </div>
-                                                    </div>
-
-                                 <div class="form-group row"  style="margin-left:15%">
-                                                  <asp:Button ID="Button3" runat="server" CssClass="btn btn-primary ml-2" 
-            Text="Commit Records" OnClick="Button3_Click"     /> &nbsp;
-            <asp:Button ID="Button4" runat="server" CausesValidation="False"   Text="New Records"  CssClass="btn btn-primary ml-2" OnClick="Button4_Click" />&nbsp;
-            
-                                                    </div>
-                                                    <div class="form-group row">
-<asp:DataGrid ID="DataGrid1" runat="server" BorderColor="#CCCCCC" BorderStyle="None"
-                    BorderWidth="1px" Caption="Import Details" CaptionAlign="Top" CellPadding="3"
-                    Font-Bold="False" Width="100%">
-                    <FooterStyle BackColor="White" ForeColor="#000066" />
-                    <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
-                    <PagerStyle BackColor="White" ForeColor="#000066" HorizontalAlign="Left" Mode="NumericPages" />
-                    <ItemStyle ForeColor="#000066" Font-Bold="False" Font-Italic="False" Font-Overline="False" Font-Size="XX-Small" Font-Strikeout="False" Font-Underline="False" />
-                    <HeaderStyle Font-Bold="True" Font-Italic="False" Font-Overline="False" Font-Strikeout="False"
-                        Font-Underline="False" Wrap="False" Font-Size="X-Small" />
-                    <AlternatingItemStyle Font-Bold="False" Font-Italic="False" Font-Overline="False"
-                        Font-Size="XX-Small" Font-Strikeout="False" Font-Underline="False" />
-                </asp:DataGrid>
-                                                        </div>
-                                                </div>
-                                             </div>
-
-                                        </div>
-
-                                </div>
-
-                            </div>
-                            
-                              <div class="col-md-4">
-                                <div class="card col-12" style="min-height: 150px">
-                                        <div style="background-color: #c60d00;
-                                        /* background-position-x: center; */
-                                        margin: 0px -12px;
-                                        height: 30px;
-                                        padding: 5px 14px 4px 14px;
-                                        color: #fff;">
-                                                <h5 class="mt-0">Summary Details</h5>
-                                            </div>
-
-                                    <div class="card-body">
-                                        
-                                     <%--   <div class="form-group row">
-                                          
-                                     <dx:ASPxComboBox ID="ASPxComboBox1"  Visible="false"   runat="server"   Width="100%"   TextFormatString="{0}; {1}"    ValueField="AccountNo" CssClass="form-control"
-                                         OnSelectedIndexChanged="ASPxComboBox1_SelectedIndexChanged" AutoPostBack="True" Border-BorderColor="AliceBlue" >
-                                     <Columns >
-                                   
-                                        <dx:ListBoxColumn Caption="AccountNo" FieldName="AccountNo"  />
-                                        <dx:ListBoxColumn Caption="Type" FieldName="ProdName" />
-                                         <dx:ListBoxColumn Caption="AccountName" FieldName="AccountDesc"  Visible="false"/>
-                                    </Columns>
-                                                          
-                                   <ItemStyle  />
-                                   
-                                   <Paddings Padding="0px" />
-                                   <ValidationSettings Display="Dynamic">
-                                       <RequiredField IsRequired="true" ErrorText="select account type" />
-                                   </ValidationSettings>
-                      </dx:ASPxComboBox>
-                                           
-                                </div>--%>
-
-                                      <div   class="form-group row"><asp:Label ID ="txtref_no" runat="server" ForeColor="blue"></asp:Label> </div>
-                                         <%-- <MaskSettings Mask="############.##" ShowHints="false" PromptChar=" " IncludeLiterals="DecimalSymbol"  />--%>
-                                      
-                                        <div   class="form-group row"> <asp:Label ID ="lbldebit" runat="server" ForeColor="Red" Visible="false"></asp:Label></div>
-                                         
-                                                        <div class="form-group row">  <asp:Label ID ="Label1" runat="server" ForeColor="blue" Visible="false"></asp:Label></div>
-                 
-                                        </div>
-                                        <%--<button type="submit" class="btn btn-primary ml-2">Clear</button>--%> 
-                                        
-                                        <div class="form-group row"> <asp:Label ID ="lblAvailBal" runat="server" ForeColor="blue" Visible="false"></asp:Label></div>
-                 
-                                        </div>
-                      
-                                    <%-- <div class="card col-12" style="min-height: 150px;
-                                background-image: url(../Resources/images/small/img-5.jpg);
-                                background-size: cover;
-                                height: 200px;">
-                                        <div class="card-body">
-                                            <!-- <h5 class="mt-0">Best Approach</h5> -->
-                                            <div class="row">
-                                            <!-- <p>We advice you to secure your transcation and <br> do not share your code with anyone.</p> -->
-                                            </div>                                                                  
-                                        </div>
-                                    </div>--%>
-
-                                    </div>
-                                </div>
-
-                                
-                            </div>
-                            </div>   
-     <asp:Label ID="lblUser" runat="server" visible="false"  ></asp:Label>
-                                    
-            <asp:ObjectDataSource ID="ObjectDataSource1" runat="server" SelectMethod="ProcessUserAcctList" TypeName="iBankPoints.iPoints">
-                <SelectParameters>
-                    <%--<asp:CookieParameter CookieName="eLonginUser" Name="strUserName" Type="String" />--%>
-                    
-                    <asp:ControlParameter ControlID="lblUser" DefaultValue="99" Name="strUserName" PropertyName="Text" Type="String" />
-              
-                    <asp:ControlParameter ControlID="lblAccountNo" DefaultValue="99" Name="strAccountNo" PropertyName="Text" Type="String" />
-                     <asp:CookieParameter CookieName="Token" Name="Token" Type="String" />
-                </SelectParameters>
-              </asp:ObjectDataSource>
-              <script src="../Resources/libs/jquery/jquery.min.js"></script>
-   <script src="../Resources/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
-   <script src="../Resources/libs/metismenu/metisMenu.min.js"></script>
-   <script src="../Resources/libs/simplebar/simplebar.min.js"></script>
-   <script src="../Resources/libs/node-waves/waves.min.js"></script>
-   <script src="../Resources/js/hidehref.js"></script>
-   <script src="../Resources/js/preloader.js"></script>
-
-     <!-- preload -->
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-            <script src="../preloader.js"></script>
-   <!-- counter -->
-   <script src="../Resources/js/counters.js"></script>
-   <script>
-       var slideIndex = 0;
-       carousel();
-
-       function carousel() {
-           var i;
-           var x = document.getElementsByClassName("mySlides");
-           for (i = 0; i < x.length; i++) {
-               x[i].style.display = "none";
-           }
-           slideIndex++;
-           if (slideIndex > x.length) { slideIndex = 1 }
-           x[slideIndex - 1].style.display = "block";
-           setTimeout(carousel, 9000); // Change image every 2 seconds
-       }
-   </script>
-
-   <!-- Plugin Js-->
-   <script src="../Resources/libs/chartist/chartist.min.js"></script>
-   <script src="../Resources/libs/chartist-plugin-tooltips/chartist-plugin-tooltip.min.js"></script>
-   <script src="../Resources/libs/morris.js/morris.min.js"></script>
-   <script src="../Resources/libs/raphael/raphael.min.js"></script>
-   <!-- Peity chart-->
-   <script src="../Resources/libs/peity/jquery.peity.min.js"></script>
-
-   <!-- Plugins js-->
-   <script src="../Resources/libs/admin-resources/jquery.vectormap/jquery-jvectormap-1.2.2.min.js"></script>
-   <script src="../Resources/libs/admin-resources/jquery.vectormap/maps/jquery-jvectormap-world-mill-en.js"></script>
-  
-   <!-- Required datatable js -->
-   <script src="../Resources/libs/datatables.net/js/jquery.dataTables.min.js"></script>
-   <script src="../Resources/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
-
-   <script src="../Resources/js/pages/dashboard2.init.js"></script>
-
-   <script src="../Resources/js/app.js"></script>
-         <script src="../showOrHideLoadingAnimation.js"></script>
-             
-     
+    <asp:Label ID="lblAccountNo" runat="server" Visible="False" />
+    <asp:Label ID="lblUser" runat="server" Visible="false" />
+    <asp:ObjectDataSource ID="ObjectDataSource1" runat="server" SelectMethod="ProcessUserAcctList" TypeName="iBankPoints.iPoints">
+        <SelectParameters>
+            <asp:ControlParameter ControlID="lblUser" DefaultValue="99" Name="strUserName" PropertyName="Text" Type="String" />
+            <asp:ControlParameter ControlID="lblAccountNo" DefaultValue="99" Name="strAccountNo" PropertyName="Text" Type="String" />
+            <asp:CookieParameter CookieName="Token" Name="Token" Type="String" />
+        </SelectParameters>
+    </asp:ObjectDataSource>
     </form>
 </body>
 </html>
-

@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.VisualBasic;
 using System;
 using System.Collections;
@@ -928,7 +928,7 @@ public partial class Request_PinUpload :  System.Web.UI.Page
 
     protected void Button4_Click(object sender, EventArgs e)
     {
-        Response.Redirect("BulkFTLocal.aspx");
+        Response.Redirect("PinUpload.aspx");
     }
 
     protected void ASPxComboBox1_SelectedIndexChanged(object sender, EventArgs e)

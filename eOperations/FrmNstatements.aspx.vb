@@ -1,112 +1,229 @@
-﻿Imports System
+﻿Option Strict Off
+Imports System
 Imports NETClass
 Imports System.Data.SqlClient
 Imports System.Data
 Imports System.IO
-Imports DevExpress.Web
 Imports System.Net.Mail
 Imports Microsoft.ReportingServices
-'Imports CrystalDecisions.Shared
-'Imports CrystalDecisions.CrystalReports.Engine
 Imports System.Drawing.Printing
-
-
-'Imports CrystalDecisions
 Imports Microsoft.Reporting.WebForms
-
 Imports iTextSharp.text
 Imports iTextSharp.text.html.simpleparser
 Imports iTextSharp.text.pdf
 Imports System.Net.Mime
+Imports ListItem = System.Web.UI.WebControls.ListItem
+Imports System.Collections.Generic
+Imports System.Configuration
+Imports System.Globalization
+Imports System.Web
+Imports System.Web.UI
+Imports System.Web.UI.WebControls
 
-
-
-
+''' <summary>
+''' Account statement notifications: e-mails password-protected PDF statements (AccountEstatementNew.rdlc) to the selected accounts.
+''' Accounts: GetAllAccountCardRequest (product, branch, optional account list). Plain ASP.NET controls (no DevExpress);
+''' the sending code is the original page's.
+''' </summary>
 Partial Class eOperations_FrmNstatements
     Inherits System.Web.UI.Page
-    Public luser As String = Context.User.Identity.Name
-    Public StrLocation As String = "101" 'luser.Substring(luser.LastIndexOf("?") + 1)
-    Public struser As String = "Axadmin" ' Mid(luser, 1, luser.LastIndexOf("?"))
-    Public guser As String = struser
-    Public l_senderlist As String
-    Public dt As New DataTable
+
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
-
-        If (IsPostBack = False And IsCallback = False) Then
-            txtUserID.Text = guser
-
-            LoadGrid()
-
-            drpStatementtype.Value = "N"
-
-            drpbranches.Value = "101"
-            drp_products.Value = "103"
-            dateIssue.Date = Today.Date
-            dateexpiry.Date = Today.Date.AddDays(1.0)
-
-            Me.ASPxGridView1.PageIndex = 0
+        If Not IsPostBack Then
+            LoadFilters()
+            drpStatementtype.SelectedValue = "N"
+            IssueDate = DateTime.Today
+            ExpiryDate = DateTime.Today.AddDays(1.0)
+            BindGrid()
         End If
     End Sub
-    Sub LoadGrid()
+
+    ' =====================================================================
+    ' Statement period (date boxes)
+    ' =====================================================================
+    Private Property IssueDate As DateTime
+        Get
+            Dim d As DateTime
+            Return If(TryDate(dateIssue.Text, d), d, DateTime.Today)
+        End Get
+        Set(ByVal value As DateTime)
+            dateIssue.Text = DateInput(value)
+        End Set
+    End Property
+
+    Private Property ExpiryDate As DateTime
+        Get
+            Dim d As DateTime
+            Return If(TryDate(dateexpiry.Text, d), d, DateTime.Today)
+        End Get
+        Set(ByVal value As DateTime)
+            dateexpiry.Text = DateInput(value)
+        End Set
+    End Property
+
+    Protected Sub drpStatementtype_SelectedIndexChanged(ByVal sender As Object, ByVal e As EventArgs)
+        changeDates()
+    End Sub
+
+    Protected Sub dateIssue_DateChanged(ByVal sender As Object, ByVal e As EventArgs)
+        changeDates()
+    End Sub
+
+    Private Const DefaultBranch As String = "101"
+    Private Const DefaultProduct As String = "103"
+
+    ' =====================================================================
+    ' Accounts
+    ' =====================================================================
+    Private Sub LoadFilters()
         Try
-            luser = Context.User.Identity.Name
-            ' StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-            'struser = Mid(luser, 1, luser.LastIndexOf("?"))
-            guser = struser
-
-
-
-            If String.IsNullOrEmpty(Trim(txtSpecificAcct.Text)) = False Then
-
-
-
-                Dim strgetAcctDetails As String = String.Format("GetAllAccountCardRequest '{0}','{1}'", drp_products.Value, drpbranches.Value)
-                SqlacctDetails.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-                SqlacctDetails.SelectCommand = strgetAcctDetails
-                SqlacctDetails.FilterExpression = String.Format("accountno in ({0})", Trim(txtSpecificAcct.Text))
-
-                SqlacctDetails.SelectCommandType = SqlDataSourceCommandType.Text
-
-            Else
-
-                Dim strgetAcctDetails As String = String.Format("GetAllAccountCardRequest '{0}','{1}'", drp_products.Value, drpbranches.Value)
-                SqlacctDetails.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-                SqlacctDetails.SelectCommand = strgetAcctDetails
-                SqlacctDetails.SelectCommandType = SqlDataSourceCommandType.Text
-
-            End If
-            'Dim strgetOffr As String = String.Format("Sproc_GetTransApprovingOfficers {0},2,'{1}','{2}','{3}'", CDec(200), gEazy.GetTransCodeInfo("002", 2), StrLocation, guser)
-            'sqlAppr.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-            'sqlAppr.SelectCommand = strgetOffr
-            'sqlAppr.SelectCommandType = SqlDataSourceCommandType.Text
-
-            'Response.Write(strgetAcctDetails)
-
+            For Each r As DataRow In QueryProc("Sproc_GetAllProductsCards").Rows
+                Dim code As String = Col(r, "Product Code"), name As String = Col(r, "product"), type As String = Col(r, "Type")
+                If code = "" OrElse drp_products.Items.FindByValue(code) IsNot Nothing Then Continue For
+                drp_products.Items.Add(New ListItem(If(name = "", code, name) & If(type = "", "", " (" & type & ")"), code))
+            Next
+            For Each r As DataRow In QueryProc("Sproc_GetAllBranchesCards").Rows
+                Dim code As String = Col(r, "Headsub_code"), name As String = Col(r, "sub_name")
+                If code = "" OrElse drpbranches.Items.FindByValue(code) IsNot Nothing Then Continue For
+                drpbranches.Items.Add(New ListItem(If(name = "", code, name & " (" & code & ")"), code))
+            Next
         Catch ex As Exception
+            ShowError("The products or branches could not be loaded: " & ex.Message)
+        End Try
+        Pick(drp_products, DefaultProduct)
+        Pick(drpbranches, DefaultBranch)
+    End Sub
 
+    Private Shared Function QueryProc(ByVal procedure As String) As DataTable
+        Dim table As New DataTable()
+        Using conn As New SqlConnection(Cfg(MainDb))
+            Using cmd As New SqlCommand(procedure, conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                Using adapter As New SqlDataAdapter(cmd)
+                    adapter.Fill(table)
+                End Using
+            End Using
+        End Using
+        Return table
+    End Function
+
+    Private Shared Sub Pick(ByVal list As DropDownList, ByVal value As String)
+        If list.Items.FindByValue(value) Is Nothing Then list.Items.Insert(0, New ListItem(value, value))
+        list.ClearSelection()
+        list.Items.FindByValue(value).Selected = True
+    End Sub
+
+    Private Function LoadAccounts() As DataTable
+        Dim t As DataTable = Query(MainDb, "EXEC GetAllAccountCardRequest @product, @branch", P("@product", drp_products.SelectedValue), P("@branch", drpbranches.SelectedValue))
+        Dim wanted As List(Of String) = AccountList(txtSpecificAcct.Text)
+        If wanted.Count > 0 AndAlso t.Columns.Contains("AccountNo") Then
+            Dim keep As New HashSet(Of String)(wanted, StringComparer.OrdinalIgnoreCase)
+            Dim filtered As DataTable = t.Clone()
+            For Each r As DataRow In t.Rows
+                If keep.Contains(Col(r, "AccountNo")) Then filtered.ImportRow(r)
+            Next
+            t = filtered
+        End If
+        For Each column As String In New String() {"AccountNo", "AccountName", "Product", "DOB", "address", "city", "Book Bal", "Cleared Bal", "Trans Status", "Account Status"}
+            If Not t.Columns.Contains(column) Then t.Columns.Add(column, GetType(String))
+        Next
+        Return t
+    End Function
+
+    Private Sub BindGrid()
+        Try
+            Dim t As DataTable = LoadAccounts()
+            ctrlGrid.DataSource = t
+            ctrlGrid.DataBind()
+            litTotal.Text = String.Format("{0:N0} account{1}", t.Rows.Count, If(t.Rows.Count = 1, "", "s"))
+        Catch ex As Exception
+            ctrlGrid.DataSource = Nothing
+            ctrlGrid.DataBind()
+            litTotal.Text = ""
+            ShowError("The accounts could not be loaded: " & ex.Message)
         End Try
     End Sub
 
-    Protected Sub ASPxGridView1_BeforePerformDataSelect(ByVal sender As Object, ByVal e As System.EventArgs) Handles ASPxGridView1.BeforePerformDataSelect
-        LoadGrid()
+    Protected Sub Filter_Changed(ByVal sender As Object, ByVal e As EventArgs)
+        ctrlGrid.PageIndex = 0
+        litResult.Text = ""
+        litError.Text = ""
+        BindGrid()
     End Sub
 
-    Protected Sub drp_products_SelectedIndexChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles drp_products.SelectedIndexChanged
-
-        LoadGrid()
+    Protected Sub ctrlGrid_PageIndexChanging(ByVal sender As Object, ByVal e As GridViewPageEventArgs)
+        ctrlGrid.PageIndex = e.NewPageIndex
+        BindGrid()
     End Sub
 
-    Protected Sub drpbranches_SelectedIndexChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles drpbranches.SelectedIndexChanged
+    ''' <summary>Ticked accounts on this page, or every listed account when "all pages" is ticked.</summary>
+    Private Function SelectedAccounts() As List(Of String)
+        Dim accounts As New List(Of String)()
+        If chkAllRecords.Checked Then
+            For Each r As DataRow In LoadAccounts().Rows
+                Dim acct As String = Col(r, "AccountNo")
+                If acct <> "" AndAlso Not accounts.Contains(acct) Then accounts.Add(acct)
+            Next
+            Return accounts
+        End If
+        For Each row As GridViewRow In ctrlGrid.Rows
+            Dim chk As CheckBox = TryCast(row.FindControl("chkSelect"), CheckBox)
+            If row.RowType = DataControlRowType.DataRow AndAlso chk IsNot Nothing AndAlso chk.Checked Then
+                accounts.Add(Convert.ToString(ctrlGrid.DataKeys(row.RowIndex).Value))
+            End If
+        Next
+        Return accounts
+    End Function
 
-        LoadGrid()
+    Protected Sub Button7_Click(ByVal sender As Object, ByVal e As EventArgs)
+        Response.Redirect(Request.Path, False)
+        Context.ApplicationInstance.CompleteRequest()
     End Sub
 
-    Protected Sub txtSpecificAcct_TextChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles txtSpecificAcct.TextChanged
+    ''' <summary>The customer's e-mail address in core banking ("" when none).</summary>
+    Private Shared Function AccountEmail(ByVal accountNo As String) As String
+        Dim t As DataTable = Query(CoreDb, "EXEC Sproc_GetAccountEmail @acct", P("@acct", accountNo))
+        If t.Rows.Count = 0 OrElse t.Rows(0).IsNull(0) Then Return ""
+        Return Convert.ToString(t.Rows(0)(0)).Replace("'", "").Trim()
+    End Function
 
-        LoadGrid()
+    Private Sub Report(ByVal what As String, ByVal done As Integer, ByVal total As Integer, ByVal skipped As Integer, ByVal skippedWhy As String, ByVal failed As List(Of String))
+        ShowSuccess(String.Format("{0} for {1} of {2} account{3}.{4}", what, done, total, If(total = 1, "", "s"),
+            If(skipped = 0, "", String.Format(" {0} skipped {1}.", skipped, skippedWhy))))
+        If failed.Count > 0 Then litError.Text = HttpUtility.HtmlEncode(String.Format("{0} failed: {1}", failed.Count, String.Join("; ", failed.ToArray())))
     End Sub
 
+    ' =====================================================================
+    ' Send statements
+    ' =====================================================================
+    Protected Sub Button6_Click(ByVal sender As Object, ByVal e As EventArgs)
+        Page.Validate("send")
+        If Not Page.IsValid Then Return
+        If ExpiryDate < IssueDate Then ShowError("The end date is before the start date.") : Return
+        Dim accounts As List(Of String) = SelectedAccounts()
+        If accounts.Count = 0 Then ShowError("Tick at least one account, or tick ""all pages"".") : Return
 
+        Dim emailServer As String = Cfg("EazyEmailServer")
+        Dim reportPath As String = Server.MapPath("~/Reports/AccountEstatementNew.rdlc")
+        Dim reportFolder As String = Server.MapPath("~/Reports/")
+        Dim sent As Integer = 0, noEmail As Integer = 0
+        Dim failed As New List(Of String)()
+        For Each accountNo As String In accounts
+            Try
+                Dim toAddress As String = AccountEmail(accountNo)
+                If Not ValidateEmail(toAddress) Then noEmail += 1 : Continue For
+                CreateMessageWithAttachmentByAcctRepSend(emailServer, toAddress, accountNo, reportPath, reportFolder)
+                sent += 1
+            Catch ex As Exception
+                failed.Add(accountNo & ": " & ex.Message)
+            End Try
+        Next
+        Report("Statements sent", sent, accounts.Count, noEmail, "because they have no valid e-mail address", failed)
+    End Sub
+
+    ' ---- BEGIN unchanged sending code (carried over from the original page) ----
+    Public l_senderlist As String
+    Public dt As New DataTable
 
     'Public Sub CreateMessageWithAttachmentByAcctRep(ByVal server As String, ByVal toAddress As String, ByVal AccountNo As String, ByVal strserverpath As String, ByVal lpath As String)
     '    ' Create the Path to the Attachments
@@ -128,12 +245,10 @@ Partial Class eOperations_FrmNstatements
 
     '    Dim lr As New Microsoft.Reporting.WebForms.LocalReport
 
-
     '    lr.ReportPath = strserverpath
 
     '    'rep.Load("C:\EazybancNET New Features\EazybancNET Reports" & "\" & "Account Statement" & ".rpt")
-    '    Dim str_getstr As String = String.Format("SELECT sub_name, account_no, seq_no, posted_by, post_date, trans_date, mini_account_no, curr_code,description, accountname, narrative, debit, credit, fcy_debit, fcy_credit, balance, fcy_balance, base_bf, fcy_bf, voucher_no, ref_no, headsub_code, exch_rate, deal_no,trans_code, approving_offr1, status_desc, client_name, narration, reversed,  cast('{0}' as datetime)  as startdate, cast('{1}' as datetime)  as enddate, address, city, prod_desc, prod_type_code, prod_type_desc, prod_code, trans_desc, report_head_code,report_head_desc, post_headsub_code, cheque_no, print_stmt, account_status, old_account_no, item_class, control_account_no  FROM VwTransHist WHere account_no ='{2}' AND startdate >='{3}' AND enddate <= '{4}'  order by post_date, seq_no", ((dateIssue.Date.ToShortDateString())), (dateexpiry.Date.ToShortDateString()), AccountNo, dateIssue.Date.ToShortDateString(), dateexpiry.Date.ToShortDateString())
-
+    '    Dim str_getstr As String = String.Format("SELECT sub_name, account_no, seq_no, posted_by, post_date, trans_date, mini_account_no, curr_code,description, accountname, narrative, debit, credit, fcy_debit, fcy_credit, balance, fcy_balance, base_bf, fcy_bf, voucher_no, ref_no, headsub_code, exch_rate, deal_no,trans_code, approving_offr1, status_desc, client_name, narration, reversed,  cast('{0}' as datetime)  as startdate, cast('{1}' as datetime)  as enddate, address, city, prod_desc, prod_type_code, prod_type_desc, prod_code, trans_desc, report_head_code,report_head_desc, post_headsub_code, cheque_no, print_stmt, account_status, old_account_no, item_class, control_account_no  FROM VwTransHist WHere account_no ='{2}' AND startdate >='{3}' AND enddate <= '{4}'  order by post_date, seq_no", ((IssueDate.ToShortDateString())), (ExpiryDate.ToShortDateString()), AccountNo, IssueDate.ToShortDateString(), ExpiryDate.ToShortDateString())
 
     '    Dim mysqldata As New SqlDataSource
     '    mysqldata.ConnectionString = ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
@@ -159,22 +274,15 @@ Partial Class eOperations_FrmNstatements
     '    ' ds = NETClass.Classes.GetDataset("SELECT * FROM VwTransHist WHere account_no ='" & AccountNo & "'")
     '    'ds = NETClass.Classes.GetDataset(str_getstr)
 
-
     '    'rep.SetDatabaseLogon(NETClass.Classes.GetPath(7), NETClass.Classes.GetPath(8), NETClass.Classes.GetPath(5), NETClass.Classes.GetPath(6))
     '    'rep.SetDataSource(ds.Tables(0))
     '    ''cr = rep
     '    '  Dim lp As CrystalDecisions.CrystalReports.Engine.ReportOptions
     '    ' rep.Export(lp.EnableSaveSummariesWithReport.TrueString)
 
-
     '    'rep.ExportToDisk(ExportFormatType.PortableDocFormat, "C:\Statement.pdf")
 
     '    'rep.ExportToDisk(ExportFormatType.PortableDocFormat, "Statement.pdf")
-
-
-
-
-
 
     '    'Dim file As String = lpath & "Statement.pdf" '"Statement.pdf"
     '    Dim file As String = String.Format("{0}.pdf", AccountNo)
@@ -183,7 +291,6 @@ Partial Class eOperations_FrmNstatements
     '    'Dim message As MailMessage = New MailMessage("eStatement@GTHomes" & EmailServer & ".com", "temmy54@yahoo.com", "Estatement Of Account.:-" & AccountNo, "Pls, See the Your attached Statements of Accounts.")
     '    ' Dim message As MailMessage = New MailMessage("eStatement@GTHomes", "kazeem.owolabi@gthomes.com", "Estatement Of Account.:-" & AccountNo, "Pls, See the Your attached Statements of Accounts.")
     '    Dim message As MailMessage = New MailMessage("eStatement@Resortng.com", toAddress, "Estatement Of Account.:-" & AccountNo, "Please, see your attached statements of accounts.")
-
 
     '    ''// Create  the file attachment for this e-mail message.
     '    'Dim data As Attachment = New Attachment(file, Net.Mime.MediaTypeNames.Application.Octet)
@@ -261,9 +368,7 @@ Partial Class eOperations_FrmNstatements
         Dim fbytes As Byte()
         Dim lr As New Microsoft.Reporting.WebForms.LocalReport
 
-
         lr.ReportPath = strserverpath
-
 
         Dim Strcon As String = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ToString()
         Dim conn As System.Data.SqlClient.SqlConnection = New SqlConnection(Strcon)
@@ -289,20 +394,14 @@ Partial Class eOperations_FrmNstatements
             strComLogojpg = String.Format("{0}", jkr("ComLogojpg"))
         Next
 
-
-
-
-
         'rep.Load("C:\EazybancNET New Features\EazybancNET Reports" & "\" & "Account Statement" & ".rpt")
         Dim str_getstr As String = String.Format("SELECT BranchName as sub_name, AccountNo as account_no, SeqNo as seq_no, AddedBy as posted_by, PostingDateAdded as post_date, ValueDate as trans_date,ParentAccountNo as mini_account_no, currCode as curr_code, isnull((select top 1 BalAcctCurr FROM TRanshist WHERE AccountNo ='{2}' AND  PostingDateAdded < '{3}' order by PostingDateAdded desc ),0) as 'base_bf', " &
-                                              "  AccountDesc as description, AccountDesc as accountname, UserNarrative as narrative, debit, credit, BalAcctCurr as balance, TransID as ref_no, BranchAdded as headsub_code, AcctExchRate as exch_rate, transCode as trans_code, UserNarrative as narration, 0 as reversed,  cast('{0}' as datetime)  as startdate, cast('{1}' as datetime)  as enddate, dbo.FnCustomerAddress(AccountNo, 0) as address,dbo.FnCustomerCity(AccountNo, 0) as city, dbo.FnAccountProductName(AccountNo) as prod_desc, ProdCode as prod_code, TransDesc as trans_desc  FROM VwTransHist WHere accountno ='{2}' AND PostingDateAdded >='{3}' AND PostingDateAdded <= '{4}' order by PostingDateAdded, seq_no", ((dateIssue.Date.ToShortDateString())), (dateexpiry.Date.ToShortDateString()), AccountNo, dateIssue.Date.ToShortDateString(), dateexpiry.Date.ToShortDateString())
+                                              "  AccountDesc as description, AccountDesc as accountname, UserNarrative as narrative, debit, credit, BalAcctCurr as balance, TransID as ref_no, BranchAdded as headsub_code, AcctExchRate as exch_rate, transCode as trans_code, UserNarrative as narration, 0 as reversed,  cast('{0}' as datetime)  as startdate, cast('{1}' as datetime)  as enddate, dbo.FnCustomerAddress(AccountNo, 0) as address,dbo.FnCustomerCity(AccountNo, 0) as city, dbo.FnAccountProductName(AccountNo) as prod_desc, ProdCode as prod_code, TransDesc as trans_desc  FROM VwTransHist WHere accountno ='{2}' AND PostingDateAdded >='{3}' AND PostingDateAdded <= '{4}' order by PostingDateAdded, seq_no", ((IssueDate.ToShortDateString())), (ExpiryDate.ToShortDateString()), AccountNo, IssueDate.ToShortDateString(), ExpiryDate.ToShortDateString())
 
         Dim strreportstr As String = String.Format("SELECT BranchName as sub_name, AccountNo as account_no, SeqNo as seq_no, AddedBy as posted_by, PostingDateAdded as post_date, ValueDate as trans_date,ParentAccountNo as mini_account_no, currCode as curr_code, isnull((select top 1 BalAcctCurr FROM TRanshist WHERE AccountNo ='{2}' AND  PostingDateAdded < '{3}' order by PostingDateAdded desc ),0) as 'base_bf', " +
                                              "  AccountDesc as description, AccountDesc as accountname, UserNarrative as narrative, debit, credit, BalAcctCurr as balance, TransID as ref_no, BranchAdded as headsub_code, AcctExchRate as exch_rate, transCode as trans_code, UserNarrative as narration, 0 as reversed,  cast('{0}' as datetime)  as startdate, cast('{1}' as datetime)  as enddate, dbo.FnCustomerAddress(AccountNo, 0) as address, " +
                                              " dbo.FnCustomerCity(AccountNo, 0) as city, dbo.FnAccountProductName(AccountNo) as prod_desc, ProdCode as prod_code, TransDesc as trans_desc, '{5}' as ComName, '{6}' as ComContactTitles, '{7}' As ComAddress, '{8}' as ComCity,'{9}' as ComState, '{10}' as ComEmail, '{11}' as ComPhone,  '{12}' as ComLogojpg  FROM VwTransHist " +
-                                             " WHere accountno ='{2}' AND PostingDateAdded >='{3}' AND PostingDateAdded <= '{4}' order by PostingDateAdded, seq_no", ((dateIssue.Date.ToShortDateString())), (dateexpiry.Date.ToShortDateString()), AccountNo, dateIssue.Date.ToShortDateString(), dateexpiry.Date.ToShortDateString(), strComName, strComContactTitles, strComAddress, strComCity, strComComState, strComEmail, strComPhone, strComLogojpg)
-
-
+                                             " WHere accountno ='{2}' AND PostingDateAdded >='{3}' AND PostingDateAdded <= '{4}' order by PostingDateAdded, seq_no", ((IssueDate.ToShortDateString())), (ExpiryDate.ToShortDateString()), AccountNo, IssueDate.ToShortDateString(), ExpiryDate.ToShortDateString(), strComName, strComContactTitles, strComAddress, strComCity, strComComState, strComEmail, strComPhone, strComLogojpg)
 
         Dim mysqldata As New SqlDataSource
         mysqldata.ConnectionString = ConfigurationManager.ConnectionStrings("EazyConnectSource").ConnectionString
@@ -316,14 +415,10 @@ Partial Class eOperations_FrmNstatements
                      deviceInfo, mimeType,
                        encoding, extension, streamids, warnings)
 
-
-
-
         Dim fs As New FileStream(lpath & "Statement.pdf", FileMode.Create)
         fs.Write(bytes, 0, bytes.Length)
         fs.Close()
         'Dim pdfDoc As New Document(PageSize.A2, 10.0F, 10.0F, 10.0F, 0.0F)
-
 
         'Dim pdfDoc As New Document(PageSize.A2, 10.0F, 10.0F, 10.0F, 0.0F)
         'Dim htmlworker As HTMLWorker = New HTMLWorker(pdfDoc)
@@ -349,9 +444,6 @@ Partial Class eOperations_FrmNstatements
         'Dim ks As PdfWriter = PdfWriter.GetInstance(pdfDoc, New FileStream(lpath & "Statement.pdf", FileMode.Open))
         'ks.SetEncryption(PdfWriter.STRENGTH40BITS, password, password, PdfWriter.ALLOW_SCREENREADERS)
 
-
-
-
         'pdfDoc.Open()
 
         'pdfDoc.SetPageSize(iTextSharp.text.PageSize.LEDGER.Rotate())
@@ -361,14 +453,6 @@ Partial Class eOperations_FrmNstatements
         'Dim iPage As Integer = 0
 
         'pdfDoc.Close()
-
-
-
-
-
-
-
-
 
         Using tinput As New MemoryStream(bytes)
             Using toutput As New MemoryStream()
@@ -395,11 +479,6 @@ Partial Class eOperations_FrmNstatements
 
         '0000159340'  
 
-
-
-
-
-
         'Dim cpassword As String = "pass@123"
         ''Dim reader As  New PdfReader(input)
 
@@ -411,7 +490,6 @@ Partial Class eOperations_FrmNstatements
         ' ''PdfEncryptor.Encrypt(reader, outputs, False, password, password, PdfWriter.ALLOW_SCREENREADERS)
         'PdfEncryptor.Encrypt(reader, outputs, True, password, password, PdfWriter.ALLOW_SCREENREADERS)
 
-
         'Response.ContentType = "application/pdf"
         'Response.AddHeader("content-disposition", "attachment;filename=statement.pdf")
         'Response.Cache.SetCacheability(HttpCacheability.NoCache)
@@ -422,14 +500,10 @@ Partial Class eOperations_FrmNstatements
         ' End Using
         'End Using
 
-
-
-
         Dim strgetAcctDetails As String = String.Format("SELECT * FROM AcctMaster WHERE AccountNo = '{0}'", AccountNo)
 
         Dim Strcons As String = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnectSource").ToString()
         Dim conns As System.Data.SqlClient.SqlConnection = New SqlConnection(Strcons)
-
 
         Dim comksp As DataSet = New DataSet()
         Dim cmddscomp As SqlDataAdapter = New SqlDataAdapter(strgetAcctDetails, conns)
@@ -447,19 +521,19 @@ Partial Class eOperations_FrmNstatements
         ' Dim file As String = String.Format("'{0}'.pdf", AccountNo)
         Dim strSenderAddress As String = ConfigurationManager.ConnectionStrings("EmailSenderAddress").ConnectionString
         Dim strTitleSubject As String = "Monthly"
-        If drpStatementtype.Value = "M" Then
-            strTitleSubject = String.Format("Monthly Statement Of Account: {2} For {0} {1}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, strpwdmask)
-        ElseIf drpStatementtype.Value = "N" Then
-            strTitleSubject = String.Format(" Statement Of Account: ", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, strpwdmask)
-        ElseIf drpStatementtype.Value = "W" Then
-            strTitleSubject = String.Format("Weekly Statement Of Account: {4} From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date, strpwdmask)
+        If drpStatementtype.SelectedValue = "M" Then
+            strTitleSubject = String.Format("Monthly Statement Of Account: {2} For {0} {1}", MonthName(IssueDate.Month), IssueDate.Year, strpwdmask)
+        ElseIf drpStatementtype.SelectedValue = "N" Then
+            strTitleSubject = String.Format(" Statement Of Account: ", MonthName(IssueDate.Month), IssueDate.Year, strpwdmask)
+        ElseIf drpStatementtype.SelectedValue = "W" Then
+            strTitleSubject = String.Format("Weekly Statement Of Account: {4} From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate, strpwdmask)
 
-        ElseIf drpStatementtype.Value = "Q" Then
-            strTitleSubject = String.Format("Quartely Statement Of Account: {4} From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date, strpwdmask)
-        ElseIf drpStatementtype.Value = "Y" Then
-            strTitleSubject = String.Format("Yearly Statement Of Account: {4} From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date, strpwdmask)
-        ElseIf drpStatementtype.Value = "D" Then
-            strTitleSubject = String.Format("Daily Statement Of Account: {4} From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date, strpwdmask)
+        ElseIf drpStatementtype.SelectedValue = "Q" Then
+            strTitleSubject = String.Format("Quartely Statement Of Account: {4} From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate, strpwdmask)
+        ElseIf drpStatementtype.SelectedValue = "Y" Then
+            strTitleSubject = String.Format("Yearly Statement Of Account: {4} From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate, strpwdmask)
+        ElseIf drpStatementtype.SelectedValue = "D" Then
+            strTitleSubject = String.Format("Daily Statement Of Account: {4} From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate, strpwdmask)
 
         End If
         '// Create a message and set up the recipients.
@@ -471,9 +545,7 @@ Partial Class eOperations_FrmNstatements
         Dim message As MailMessage = New MailMessage(strSenderAddress, toAddress.Replace("'", ""), strTitleSubject, String.Format("<html><body> Dear {0},</br> <p>Please, find attached your monthly Abbey e-statements of Accounts.</br> </p> To provide Confidentiality, a password protection has been built in.</br> When prompted for password, please enter the last six digit of your account number.</br>Regards </br></br>This email is for the intended recipient only. {1} makes no representations about the correctness of the information contained in this email. All information are provided 'as-is' without warranty of any kind and are subject to change without notice. The entire risk arising out of their use remains with the recipient. In no event shall {1} be liable for any direct, consequential, incidental special, punitive or other damage. </br><img alt=' ' src='cid:companylogo' /></body></html>", AccountName, "Abbey Mortgagebank Plc"))
         message.From = strMsgfrom
 
-
         'Dim message As MailMessage = New MailMessage("Femi", "femi_mes@yahoo.com", "Estatement Of Account.:-" & AccountNo, "<html><body>Please, see your attached statements of Accounts.</br></br> <img alt=' ' src='cid:companylogo' /></body></html>")
-
 
         '// Create  the file attachment for this e-mail message.
         Dim data As Attachment = New Attachment(file, Net.Mime.MediaTypeNames.Application.Octet)
@@ -489,14 +561,11 @@ Partial Class eOperations_FrmNstatements
         'Dim logo As LinkedResource = New LinkedResource("~/Images/logosmallorg.JPG")
         Dim logo As LinkedResource = New LinkedResource(lpathmagepath & "companylogo.JPG")
 
-
         logo.ContentId = "companylogo"
 
         htmlView.LinkedResources.Add(logo)
         message.AlternateViews.Add(htmlView)
         message.IsBodyHtml = True
-
-
 
         Dim client As SmtpClient = New SmtpClient(server)
         ' // Add credentials if the SMTP server requires them.
@@ -512,16 +581,9 @@ Partial Class eOperations_FrmNstatements
         'client.PickupDirectoryLocation = "C:\EmailStatement\"
         client.DeliveryMethod = SmtpDeliveryMethod.Network
 
-
-
         ' client.Send(message)
 
-
-
-
-
         ' Sections to push via SendGrid
-
 
         Dim strRep = ""
 
@@ -551,11 +613,9 @@ Partial Class eOperations_FrmNstatements
             msgAddAttachments.Filename = file
             'Dim kl As String = System.Web.GetMimeMapping(file)
 
-
             msgAddAttachments.Type = "application/pdf"
             msgAddAttachments.Disposition = "attachment"
             msg.AddAttachment(msgAddAttachments)
-
 
             'SendGrid.Helpers.Mail.Attachment attachments = New SendGrid.Helpers.Mail.Attachment();
             'attachments.ContentId =
@@ -566,17 +626,6 @@ Partial Class eOperations_FrmNstatements
         Dim strlogmsg = String.Format("{0} ; Response{1}", strmsg, strRep)
 
         AddtoLogFile(strlogmsg, "Statement By Email")
-
-
-
-
-
-
-
-
-
-
-
 
         l_senderlist = String.Format("{0}{1}:({2}),", l_senderlist, AccountNo, toAddress)
 
@@ -600,106 +649,6 @@ Partial Class eOperations_FrmNstatements
 
     End Sub
 
-
-
-    Protected Sub cmdClear_Command(ByVal sender As Object, ByVal e As System.Web.UI.WebControls.CommandEventArgs) Handles cmdClear.Command
-        ASPxListBox1.Dispose()
-
-        ASPxGridView1.DataBind()
-    End Sub
-
-    Protected Sub cmdClear_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles cmdClear.Click
-        ASPxListBox1.Items.Clear()
-    End Sub
-
-    Protected Sub Button5_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles Button5.Click
-        'Try
-        On Error Resume Next
-
-        Dim item As ListItem, i As Integer = 0, j As Integer = 0
-
-        ' For Each item In ASPxListBox1.Items
-
-        For i = 0 To (ASPxListBox1.Items.Count - 1)
-            ' If NETClass.Classes.GetDataset(str_getActive).Tables(0).Rows.Count > 0 Then
-
-
-            'Dim str_ToAddress As String = NETClass.Classes.GetField("Sproc_GetAccountEmail '" & ASPxListBox1.Items(i).Value & "'")
-            Dim strgetemailconn As String = ConfigurationManager.ConnectionStrings("EazyConnectSource").ConnectionString
-            Dim strgetemail As String = String.Format("Sproc_GetAccountEmail '{0}'", ASPxListBox1.Items(i).Value)
-            Dim DsEmail As New DataSet()
-            Dim sqlgetemailcon As SqlClient.SqlConnection = New SqlConnection(strgetemailconn)
-
-            Dim sqlDataAdapter As SqlClient.SqlDataAdapter = New SqlDataAdapter(strgetemail, sqlgetemailcon)
-            sqlDataAdapter.Fill(DsEmail)
-            Dim str_ToAddress As String = ""
-            If DsEmail.Tables(0).Rows.Count > 0 Then
-                str_ToAddress = String.Format("'{0}'", DsEmail.Tables(0).Rows(0).Item(0))
-            End If
-            Dim strSenderAddress As String = ConfigurationManager.ConnectionStrings("EmailSenderAddress").ConnectionString
-            'If str_ToAddress = Nothing Then
-            '    str_ToAddress = strSenderAddress ' "femi.mes@gmail.com"
-            'End If
-            'If (str_ToAddress.Contains("@") = False) Then
-
-            '    str_ToAddress = strSenderAddress
-            'End If
-
-            If ValidateEmail(str_ToAddress) = True Then
-
-
-                Dim EmailServer As String = System.Configuration.ConfigurationManager.ConnectionStrings("EazyEmailServer").ConnectionString
-                Dim str_reppath As String = Server.MapPath("~/Reports/AccountEstatementNew.rdlc")
-                'Dim lpath As String = Server.MapPath("~/mandate/")
-                Dim lpath As String = Server.MapPath("~/Reports/")
-                ' Dim lpath As String = "C:\EmailStatement\"
-                'CreateMessageWithAttachmentByAcctRep(EmailServer, str_ToAddress, item.Value, str_reppath, lpath)
-                CreateMessageWithAttachmentByAcctRepSend(EmailServer, str_ToAddress, ASPxListBox1.Items(i).Value, str_reppath, lpath)
-
-
-
-                j = j + 1
-
-            End If
-
-            'End If
-
-
-
-
-        Next
-
-        'If item.Selected = True Then
-
-
-
-
-
-
-
-        'End If
-
-        'Next
-        If dt.Rows.Count > 0 Then
-            'Me.GridView1.DataSource = dt
-            'Me.GridView1.DataBind()
-
-
-        Else
-            'Me.GridView1.DataSource = Nothing
-            'Me.GridView1.Dispose()
-
-
-        End If
-        Response.Write(String.Format("<script>alert('statements Sucessfully Sent for {0}') </script>", j))
-
-        'Catch ex As Exception
-        '    Response.Write("<script>alert('The Following error has occured " & ex.Message & "') </script>")
-
-
-        'End Try
-    End Sub
-
     Public Function ValidateEmail(ByVal strCheck As String) As Boolean
         Try
             Dim vEmailAddress As New System.Net.Mail.MailAddress(strCheck)
@@ -708,54 +657,34 @@ Partial Class eOperations_FrmNstatements
         End Try
         Return True
     End Function
-    Protected Sub Button6_Click(sender As Object, e As System.EventArgs) Handles Button6.Click
-        Button5_Click(sender, e)
-
-    End Sub
-
-    Protected Sub Button7_Click(sender As Object, e As System.EventArgs) Handles Button7.Click
-        Response.Redirect("FrmNstatements.aspx")
-    End Sub
-
-    Protected Sub Button3_Click(sender As Object, e As System.EventArgs) Handles Button3.Click
-        Response.Redirect("FrmNstatements.aspx")
-    End Sub
-
-    Protected Sub dateIssue_DateChanged(sender As Object, e As System.EventArgs) Handles dateIssue.DateChanged
-        changeDates()
-    End Sub
-
-    Protected Sub drpStatementtype_SelectedIndexChanged(sender As Object, e As System.EventArgs) Handles drpStatementtype.SelectedIndexChanged
-        changeDates()
-    End Sub
 
     Sub changeDates()
         Dim strTitleSubject As String = "Monthly"
-        If drpStatementtype.Value = "M" Then
-            dateexpiry.Date = dateIssue.Date.AddMonths(1).AddDays(-1)
+        If drpStatementtype.SelectedValue = "M" Then
+            ExpiryDate = IssueDate.AddMonths(1).AddDays(-1)
             dateexpiry.ReadOnly = True
-            strTitleSubject = String.Format("Monthly Statement Of Account For {0} {1}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year)
-        ElseIf drpStatementtype.Value = "N" Then
-            'dateexpiry.Date = dateIssue.Date.AddMonths(1)
+            strTitleSubject = String.Format("Monthly Statement Of Account For {0} {1}", MonthName(IssueDate.Month), IssueDate.Year)
+        ElseIf drpStatementtype.SelectedValue = "N" Then
+            'ExpiryDate = IssueDate.AddMonths(1)
             dateexpiry.ReadOnly = False
-            strTitleSubject = String.Format(" Statement Of Account ", MonthName(dateIssue.Date.Month), dateIssue.Date.Year)
-        ElseIf drpStatementtype.Value = "W" Then
-            dateexpiry.Date = dateIssue.Date.AddDays(7)
+            strTitleSubject = String.Format(" Statement Of Account ", MonthName(IssueDate.Month), IssueDate.Year)
+        ElseIf drpStatementtype.SelectedValue = "W" Then
+            ExpiryDate = IssueDate.AddDays(7)
             dateexpiry.ReadOnly = True
-            strTitleSubject = String.Format("Weekly Statement Of Account From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date)
+            strTitleSubject = String.Format("Weekly Statement Of Account From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate)
 
-        ElseIf drpStatementtype.Value = "Q" Then
-            dateexpiry.Date = dateIssue.Date.AddMonths(3).AddDays(-1)
+        ElseIf drpStatementtype.SelectedValue = "Q" Then
+            ExpiryDate = IssueDate.AddMonths(3).AddDays(-1)
             dateexpiry.ReadOnly = True
-            strTitleSubject = String.Format("Quartely Statement Of Account From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date)
-        ElseIf drpStatementtype.Value = "Y" Then
-            dateexpiry.Date = dateIssue.Date.AddYears(1).AddDays(-1)
+            strTitleSubject = String.Format("Quartely Statement Of Account From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate)
+        ElseIf drpStatementtype.SelectedValue = "Y" Then
+            ExpiryDate = IssueDate.AddYears(1).AddDays(-1)
             dateexpiry.ReadOnly = True
-            strTitleSubject = String.Format("Yearly Statement Of Account From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date)
-        ElseIf drpStatementtype.Value = "D" Then
-            dateexpiry.Date = dateIssue.Date.AddDays(1)
+            strTitleSubject = String.Format("Yearly Statement Of Account From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate)
+        ElseIf drpStatementtype.SelectedValue = "D" Then
+            ExpiryDate = IssueDate.AddDays(1)
             dateexpiry.ReadOnly = True
-            strTitleSubject = String.Format("Daily Statement Of Account From {2} To {3}", MonthName(dateIssue.Date.Month), dateIssue.Date.Year, dateIssue.Date, dateexpiry.Date)
+            strTitleSubject = String.Format("Daily Statement Of Account From {2} To {3}", MonthName(IssueDate.Month), IssueDate.Year, IssueDate, ExpiryDate)
 
         End If
     End Sub
@@ -783,7 +712,109 @@ Partial Class eOperations_FrmNstatements
 
         End If
     End Sub
+    ' ---- END unchanged sending code ----
 
+    ' =====================================================================
+    ' Shared Request-page helpers (same code in every rewritten Request page)
+    ' =====================================================================
+    Private Const MainDb As String = "EazyConnect"
+    Private Const CoreDb As String = "EazyConnectSource"
 
+    ''' <summary>Signed-in officer: the LogonUserID cookie is "user?branch".</summary>
+    Private Function CurrentUser() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Dim name As String = If(split >= 0, luser.Substring(0, split), luser)
+        Return If(name = "", "system", name)
+    End Function
+
+    ''' <summary>Branch of the signed-in officer (the part after "?" in the cookie).</summary>
+    Private Function CurrentBranch() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Return If(split >= 0, luser.Substring(split + 1), "")
+    End Function
+
+    Private Shared Function Cfg(ByVal name As String) As String
+        Dim s As ConnectionStringSettings = ConfigurationManager.ConnectionStrings(name)
+        Return If(s Is Nothing, "", s.ConnectionString)
+    End Function
+
+    Private Shared Function SqlText(ByVal value As String) As String
+        Return If(value, "").Replace("'", "''")
+    End Function
+
+    Private Shared Sub Audit(ByVal code As String, ByVal message As String, ByVal actor As String)
+        Classes.RecordOp(String.Format("Sproc_AddAuditLog '{0}','{1}','{2}',''", code, SqlText(message), SqlText(actor)))
+    End Sub
+
+    ''' <summary>Runs a stored procedure on the main database.</summary>
+    Private Shared Sub Exec(ByVal procedure As String, ByVal ParamArray parameters As SqlParameter())
+        Using conn As New SqlConnection(Cfg(MainDb))
+            Using cmd As New SqlCommand(procedure, conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddRange(parameters)
+                conn.Open()
+                cmd.ExecuteNonQuery()
+            End Using
+        End Using
+    End Sub
+
+    ''' <summary>Runs a query with parameters (never string concatenation) and returns the first table.</summary>
+    Private Shared Function Query(ByVal connectionName As String, ByVal sql As String, ByVal ParamArray parameters As SqlParameter()) As DataTable
+        Dim table As New DataTable()
+        Using conn As New SqlConnection(Cfg(connectionName))
+            Using cmd As New SqlCommand(sql, conn)
+                cmd.Parameters.AddRange(parameters)
+                Using adapter As New SqlDataAdapter(cmd)
+                    adapter.Fill(table)
+                End Using
+            End Using
+        End Using
+        Return table
+    End Function
+
+    Private Shared Function P(ByVal name As String, ByVal value As Object) As SqlParameter
+        Return New SqlParameter(name, If(value, DBNull.Value))
+    End Function
+
+    Private Shared Function Col(ByVal row As DataRow, ByVal column As String) As String
+        If row Is Nothing OrElse Not row.Table.Columns.Contains(column) OrElse row.IsNull(column) Then Return ""
+        Return Convert.ToString(row(column))
+    End Function
+
+    ''' <summary>Splits "123, 456 789" into a clean list of account numbers.</summary>
+    Private Shared Function AccountList(ByVal text As String) As List(Of String)
+        Dim result As New List(Of String)()
+        For Each part As String In If(text, "").Split(New Char() {","c, ";"c, " "c, Convert.ToChar(13), Convert.ToChar(10), Convert.ToChar(9)}, StringSplitOptions.RemoveEmptyEntries)
+            Dim acct As String = part.Trim().Trim("'"c)
+            If acct <> "" AndAlso Not result.Contains(acct) Then result.Add(acct)
+        Next
+        Return result
+    End Function
+
+    Private Shared Function TryDate(ByVal value As String, ByRef result As DateTime) As Boolean
+        Return DateTime.TryParseExact(If(value, "").Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, result)
+    End Function
+
+    ''' <summary>Formats a date for an HTML date input (yyyy-MM-dd).</summary>
+    Protected Shared Function DateInput(ByVal value As Object) As String
+        If TypeOf value Is DateTime Then Return CType(value, DateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Dim d As DateTime
+        If DateTime.TryParse(Convert.ToString(value), d) Then Return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Return ""
+    End Function
+
+    Private Sub ShowSuccess(ByVal message As String)
+        litResult.Text = HttpUtility.HtmlEncode(message)
+        litError.Text = ""
+    End Sub
+
+    Private Sub ShowError(ByVal message As String)
+        litError.Text = HttpUtility.HtmlEncode(message)
+        litResult.Text = ""
+    End Sub
 End Class
 

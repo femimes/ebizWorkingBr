@@ -17,8 +17,6 @@ using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 using System.Timers;
 using System.Threading;
-using DevExpress;
-using DevExpress.Web;
 
 public partial class Account_Auth :  System.Web.UI.Page
 {
@@ -43,7 +41,7 @@ public partial class Account_Auth :  System.Web.UI.Page
                     LoginUser.UserName = WindowsIdentity.GetCurrent().Name.Substring(WindowsIdentity.GetCurrent().Name.IndexOf("\\") + 1);
                     TextBox txtUserName = (TextBox)LoginUser.FindControl("UserName");
                     TextBox txtPassword = (TextBox)LoginUser.FindControl("Password");
-                    ASPxComboBox drplocation = (ASPxComboBox)LoginUser.FindControl("ASPxComboBox1");
+                    DropDownList drplocation = (DropDownList)LoginUser.FindControl("drpLocation");
                     //LoginUser.UserName = WindowsIdentity.GetCurrent().Name;
                     // txtUserName.Text = HttpContext.Current.User.Identity.Name;//  HttpContext.Current.User.Identity.Name;
                     txtPassword.Text = "abcdefghijk";
@@ -90,7 +88,7 @@ public partial class Account_Auth :  System.Web.UI.Page
                     if (ds.Tables[0].Rows.Count > 0)
                     {
                         //drplocation.Value = NETClass.Classes.GetDataset(strgetBranchAx).Tables[0].Rows[0]["BranchCode"];
-                        drplocation.Value = ds.Tables[0].Rows[0]["BranchCode"].ToString();
+                        SelectLocation(drplocation, ds.Tables[0].Rows[0]["BranchCode"].ToString());
                     }
                 }
                 catch (Exception ex)
@@ -195,9 +193,9 @@ public partial class Account_Auth :  System.Web.UI.Page
             {
                 TextBox txtUserName = (TextBox)LoginUser.FindControl("UserName");
                 TextBox txtPassword = (TextBox)LoginUser.FindControl("Password");
-                ASPxComboBox drplocation = (ASPxComboBox)LoginUser.FindControl("ASPxComboBox1");
+                DropDownList drplocation = (DropDownList)LoginUser.FindControl("drpLocation");
                 //DropDownList drplocation = (DropDownList)LoginUser.FindControl("ASPxComboBox1");
-                if (drplocation.SelectedItem.Value != null)
+                if (!string.IsNullOrEmpty(drplocation.SelectedValue))
                 {
                     Boolean userchecks = false;
 
@@ -211,7 +209,7 @@ public partial class Account_Auth :  System.Web.UI.Page
                         {
                             Classes.alertwindow(this.Page, string.Format("Enter your Password"), "Halt");
                         }
-                        else if (drplocation.SelectedItem.Value == null || drplocation.SelectedItem.Value == "")
+                        else if (string.IsNullOrEmpty(drplocation.SelectedValue))
                         {
                             Classes.alertwindow(this.Page, string.Format("Enter your Branch or location"), "Halt");
                             FormsAuthentication.RedirectFromLoginPage(txtUserName.Text, true);
@@ -227,22 +225,22 @@ public partial class Account_Auth :  System.Web.UI.Page
                                     //  FormsAuthentication.SetAuthCookie(string.Format("{0}?{1}", txtUserName.Text, drplocation.Value), false);
 
 
-                                    string UserName = string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedItem.Value);
+                                    string UserName = string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedValue);
                                     Response.Cookies["LogonUserID"].Value = UserName;
                                     //Response.Cookies["LogonUserIDOnly"].Value = txtUserName.Text;
                                     //Response.Cookies["LogonUserIDBranch"].Value = drplocation.Value.ToString();
 
-                                    string msg = string.Format("USer ID:{0} Location:-{1}, User Ebiz Logon", txtUserName.Text, drplocation.SelectedItem.Text);
+                                    string msg = string.Format("USer ID:{0} Location:-{1}, User Ebiz Logon", txtUserName.Text, LocationText(drplocation));
                                     Classes.RecordOp(String.Format("Sproc_AddAuditLog '003','{0}','{1}',''", msg, txtUserName.Text));
 
-                                    FormsAuthentication.SetAuthCookie(string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedItem.Value), false);
+                                    FormsAuthentication.SetAuthCookie(string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedValue), false);
                                     FormsAuthentication.RedirectFromLoginPage(UserName, true);
                                     this.Response.Redirect("~/WebPages.aspx");
 
                                 }
                                 else
                                 {
-                                    string msg = string.Format("USer ID:{0} Location:-{1}, Domain Server cannot be Contacted", txtUserName.Text, drplocation.Text);
+                                    string msg = string.Format("USer ID:{0} Location:-{1}, Domain Server cannot be Contacted", txtUserName.Text, LocationText(drplocation));
                                     Classes.RecordOp(String.Format("Sproc_AddAuditLog '004','{0}','{1}',''", msg, txtUserName.Text));
 
                                     Classes.alertwindow(this.Page, "Domain Server cannot be Contacted", "Halt");
@@ -255,13 +253,13 @@ public partial class Account_Auth :  System.Web.UI.Page
                                 //txtUserName.Text = "Axadmin";
                                 //drplocation.Value = "101";
                                 //FormsAuthentication.SetAuthCookie();
-                                string msg = string.Format("USer ID:{0} Location:-{1}, User Ebiz Logon ", txtUserName.Text, drplocation.SelectedItem.Text);
+                                string msg = string.Format("USer ID:{0} Location:-{1}, User Ebiz Logon ", txtUserName.Text, LocationText(drplocation));
                                 Classes.RecordOp(String.Format("Sproc_AddAuditLog '003','{0}','{1}',''", msg, txtUserName.Text));
 
-                                string UserName = string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedItem.Value);
+                                string UserName = string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedValue);
                                 Response.Cookies["LogonUserID"].Value = UserName;
 
-                                FormsAuthentication.SetAuthCookie(string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedItem.Value), false);
+                                FormsAuthentication.SetAuthCookie(string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedValue), false);
                                 FormsAuthentication.RedirectFromLoginPage(UserName, true);
                                 this.Response.Redirect("~/WebPages.aspx");
                                 //Response.Write(expr.Message);
@@ -284,17 +282,17 @@ public partial class Account_Auth :  System.Web.UI.Page
 
                 TextBox txtUserName = (TextBox)LoginUser.FindControl("UserName");
                 TextBox txtPassword = (TextBox)LoginUser.FindControl("Password");
-                ASPxComboBox drplocation = (ASPxComboBox)LoginUser.FindControl("ASPxComboBox1");
+                DropDownList drplocation = (DropDownList)LoginUser.FindControl("drpLocation");
                 //DropDownList drplocation = (DropDownList)LoginUser.FindControl("ASPxComboBox1");
-                if (drplocation.SelectedItem.Value != null)
+                if (!string.IsNullOrEmpty(drplocation.SelectedValue))
                 {
-                    string UserName = string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedItem.Value);
+                    string UserName = string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedValue);
                     Response.Cookies["LogonUserID"].Value = UserName;
 
-                    string msg = string.Format("USer ID:{0} Location:-{1}, User Ebiz Logon", txtUserName.Text, drplocation.SelectedItem.Text);
+                    string msg = string.Format("USer ID:{0} Location:-{1}, User Ebiz Logon", txtUserName.Text, LocationText(drplocation));
                     Classes.RecordOp(String.Format("Sproc_AddAuditLog '003','{0}','{1}',''", msg, txtUserName.Text));
 
-                    FormsAuthentication.SetAuthCookie(string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedItem.Value), false);
+                    FormsAuthentication.SetAuthCookie(string.Format("{0}?{1}", txtUserName.Text, drplocation.SelectedValue), false);
                     FormsAuthentication.RedirectFromLoginPage(UserName, true);
                     this.Response.Redirect("~/WebPages.aspx");
                 }
@@ -343,7 +341,7 @@ public partial class Account_Auth :  System.Web.UI.Page
         string HostType = ConfigurationManager.ConnectionStrings["LoginType"].ConnectionString.ToString();
         TextBox txtUserName = (TextBox)sender;
         TextBox txtPassword = (TextBox)LoginUser.FindControl("Password");
-        ASPxComboBox drplocation = (ASPxComboBox)LoginUser.FindControl("ASPxComboBox1");
+        DropDownList drplocation = (DropDownList)LoginUser.FindControl("drpLocation");
         //DropDownList drplocation = (DropDownList)LoginUser.FindControl("ASPxComboBox1");
         if (HostType == "EazybankAX")
         {
@@ -354,8 +352,8 @@ public partial class Account_Auth :  System.Web.UI.Page
 
             string strGetMyLocation = string.Format("SpUserBranchesSelected '{0}'", txtUserName.Text);
             drplocation.DataSource = NETClass.Dbconnect.FxSql(strGetMyLocation, conn);
-            drplocation.TextField = "BranchName";
-            drplocation.ValueField = "BranchCode";
+            drplocation.DataTextField = "BranchName";
+            drplocation.DataValueField = "BranchCode";
             drplocation.DataBind();
             txtPassword.Focus();
             if (drplocation.Items.Count == 0)
@@ -377,8 +375,8 @@ public partial class Account_Auth :  System.Web.UI.Page
 
             string strGetMyLocation = string.Format("SpUserBranchesSelected '{0}'", txtUserName.Text);
             drplocation.DataSource = NETClass.Dbconnect.FxSql(strGetMyLocation, conn);
-            drplocation.TextField = "BranchName";
-            drplocation.ValueField = "BranchCode";
+            drplocation.DataTextField = "BranchName";
+            drplocation.DataValueField = "BranchCode";
             drplocation.DataBind();
             txtPassword.Focus();
             //if (drplocation.Items.Count == 0)
@@ -475,11 +473,26 @@ public partial class Account_Auth :  System.Web.UI.Page
     {
         TextBox txtUserName = (TextBox)LoginUser.FindControl("UserName");
         TextBox txtPassword = (TextBox)LoginUser.FindControl("Password");
-        ASPxComboBox drplocation = (ASPxComboBox)LoginUser.FindControl("ASPxComboBox1");
+        DropDownList drplocation = (DropDownList)LoginUser.FindControl("drpLocation");
         //DropDownList drplocation = (DropDownList)LoginUser.FindControl("ASPxComboBox1");
         // Set the Membership provider for the Login control from a DropDownList.
         //DropDownList list = (DropDownList)this.FindControl("domain");
         //this.MembershipProvider = list.SelectedValue;
         //base.OnLoggingIn(e);
+    }
+
+    /// <summary>Selects a branch in the location list when it is there.</summary>
+    private static void SelectLocation(DropDownList list, string value)
+    {
+        ListItem item = list.Items.FindByValue(value ?? "");
+        if (item == null) return;
+        list.ClearSelection();
+        item.Selected = true;
+    }
+
+    /// <summary>Name of the selected branch ("" when none).</summary>
+    private static string LocationText(DropDownList list)
+    {
+        return list.SelectedItem == null ? "" : list.SelectedItem.Text;
     }
 }

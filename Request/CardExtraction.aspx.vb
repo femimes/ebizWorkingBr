@@ -1,199 +1,125 @@
+Option Strict Off
 Imports System
-Imports NETClass
-Imports System.Data.SqlClient
+Imports System.Collections.Generic
+Imports System.Configuration
 Imports System.Data
+Imports System.Data.SqlClient
+Imports System.Globalization
 Imports System.IO
-Imports DevExpress.Web
-Imports System.Web.UI
 Imports System.Linq
-'Imports Microsoft.Office.Interop.Excel
+Imports System.Web
+Imports System.Web.UI
+Imports System.Web.UI.WebControls
+Imports NETClass
 
-'Imports System.Windows.Forms
+''' <summary>
+''' Card extraction: writes the card production files of approved batches (Sproc_GetCardForExtactInfo, status 3)
+''' and moves each batch to status 5 (Sproc_ApproveCardRequestUpd); "Drop" moves it to status 99.
+''' Plain ASP.NET controls (no DevExpress). The file-generation code (generateCardFiles and the ISO8583
+''' formatting functions) is kept exactly as it was.
+''' </summary>
 Partial Class Mandate_CardExtraction
     Inherits System.Web.UI.Page
-    Public luser As String
-    Public StrLocation As String
-    Public struser As String
-    Public guser As String
+
     Const NUMBERTYPE = 1
     Const STRTYPE = 2
     Const DATETYPE = 3
-    ' Constants Used for String Alignment.
-
+    ' Constants used for string alignment by the file formatting functions.
     Const LALIGN = 1
     Const RALIGN = 2
 
+    Private Const StatusExtracted As Integer = 5
+    Private Const StatusDropped As Integer = 99
+
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
-        If (IsPostBack = False And IsCallback = False) Then
-            Dim str_sel As String, strauthUser As String, strgetauthcookies As String
-            strgetauthcookies = Request.Cookies("LogonUserID").Value
-            If strgetauthcookies <> Nothing Then
-
-                guser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"))
-            Else
-                luser = Context.User.Identity.Name
-                StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-                struser = luser.Substring(0, luser.LastIndexOf("?")) ' Mid(luser, 1, luser.LastIndexOf("?"))
-                guser = struser
-
-            End If
-            txtuserID.Text = guser
-            'LoadBoxes()
-            'LoadGrid()
-            txtFilePath.Text = NETClass.Classes.GetDataset("Sproc_GetPref").Tables(0).Rows(0).Item("ExtractionPath").ToString()
-            Me.ctrlGrid.PageIndex = 0
+        If Not IsPostBack Then
+            Try
+                txtFilePath.Text = Convert.ToString(Classes.GetDataset("Sproc_GetPref").Tables(0).Rows(0).Item("ExtractionPath")).Trim().TrimEnd("\"c)
+            Catch ex As Exception
+                ShowError("The extraction folder could not be read from the preferences (Sproc_GetPref): " & ex.Message)
+            End Try
         End If
-
+        litPath.Text = If(txtFilePath.Text = "", "<strong>(not set)</strong>", "<strong>" & HttpUtility.HtmlEncode(txtFilePath.Text) & "</strong>")
     End Sub
 
-
-    Protected Sub CheckBox2_CheckedChanged(ByVal sender As Object, ByVal e As System.EventArgs)
-        Dim chkAll As System.Web.UI.WebControls.CheckBox = CType(sender, System.Web.UI.WebControls.CheckBox)
-        Dim AccountNoHead As GridViewDataColumn = CType(ctrlGrid.Columns("RequestTitle"), GridViewDataColumn)
-
-        Dim VisibleRowsCount As Integer = 0
-
-        If ((ctrlGrid.VisibleRowCount / ctrlGrid.SettingsPager.PageSize) > 1) Then
-            VisibleRowsCount = ctrlGrid.SettingsPager.PageSize
-        Else
-            VisibleRowsCount = ctrlGrid.VisibleRowCount
-        End If
-
-
-
-        If (chkAll.Checked = True) Then
-            Dim rowIndex As Integer
-
-
-            For rowIndex = 0 To VisibleRowsCount - 1
-
-
-
-                Dim AccountNo As CheckBox = CType(ctrlGrid.FindRowCellTemplateControl(rowIndex, AccountNoHead, "CheckBox1"), CheckBox)
-
-                AccountNo.Checked = True
-            Next
-        Else
-            Dim rowIndex As Integer
-            For rowIndex = 0 To VisibleRowsCount - 1
-
-
-
-                'CheckBox ChkFirstName = (CheckBox)ctrlGrid.FindRowCellTemplateControl(rowIndex, columnFirstName, "CheckBox1")
-                Dim AccountNo As CheckBox = CType(ctrlGrid.FindRowCellTemplateControl(rowIndex, AccountNoHead, "CheckBox1"), CheckBox)
-
-                AccountNo.Checked = False
-            Next
-        End If
+    Protected Sub SqlDataSource1_Selected(ByVal sender As Object, ByVal e As SqlDataSourceStatusEventArgs) Handles SqlDataSource1.Selected
+        litTotal.Text = If(e.Exception Is Nothing, String.Format("{0:N0} batch{1}", e.AffectedRows, If(e.AffectedRows = 1, "", "es")), "")
     End Sub
 
-    Protected Sub ApprOnly_Click(ByVal sender As Object, ByVal e As System.EventArgs)
-        Dim str_sel As String, strauthUser As String, strgetauthcookies As String
-        strgetauthcookies = Request.Cookies("LogonUserID").Value
-        If strgetauthcookies <> Nothing Then
-
-            guser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"))
-        Else
-            luser = Context.User.Identity.Name
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-            struser = luser.Substring(0, luser.LastIndexOf("?")) ' Mid(luser, 1, luser.LastIndexOf("?"))
-            guser = struser
-
-        End If
-        'Dim AccountNoHead As GridViewDataColumn = CType(sender, GridViewDataColumn)
-        Dim strcon As String = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-
-        Dim btnAppr As ASPxButton = CType(sender, ASPxButton)
-        Dim Cmd As New SqlCommand, sqlConn As New SqlConnection(strcon), result As SqlParameter
-        generateCardFiles(btnAppr.CommandArgument, "", txtFilePath.Text)
-
-        Cmd.CommandText = "Sproc_ApproveCardRequestUpd"
-        Cmd.Connection = sqlConn
-        Cmd.CommandType = CommandType.StoredProcedure
-
-        sqlConn.Open()
-        Cmd.Parameters.Add(New SqlParameter("@RefNo", btnAppr.CommandArgument))
-        Cmd.Parameters.Add(New SqlParameter("@ApprovingOfficer", guser))
-        Cmd.Parameters.Add(New SqlParameter("@status", 5))
-
-
-        Cmd.ExecuteNonQuery()
-
-
-        sqlConn.Close()
-        ' Dim AccountNo As CheckBox = CType(ctrlGrid.FindRowCellTemplateControl(rowIndex, AccountNoHead, "CheckBox1"), CheckBox)
-        ' Response.Write("CardExtraction.aspx")
-    End Sub
-
-
-
-
-    Protected Sub BtnApprove_Click(ByVal sender As Object, ByVal e As System.EventArgs)
-        Dim str_sel As String, strauthUser As String, strgetauthcookies As String
-        strgetauthcookies = Request.Cookies("LogonUserID").Value
-        If strgetauthcookies <> Nothing Then
-
-            guser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"))
-        Else
-            luser = Context.User.Identity.Name
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-            struser = luser.Substring(0, luser.LastIndexOf("?")) ' Mid(luser, 1, luser.LastIndexOf("?"))
-            guser = struser
-
-        End If
-        Dim AccountNoHead As GridViewDataColumn = CType(ctrlGrid.Columns("RequestTitle"), GridViewDataColumn)
-        'Dim AccountNoHead As GridViewDataColumn = CType(sender, GridViewDataColumn)
-        '  Dim FolderPathName As String = Me.FileUpload1.PostedFile.FileName 'Path.GetDirectoryName(Me.FileUpload1.PostedFile.FileName)
-        'Response.Write(FolderPathName)
-
-
-
-
-
-
-        Dim VisibleRowsCount As Integer = 0
-
-        If ((ctrlGrid.VisibleRowCount / ctrlGrid.SettingsPager.PageSize) > 1) Then
-            VisibleRowsCount = ctrlGrid.SettingsPager.PageSize
-        Else
-            VisibleRowsCount = ctrlGrid.VisibleRowCount
-        End If
-        Dim rowIndex As Integer
-
-        Dim strcon As String = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-
-        For rowIndex = 0 To VisibleRowsCount - 1
-
-            Dim AccountNo As System.Web.UI.WebControls.CheckBox = CType(ctrlGrid.FindRowCellTemplateControl(rowIndex, AccountNoHead, "CheckBox1"), System.Web.UI.WebControls.CheckBox)
-
-            If AccountNo.Checked = True Then
-                Dim Cmd As New SqlCommand, sqlConn As New SqlConnection(strcon), result As SqlParameter
-                generateCardFiles(ctrlGrid.GetRowValues(rowIndex, "RefNo"), "", txtFilePath.Text)
-
-                Cmd.CommandText = "Sproc_ApproveCardRequestUpd"
-                Cmd.Connection = sqlConn
-                Cmd.CommandType = CommandType.StoredProcedure
-
-                sqlConn.Open()
-                Cmd.Parameters.Add(New SqlParameter("@RefNo", ctrlGrid.GetRowValues(rowIndex, "RefNo")))
-                Cmd.Parameters.Add(New SqlParameter("@ApprovingOfficer", guser))
-                Cmd.Parameters.Add(New SqlParameter("@status", 5))
-
-
-                Cmd.ExecuteNonQuery()
-
-
-                sqlConn.Close()
-
-            End If
+    ' =====================================================================
+    ' Selection
+    ' =====================================================================
+    Private Function SelectedRefs() As List(Of String)
+        Dim refs As New List(Of String)()
+        For Each row As GridViewRow In ctrlGrid.Rows
+            If row.RowType <> DataControlRowType.DataRow Then Continue For
+            Dim chk As CheckBox = TryCast(row.FindControl("chkSelect"), CheckBox)
+            If chk IsNot Nothing AndAlso chk.Checked Then refs.Add(Convert.ToString(ctrlGrid.DataKeys(row.RowIndex).Value))
         Next
-        'Dim strdipl As String = String.Format("<script>alert('{0}') </script>", FolderPathName)
-        '  Response.Write("CardExtraction.aspx")
-        ' Response.Write("<script>alert('Extraction Completed Successfully') </script>")
+        Return refs
+    End Function
+
+    ' =====================================================================
+    ' Actions
+    ' =====================================================================
+    ''' <summary>Extract one batch (the "Extract" button on its row).</summary>
+    Protected Sub ctrlGrid_RowCommand(ByVal sender As Object, ByVal e As GridViewCommandEventArgs) Handles ctrlGrid.RowCommand
+        If e.CommandName <> "Extract" Then Return
+        Extract(New List(Of String)(New String() {Convert.ToString(e.CommandArgument)}))
+    End Sub
+
+    Protected Sub BtnApprove_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles BtnApprove.Click
+        Extract(SelectedRefs())
+    End Sub
+
+    Protected Sub btnDrop_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles btnDrop.Click
+        Dim refs As List(Of String) = SelectedRefs()
+        If refs.Count = 0 Then ShowError("Tick at least one batch first.") : Return
+        Dim done As Integer = 0
+        Dim failed As New List(Of String)()
+        For Each refNo As String In refs
+            Try
+                SetStatus(refNo, StatusDropped)
+                done += 1
+            Catch ex As Exception
+                failed.Add(refNo & ": " & ex.Message)
+            End Try
+        Next
+        Report("Dropped", done, failed, "")
+    End Sub
+
+    Private Sub Extract(ByVal refs As List(Of String))
+        If refs.Count = 0 Then ShowError("Tick at least one batch first.") : Return
+        If txtFilePath.Text.Trim() = "" Then ShowError("No extraction folder is set in the preferences, so nothing was extracted.") : Return
+        Dim done As Integer = 0
+        Dim failed As New List(Of String)()
+        For Each refNo As String In refs
+            If refNo = "" Then Continue For
+            Try
+                generateCardFiles(refNo, "", txtFilePath.Text)
+                SetStatus(refNo, StatusExtracted)
+                done += 1
+            Catch ex As Exception
+                failed.Add(refNo & ": " & ex.Message)
+            End Try
+        Next
+        Report("Extracted", done, failed, " Files are in " & txtFilePath.Text & "\<batch ref>.")
+    End Sub
+
+    Private Sub SetStatus(ByVal refNo As String, ByVal status As Integer)
+        Exec("Sproc_ApproveCardRequestUpd", P("@RefNo", refNo), P("@ApprovingOfficer", CurrentUser()), P("@status", status))
+    End Sub
+
+    Private Sub Report(ByVal action As String, ByVal done As Integer, ByVal failed As List(Of String), ByVal extra As String)
+        If done > 0 Then ShowSuccess(String.Format("{0} {1} batch{2}.{3}", action, done, If(done = 1, "", "es"), extra)) Else ShowSuccess("")
+        If failed.Count > 0 Then litError.Text = HttpUtility.HtmlEncode(String.Format("{0} batch(es) not processed: {1}", failed.Count, String.Join("; ", failed.ToArray())))
         ctrlGrid.DataBind()
     End Sub
 
-
+    ' =====================================================================
+    ' Card file generation (unchanged from the original page)
+    ' =====================================================================
+    ' ---- BEGIN unchanged file generation ----
     Sub generateCardFiles(ByVal BatchRef As String, ByVal FileLocation As String, ByVal FolderLocation As String)
         Dim strselAccount As String = String.Format("Sproc_ATMGetAccountsByRequest '{0}'", BatchRef)
         Dim ds As New DataSet, row As DataRow
@@ -812,71 +738,108 @@ Partial Class Mandate_CardExtraction
         CheckXMLChars = ""
         Exit Function
     End Function
-    '   Main Function in the Macro.
+    ' ---- END unchanged file generation ----
 
+    ' =====================================================================
+    ' Shared Request-page helpers (same code in every rewritten Request page)
+    ' =====================================================================
+    Private Const MainDb As String = "EazyConnect"
+    Private Const CoreDb As String = "EazyConnectSource"
 
-    Protected Sub btnDrop_Click(ByVal sender As Object, ByVal e As System.EventArgs)
-        Dim str_sel As String, strauthUser As String, strgetauthcookies As String
-        strgetauthcookies = Request.Cookies("LogonUserID").Value
-        If strgetauthcookies <> Nothing Then
+    ''' <summary>Signed-in officer: the LogonUserID cookie is "user?branch".</summary>
+    Private Function CurrentUser() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Dim name As String = If(split >= 0, luser.Substring(0, split), luser)
+        Return If(name = "", "system", name)
+    End Function
 
-            guser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"))
-        Else
-            luser = Context.User.Identity.Name
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-            struser = luser.Substring(0, luser.LastIndexOf("?")) ' Mid(luser, 1, luser.LastIndexOf("?"))
-            guser = struser
+    ''' <summary>Branch of the signed-in officer (the part after "?" in the cookie).</summary>
+    Private Function CurrentBranch() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Return If(split >= 0, luser.Substring(split + 1), "")
+    End Function
 
-        End If
-        Dim AccountNoHead As GridViewDataColumn = CType(ctrlGrid.Columns("RequestTitle"), GridViewDataColumn)
-        'Dim AccountNoHead As GridViewDataColumn = CType(sender, GridViewDataColumn)
-        '  Dim FolderPathName As String = Me.FileUpload1.PostedFile.FileName 'Path.GetDirectoryName(Me.FileUpload1.PostedFile.FileName)
-        'Response.Write(FolderPathName)
+    Private Shared Function Cfg(ByVal name As String) As String
+        Dim s As ConnectionStringSettings = ConfigurationManager.ConnectionStrings(name)
+        Return If(s Is Nothing, "", s.ConnectionString)
+    End Function
 
+    Private Shared Function SqlText(ByVal value As String) As String
+        Return If(value, "").Replace("'", "''")
+    End Function
 
+    Private Shared Sub Audit(ByVal code As String, ByVal message As String, ByVal actor As String)
+        Classes.RecordOp(String.Format("Sproc_AddAuditLog '{0}','{1}','{2}',''", code, SqlText(message), SqlText(actor)))
+    End Sub
 
+    ''' <summary>Runs a stored procedure on the main database.</summary>
+    Private Shared Sub Exec(ByVal procedure As String, ByVal ParamArray parameters As SqlParameter())
+        Using conn As New SqlConnection(Cfg(MainDb))
+            Using cmd As New SqlCommand(procedure, conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddRange(parameters)
+                conn.Open()
+                cmd.ExecuteNonQuery()
+            End Using
+        End Using
+    End Sub
 
+    ''' <summary>Runs a query with parameters (never string concatenation) and returns the first table.</summary>
+    Private Shared Function Query(ByVal connectionName As String, ByVal sql As String, ByVal ParamArray parameters As SqlParameter()) As DataTable
+        Dim table As New DataTable()
+        Using conn As New SqlConnection(Cfg(connectionName))
+            Using cmd As New SqlCommand(sql, conn)
+                cmd.Parameters.AddRange(parameters)
+                Using adapter As New SqlDataAdapter(cmd)
+                    adapter.Fill(table)
+                End Using
+            End Using
+        End Using
+        Return table
+    End Function
 
+    Private Shared Function P(ByVal name As String, ByVal value As Object) As SqlParameter
+        Return New SqlParameter(name, If(value, DBNull.Value))
+    End Function
 
-        Dim VisibleRowsCount As Integer = 0
+    Private Shared Function Col(ByVal row As DataRow, ByVal column As String) As String
+        If row Is Nothing OrElse Not row.Table.Columns.Contains(column) OrElse row.IsNull(column) Then Return ""
+        Return Convert.ToString(row(column))
+    End Function
 
-        If ((ctrlGrid.VisibleRowCount / ctrlGrid.SettingsPager.PageSize) > 1) Then
-            VisibleRowsCount = ctrlGrid.SettingsPager.PageSize
-        Else
-            VisibleRowsCount = ctrlGrid.VisibleRowCount
-        End If
-        Dim rowIndex As Integer
-
-        Dim strcon As String = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-
-        For rowIndex = 0 To VisibleRowsCount - 1
-
-            Dim AccountNo As CheckBox = CType(ctrlGrid.FindRowCellTemplateControl(rowIndex, AccountNoHead, "CheckBox1"), CheckBox)
-
-            If AccountNo.Checked = True Then
-                Dim Cmd As New SqlCommand, sqlConn As New SqlConnection(strcon), result As SqlParameter
-                'generateCardFiles(ctrlGrid.GetRowValues(rowIndex, "RefNo"), "", txtFilePath.Text)
-
-                Cmd.CommandText = "Sproc_ApproveCardRequestUpd"
-                Cmd.Connection = sqlConn
-                Cmd.CommandType = CommandType.StoredProcedure
-
-                sqlConn.Open()
-                Cmd.Parameters.Add(New SqlParameter("@RefNo", ctrlGrid.GetRowValues(rowIndex, "RefNo")))
-                Cmd.Parameters.Add(New SqlParameter("@ApprovingOfficer", guser))
-                Cmd.Parameters.Add(New SqlParameter("@status", 99))
-
-
-                Cmd.ExecuteNonQuery()
-
-
-                sqlConn.Close()
-
-            End If
+    ''' <summary>Splits "123, 456 789" into a clean list of account numbers.</summary>
+    Private Shared Function AccountList(ByVal text As String) As List(Of String)
+        Dim result As New List(Of String)()
+        For Each part As String In If(text, "").Split(New Char() {","c, ";"c, " "c, Convert.ToChar(13), Convert.ToChar(10), Convert.ToChar(9)}, StringSplitOptions.RemoveEmptyEntries)
+            Dim acct As String = part.Trim().Trim("'"c)
+            If acct <> "" AndAlso Not result.Contains(acct) Then result.Add(acct)
         Next
-        'Dim strdipl As String = String.Format("<script>alert('{0}') </script>", FolderPathName)
-        Response.Write("CardExtraction.aspx")
-        ' Response.Write("<script>alert('Extraction Completed Successfully') </script>")
-        ctrlGrid.DataBind()
+        Return result
+    End Function
+
+    Private Shared Function TryDate(ByVal value As String, ByRef result As DateTime) As Boolean
+        Return DateTime.TryParseExact(If(value, "").Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, result)
+    End Function
+
+    ''' <summary>Formats a date for an HTML date input (yyyy-MM-dd).</summary>
+    Protected Shared Function DateInput(ByVal value As Object) As String
+        If TypeOf value Is DateTime Then Return CType(value, DateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Dim d As DateTime
+        If DateTime.TryParse(Convert.ToString(value), d) Then Return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Return ""
+    End Function
+
+    Private Sub ShowSuccess(ByVal message As String)
+        litResult.Text = HttpUtility.HtmlEncode(message)
+        litError.Text = ""
+    End Sub
+
+    Private Sub ShowError(ByVal message As String)
+        litError.Text = HttpUtility.HtmlEncode(message)
+        litResult.Text = ""
     End Sub
 End Class

@@ -1,356 +1,279 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Globalization;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using DevExpress.Web;
-using System.Security.Cryptography;
-using System.IO;
-using System.Text;
-using System.Data;
-using System.Data.SqlClient;
-using NETClass;
-using System.Net;
 
+/// <summary>
+/// Maintain eRequest: batches from Sproc_GetCardForMaint, requests in a batch from SpCardRequestMaint;
+/// ticked requests get new issue/expiry dates through Sproc_AddDeleteCardMaint. Plain ASP.NET controls (no DevExpress).
+/// </summary>
 public partial class Request_CardMaintenance : System.Web.UI.Page
 {
-    public string gUser = HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name;
-    public string luser = HttpContext.Current.User.Identity.Name;
-    public string StrLocation = "";
-    public string struser = "";
-
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (!IsCallback && !IsPostBack)
+        if (!IsPostBack)
         {
-
-
-            loadMsgs();
-
-            //GridViewDataColumn columnBranch = (GridViewDataColumn)ctrlGrid.Columns["BranchName"];
-            //ctrlGrid.GroupBy(columnBranch);
-            DatCardIssue.Date = DateTime.Today.Date;
-            DatCardExpiry.Date = DateTime.Today.Date;
-
-            this.ctrlGrid.PageIndex = 0;
+            DatCardIssue.Text = DateInput(DateTime.Today);
+            DatCardExpiry.Text = DateInput(DateTime.Today);
+            LoadBatches();
+            BindGrid();
         }
     }
 
-    private void loadMsgs()
+    private void LoadBatches()
+    {
+        drpBatchRefNo.Items.Clear();
+        drpBatchRefNo.Items.Add(new ListItem("Choose a batch", ""));
+        try
+        {
+            foreach (DataRow r in QueryOn(MainDb, "Sproc_GetCardForMaint", CommandType.StoredProcedure).Rows)
+            {
+                string refNo = Col(r, "RefNo");
+                if (refNo == "" || drpBatchRefNo.Items.FindByValue(refNo) != null) continue;
+                string title = Col(r, "RequestTitle");
+                drpBatchRefNo.Items.Add(new ListItem(title == "" ? refNo : refNo + " - " + title, refNo));
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError("The batches could not be loaded: " + ex.Message);
+        }
+    }
+
+    private DataTable LoadRequests()
+    {
+        if (drpBatchRefNo.SelectedValue == "") return new DataTable();
+        string branch = CurrentBranch(), user = CurrentUser();
+        DataTable t = Query("EXEC SpCardRequestMaint @userId = @userId, @locationID = @locationID, @RefNo = @RefNo",
+            P("@userId", user == "" ? "00" : user), P("@locationID", branch == "" ? "00" : branch), P("@RefNo", drpBatchRefNo.SelectedValue));
+        foreach (string column in new[] { "SeqNum", "AccountNo", "AccountDesc", "CardTypeDesc", "CardIssueDate", "CardExpiryDate", "SystemDateTime" })
+            if (!t.Columns.Contains(column)) t.Columns.Add(column, typeof(string));
+        return t;
+    }
+
+    private void BindGrid()
     {
         try
         {
-            luser = HttpContext.Current.User.Identity.Name;
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1);
-            struser = luser.Substring(0, luser.LastIndexOf("?"));
-            gUser = struser;
+            DataTable t = LoadRequests();
+            ctrlGrid.DataSource = t;
+            ctrlGrid.DataBind();
+            litTotal.Text = drpBatchRefNo.SelectedValue == "" ? "" : string.Format("{0:N0} request{1}", t.Rows.Count, t.Rows.Count == 1 ? "" : "s");
         }
-        catch (Exception ex) { }
-
-
-        txtUserID.Text = struser;
-        txtlocation.Text = StrLocation;
-        ctrlGrid.DataBind();
+        catch (Exception ex)
+        {
+            ctrlGrid.DataSource = null;
+            ctrlGrid.DataBind();
+            litTotal.Text = "";
+            ShowError("The requests could not be loaded: " + ex.Message);
+        }
     }
 
-
-    public String GetIPAddress()
+    protected void drpBatchRefNo_SelectedIndexChanged(object sender, EventArgs e)
     {
-        //The X-Forwarded-For (XFF) HTTP header field is a de facto standard for identifying the originating IP address of a 
-        //client connecting to a web server through an HTTP proxy or load balancer
-        String ip = HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
+        ctrlGrid.PageIndex = 0;
+        litResult.Text = "";
+        litError.Text = "";
+        BindGrid();
+    }
 
-        if (string.IsNullOrEmpty(ip))
-        {
-            ip = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
-        }
+    protected void ctrlGrid_PageIndexChanging(object sender, GridViewPageEventArgs e)
+    {
+        ctrlGrid.PageIndex = e.NewPageIndex;
+        BindGrid();
+    }
 
-        return ip;
+    protected void btncancel_Click(object sender, EventArgs e)
+    {
+        Response.Redirect(Request.Path, false);
+        Context.ApplicationInstance.CompleteRequest();
     }
 
     protected void BtnApprove_Click(object sender, EventArgs e)
     {
+        Page.Validate("submit");
+        if (!Page.IsValid) return;
+        if (drpBatchRefNo.SelectedValue == "") { ShowError("Choose a batch first."); return; }
 
-        string strlblerror = "";
-        try
+        DateTime issue, expiry;
+        if (!TryDate(DatCardIssue.Text, out issue) || !TryDate(DatCardExpiry.Text, out expiry)) { ShowError("Enter valid issue and expiry dates."); return; }
+
+        List<GridViewRow> rows = new List<GridViewRow>();
+        foreach (GridViewRow row in ctrlGrid.Rows)
         {
-            luser = HttpContext.Current.User.Identity.Name;
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1);
-            struser = luser.Substring(0, luser.LastIndexOf("?"));
-            gUser = struser;
+            CheckBox chk = row.FindControl("chkSelect") as CheckBox;
+            if (row.RowType == DataControlRowType.DataRow && chk != null && chk.Checked) rows.Add(row);
         }
-        catch (Exception ex) { }
+        if (rows.Count == 0) { ShowError("Tick at least one request first."); return; }
 
-        String OriginatingIP = GetIPAddress().Replace("::ffff:", "");
-        String strHostName = HttpContext.Current.Request.UserHostAddress.ToString();
-
-        OriginatingIP = System.Net.Dns.GetHostAddresses(strHostName).GetValue(0).ToString();
-        GridViewDataColumn columnReason = (GridViewDataColumn)ctrlGrid.Columns["Reason"];
-        GridViewDataColumn columnDateIssue = (GridViewDataColumn)ctrlGrid.Columns["CardIssueDate"];
-        GridViewDataColumn columnDateExpiry = (GridViewDataColumn)ctrlGrid.Columns["CardExpiryDate"];
-
-        for (int rowIndex = 0; rowIndex < ASPxListBox1.Items.Count; rowIndex++)
+        string user = CurrentUser();
+        int done = 0;
+        List<string> failed = new List<string>();
+        foreach (GridViewRow row in rows)
         {
-            string strAccountNo = ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "AccountNo").ToString();
-            // ctrlGrid.FindRowCellTemplateControlByKey
-            //string strCardTypes = ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "CardBrand").ToString();
-            string strCardTypesDesc = ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "CardTypeDesc").ToString();
+            string seq = Convert.ToString(ctrlGrid.DataKeys[row.RowIndex].Values["SeqNum"]);
+            string accountNo = Convert.ToString(ctrlGrid.DataKeys[row.RowIndex].Values["AccountNo"]);
+            TextBox tb = row.FindControl("tatReason") as TextBox;
+            string reason = tb == null ? "" : tb.Text.Trim();
+            if (reason == "") { failed.Add(accountNo + ": reason missing"); continue; }
+            try
+            {
+                string response = Exec("Sproc_AddDeleteCardMaint",
+                    P("@eBatRefNo", drpBatchRefNo.SelectedValue),
+                    P("@accountNo", accountNo),
+                    P("@eIssueDate", issue),
+                    P("@eExipryDate", expiry),
+                    P("@reason", reason),
+                    P("@UserID", user),
+                    P("@SeqNum", seq),
+                    Out("@ResponseDesc"));
+                if (response == "Success") done++;
+                else failed.Add(accountNo + ": " + (response == "" ? "not saved" : response));
+            }
+            catch (Exception ex)
+            {
+                failed.Add(accountNo + ": " + ex.Message);
+            }
+        }
 
-            DateTime dateRequested = DateTime.Parse(ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "SystemDateTime").ToString());
-
-
-            ASPxMemo TatReason = (ASPxMemo)ctrlGrid.FindRowCellTemplateControlByKey(ASPxListBox1.Items[rowIndex].Value.ToString(), columnReason, "tatReason");
-           // ASPxDateEdit idatCardExpiry = (ASPxDateEdit)ctrlGrid.FindRowCellTemplateControlByKey(ASPxListBox1.Items[rowIndex].Value.ToString(), columnDateIssue, "DatCardExpiry");
-            //ASPxDateEdit datCardIssue = (ASPxDateEdit)ctrlGrid.FindRowCellTemplateControlByKey(ASPxListBox1.Items[rowIndex].Value.ToString(), columnDateExpiry, "DatCardIssue");
-
-
-
-            string ststatus = checkValidateReuest(strAccountNo, strCardTypesDesc, gUser, StrLocation);
-            //if (ststatus == "Success")
-            // {
-            //string strins = string.Format("SpAddCardRemoteRequest '{0}','{1}','{2}','{3}','{4}'", txtAccountNo.Text, gUser, drpTypes.SelectedItem.Value, StrLocation, OriginatingIP);
-            //NETClass.Classes.GetDataset(strins);
-            //for (int vrowIndex = 0; vrowIndex < ctrlGrid.VisibleRowCount; vrowIndex++)
-
-            //{
-            //    //ASPxTextBox TatCity = (ASPxTextBox)ctrlGrid.FindRowCellTemplateControl(rowIndex, columnCity, "TxtCity");
-                //ASPxMemo TatAccountDesc = (ASPxMemo)ctrlGrid.FindRowCellTemplateControl(rowIndex, columnAccountDesc, "tatAccountDesc");
-                //ASPxDateEdit datCardExpiry = (ASPxDateEdit)ctrlGrid.FindRowCellTemplateControl(vrowIndex, columnDateIssue, "DatCardExpiry");
-                //ASPxDateEdit datCardIssue = (ASPxDateEdit)ctrlGrid.FindRowCellTemplateControl(vrowIndex, columnDateExpiry, "DatCardIssue");
-
-               // if (TatReason.ToolTip == ASPxListBox1.Items[rowIndex].Value.ToString())
-               // {
-                if (TatReason.Text != string.Empty)
-                { 
-                #region Validate Records
-
-                    SqlConnection connValidate = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-           
-
-
-                SqlCommand commandValidate = new SqlCommand();
-                connValidate.Open();
-                commandValidate.CommandText = "Sproc_AddDeleteCardMaint";
-                commandValidate.Connection = connValidate;
-                commandValidate.CommandType = CommandType.StoredProcedure;
-                commandValidate.Parameters.Add(new SqlParameter("@eBatRefNo", drpBatchRefNo.Value));
-                commandValidate.Parameters.Add(new SqlParameter("@accountNo", strAccountNo));
-                commandValidate.Parameters.Add(new SqlParameter("@eIssueDate", DatCardIssue.Date));
-                commandValidate.Parameters.Add(new SqlParameter("@eExipryDate", DatCardExpiry.Date));
-        
-                commandValidate.Parameters.Add(new SqlParameter("@reason", TatReason.Text));
-                commandValidate.Parameters.Add(new SqlParameter("@UserID", gUser));
-         
-                commandValidate.Parameters.Add(new SqlParameter("@SeqNum", ASPxListBox1.Items[rowIndex].Value.ToString()));
-
-                //SqlParameter parameterMsgCode = commandValidate.Parameters.Add(new SqlParameter("@ResponseCode", SqlDbType.VarChar, 50));
-                //parameterMsgCode.Direction = ParameterDirection.Output;
-
-                SqlParameter parameterMsg = commandValidate.Parameters.Add(new SqlParameter("@ResponseDesc", SqlDbType.VarChar, 5000));
-                parameterMsg.Direction = ParameterDirection.Output;
-
-                commandValidate.ExecuteNonQuery();
-                connValidate.Close();
-
-
-                if (parameterMsg.Value.ToString() != "Success")
-                {
-
-                    strlblerror += parameterMsg.Value + "; ";
-                }
-
-
-                    #endregion
-                }
-
-              else
-                    {
-                        ststatus = "Reason missing";
-                           strlblerror += ststatus + "; ";
-                    }
-
-
-            //    }
-
-          //  }
-
-
-
-
-}
-
-        Literal1.Text = strlblerror;
-
-
-        ctrlGrid.DataBind();
-
+        ShowSuccess(done == 0 ? "" : string.Format("Submitted {0} request{1} for maintenance.", done, done == 1 ? "" : "s"));
+        if (failed.Count > 0)
+            litError.Text = HttpUtility.HtmlEncode(string.Format("{0} request(s) not submitted: {1}", failed.Count, string.Join("; ", failed.ToArray())));
+        BindGrid();
     }
 
-    private string checkValidateReuest(string AccountNo, string requestType, string userId, string LocationCode)
+    // =====================================================================
+    // Shared Request-page helpers (same code in every rewritten C# Request page)
+    // =====================================================================
+
+    /// <summary>Signed-in identity "user?branch" (forms identity, else the LogonUserID cookie).</summary>
+    private string Identity()
     {
-        #region Validate Records
-
-        SqlConnection connValidate = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-
-
-        SqlCommand commandValidate = new SqlCommand();
-        connValidate.Open();
-        commandValidate.CommandText = "SpCardValidateRemotes";
-        commandValidate.Connection = connValidate;
-        commandValidate.CommandType = CommandType.StoredProcedure;
-
-        commandValidate.Parameters.Add(new SqlParameter("@accountNo", AccountNo));
-        commandValidate.Parameters.Add(new SqlParameter("@requestType", requestType));
-        commandValidate.Parameters.Add(new SqlParameter("@userId", userId));
-        commandValidate.Parameters.Add(new SqlParameter("@locationID", LocationCode));
-
-        SqlParameter parameterMsg = commandValidate.Parameters.Add(new SqlParameter("@responseMsg", SqlDbType.VarChar, 5000));
-        parameterMsg.Direction = ParameterDirection.Output;
-        commandValidate.ExecuteNonQuery();
-        connValidate.Close();
-
-
-
-
-        #endregion
-
-
-
-
-
-        return parameterMsg.Value.ToString();
+        string id = User != null && User.Identity != null ? User.Identity.Name : "";
+        if (string.IsNullOrEmpty(id) && Request.Cookies["LogonUserID"] != null) id = Request.Cookies["LogonUserID"].Value;
+        return id ?? "";
     }
 
+    private string CurrentUser()
+    {
+        string id = Identity();
+        int split = id.LastIndexOf('?');
+        return split >= 0 ? id.Substring(0, split) : id;
+    }
 
-    //protected void btnDisApprove_Click(object sender, EventArgs e)
-    //{
+    private string CurrentBranch()
+    {
+        string id = Identity();
+        int split = id.LastIndexOf('?');
+        return split >= 0 ? id.Substring(split + 1) : "";
+    }
 
-    //    string strlblerror = "";
-    //    try
-    //    {
-    //        luser = HttpContext.Current.User.Identity.Name;
-    //        StrLocation = luser.Substring(luser.LastIndexOf("?") + 1);
-    //        struser = luser.Substring(0, luser.LastIndexOf("?"));
-    //        gUser = struser;
-    //    }
-    //    catch (Exception ex) { }
+    private static string ConnectionString(string name)
+    {
+        ConnectionStringSettings s = ConfigurationManager.ConnectionStrings[name];
+        return s == null ? "" : s.ConnectionString;
+    }
 
+    private static string MainDb { get { return ConnectionString("EazyConnect"); } }
 
+    /// <summary>Runs a query with parameters (never string concatenation) and returns the first table.</summary>
+    private static DataTable Query(string sql, params SqlParameter[] parameters)
+    {
+        return QueryOn(MainDb, sql, CommandType.Text, parameters);
+    }
 
-    //    String OriginatingIP = GetIPAddress().Replace("::ffff:", "");
-    //    String strHostName = HttpContext.Current.Request.UserHostAddress.ToString();
+    private static DataTable QueryOn(string connection, string sql, CommandType type, params SqlParameter[] parameters)
+    {
+        DataTable table = new DataTable();
+        using (SqlConnection conn = new SqlConnection(connection))
+        using (SqlCommand cmd = new SqlCommand(sql, conn))
+        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+        {
+            cmd.CommandType = type;
+            cmd.Parameters.AddRange(parameters);
+            adapter.Fill(table);
+        }
+        return table;
+    }
 
-    //    OriginatingIP = System.Net.Dns.GetHostAddresses(strHostName).GetValue(0).ToString();
-    //    //GridViewDataColumn columnReason = (GridViewDataColumn)ctrlGrid.Columns["remarks"];
-    //    //for (int rowIndex = 0; rowIndex < ASPxListBox1.Items.Count; rowIndex++)
-    //    //{
-    //    //    string strAccountNo = ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "accountNo").ToString();
-    //    //    // ctrlGrid.FindRowCellTemplateControlByKey
-    //    //    //string strCardTypes = ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "requestType").ToString();
-    //    //    //string strCardTypesDesc = ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "CardTypeDesc").ToString();
+    /// <summary>Runs a stored procedure on the main database; returns the value of its first output parameter (or "").</summary>
+    private static string Exec(string procedure, params SqlParameter[] parameters)
+    {
+        using (SqlConnection conn = new SqlConnection(MainDb))
+        using (SqlCommand cmd = new SqlCommand(procedure, conn))
+        {
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddRange(parameters);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        foreach (SqlParameter p in parameters)
+        {
+            if (p.Direction == ParameterDirection.Output || p.Direction == ParameterDirection.InputOutput)
+                return p.Value == null || p.Value == DBNull.Value ? "" : Convert.ToString(p.Value);
+        }
+        return "";
+    }
 
-    //    //    //DateTime dateRequested = DateTime.Parse(ctrlGrid.GetRowValuesByKeyValue(ASPxListBox1.Items[rowIndex].Value.ToString(), "systemDateTime").ToString());
+    private static SqlParameter P(string name, object value)
+    {
+        return new SqlParameter(name, value ?? DBNull.Value);
+    }
 
-    //    //    //TextBox tatBox = (TextBox)ctrlGrid.FindRowCellTemplateControlByKey(ASPxListBox1.Items[rowIndex].Value.ToString(), columnReason, "chkTat");//(TextBox)ctrlGrid.FindControl("chkTat");
-    //    //    ASPxMemo TatReason = (ASPxMemo)ctrlGrid.FindRowCellTemplateControlByKey(ASPxListBox1.Items[rowIndex].Value.ToString(), columnReason, "tatReason");
+    private static SqlParameter Out(string name)
+    {
+        SqlParameter p = new SqlParameter(name, SqlDbType.VarChar, 5000);
+        p.Direction = ParameterDirection.Output;
+        return p;
+    }
 
-    //    //    //if (ChkVoucherID.Checked == true)
-    //    //    {
-    //    //        //  string l_passWrd = GetUniqueKey();
-    //    //        string strapprove;
+    private static string Col(DataRow row, string column)
+    {
+        if (row == null || !row.Table.Columns.Contains(column) || row.IsNull(column)) return "";
+        return Convert.ToString(row[column]);
+    }
 
+    /// <summary>yyyy-MM-dd for an HTML date box.</summary>
+    protected static string DateInput(object value)
+    {
+        DateTime d;
+        if (value is DateTime) return ((DateTime)value).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        if (value != null && value != DBNull.Value && DateTime.TryParse(Convert.ToString(value), out d) && d.Year > 1900)
+            return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        return "";
+    }
 
+    private static bool TryDate(string text, out DateTime value)
+    {
+        return DateTime.TryParseExact((text ?? "").Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out value);
+    }
 
-    //    //        #region Section Approve Accounts
+    /// <summary>Splits "123, 456 789" into a clean list of account numbers.</summary>
+    private static List<string> AccountList(string text)
+    {
+        List<string> result = new List<string>();
+        foreach (string part in (text ?? "").Split(new[] { ',', ';', ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            string acct = part.Trim().Trim('\'');
+            if (acct != "" && !result.Contains(acct)) result.Add(acct);
+        }
+        return result;
+    }
 
+    private void ShowSuccess(string message)
+    {
+        litResult.Text = HttpUtility.HtmlEncode(message);
+        litError.Text = "";
+    }
 
-
-    //    //        #endregion
-
-
-
-    //    //    }
-    //    //    string ststatus = "Success";
-    //    //    // string ststatus = checkValidateReuest(strAccountNo, strCardTypes, gUser, StrLocation);
-    //    //    if (ststatus == "Success")
-    //    //    {
-    //    //        //string strins = string.Format("SpAddCardRemoteRequest '{0}','{1}','{2}','{3}','{4}'", txtAccountNo.Text, gUser, drpTypes.SelectedItem.Value, StrLocation, OriginatingIP);
-    //    //        //NETClass.Classes.GetDataset(strins);
-
-    //    //        //if (TatReason.Text == "" || TatReason.Text == string.Empty)
-    //    //        //{
-    //    //        //    //string strins = string.Format("SpAddCardRemoteRequest '{0}','{1}','{2}','{3}','{4}'", txtAccountNo.Text, gUser, drpTypes.SelectedItem.Value, StrLocation, OriginatingIP);
-    //    //        //    //NETClass.Classes.GetDataset(strins);
-    //    //        //    ststatus = string.Format("missing reason on UserName '{0}'", strAccountNo);
-    //    //        //    strlblerror += ststatus + "; ";
-
-    //    //        //}
-    //    //        if (gUser == "" || gUser == string.Empty)
-    //    //        {
-
-    //    //            ststatus = string.Format("User details missing");
-    //    //            strlblerror += ststatus + "; ";
-    //    //        }
-    //    //        else
-    //    //        {
-
-    //    //            #region Validate Records
-
-    //    //            SqlConnection connValidate = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-
-
-    //    //            SqlCommand commandValidate = new SqlCommand();
-    //    //            connValidate.Open();
-    //    //            commandValidate.CommandText = "Sproc_ATMDeAppreRequest";
-    //    //            commandValidate.Connection = connValidate;
-    //    //            commandValidate.CommandType = CommandType.StoredProcedure;
-
-    //    //            //commandValidate.Parameters.Add(new SqlParameter("@Trans_date", dateRequested));
-    //    //            commandValidate.Parameters.Add(new SqlParameter("@Account_no", strAccountNo));
-    //    //            commandValidate.Parameters.Add(new SqlParameter("@UserID", gUser));
-    //    //            commandValidate.Parameters.Add(new SqlParameter("@Status", 4));
-    //    //            commandValidate.Parameters.Add(new SqlParameter("@Trans_date", DateTime.Today.Date));
-    //    //            commandValidate.Parameters.Add(new SqlParameter("@Narrative", "Dis approved By- " + gUser));
-    //    //            commandValidate.Parameters.Add(new SqlParameter("@ExtRefNo", ASPxListBox1.Items[rowIndex].Value.ToString()));
-
-    //    //            //SqlParameter parameterMsgCode = commandValidate.Parameters.Add(new SqlParameter("@ResponseCode", SqlDbType.VarChar, 50));
-    //    //            //parameterMsgCode.Direction = ParameterDirection.Output;
-
-    //    //            //SqlParameter parameterMsg = commandValidate.Parameters.Add(new SqlParameter("@ResponseDesc", SqlDbType.VarChar, 5000));
-    //    //            //parameterMsg.Direction = ParameterDirection.Output;
-
-    //    //            commandValidate.ExecuteNonQuery();
-    //    //            connValidate.Close();
-
-
-    //    //            //if (parameterMsg.Value.ToString() != "Success")
-    //    //            //{
-
-    //    //            //    strlblerror += parameterMsg.Value + "; ";
-    //    //            //}
-
-
-    //    //            #endregion
-
-    //    //        }
-
-
-    //    //    }
-
-    //    //    else
-    //    //    {
-    //    //        strlblerror += ststatus + "; ";
-    //    //    }
-
-
-
-    //    //}
-
-    //    Literal1.Text = strlblerror;
-
-
-    //    ctrlGrid.DataBind();
-
-    //}
+    private void ShowError(string message)
+    {
+        litError.Text = HttpUtility.HtmlEncode(message);
+        litResult.Text = "";
+    }
 }

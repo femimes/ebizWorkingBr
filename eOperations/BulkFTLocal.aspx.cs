@@ -31,6 +31,14 @@ public partial class Bulk_BulkFTLocal : System.Web.UI.Page
     public string struser = "";
     public decimal l_totalAmt = 0;
     public string transflag = "";
+    /// <summary>"user?branch" from the LogonUserID cookie, or from the signed-in identity when the cookie is missing or empty.</summary>
+    private string LogonId()
+    {
+        HttpCookie cookie = Request.Cookies["LogonUserID"];
+        if (cookie != null && !string.IsNullOrEmpty(cookie.Value) && cookie.Value.IndexOf("?") >= 0) return cookie.Value;
+        return User != null && User.Identity != null ? (User.Identity.Name ?? "") : "";
+    }
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (this.IsCallback && this.IsPostBack)
@@ -41,17 +49,8 @@ public partial class Bulk_BulkFTLocal : System.Web.UI.Page
         {
             lblAccountNo.Text = item["AccountNo"].ToString();
         }
-        string strauthUser;
-        string strgetauthcookies = Request.Cookies["LogonUserID"].Value;
-        if (strgetauthcookies != null)
-        {
-            strauthUser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"));
-        }
-        else
-        {
-            strauthUser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"));
-            strauthUser = HttpContext.Current.User.Identity.Name.Substring(0, HttpContext.Current.User.Identity.Name.LastIndexOf("?"));
-        }
+        string logon = LogonId();
+        string strauthUser = logon.IndexOf("?") >= 0 ? logon.Substring(0, logon.LastIndexOf("?")) : logon;
             lblUser.Text = strauthUser;
 
 
@@ -732,7 +731,7 @@ public partial class Bulk_BulkFTLocal : System.Web.UI.Page
 
     protected void Button3_Click(object sender, EventArgs e)
     {
-        luser = Request.Cookies["LogonUserID"].Value;// HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name; //HttpContext.Current.User.Identity.Name;// HttpContext.Current.User.Identity.Name;
+        luser = LogonId();// HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name; //HttpContext.Current.User.Identity.Name;// HttpContext.Current.User.Identity.Name;
         StrLocation = this.luser.Substring(this.luser.LastIndexOf("?") + 1);
         struser = this.luser.Substring(0, this.luser.LastIndexOf("?"));
         gUser = this.struser;
@@ -742,7 +741,7 @@ public partial class Bulk_BulkFTLocal : System.Web.UI.Page
         //    transflag = "1";
         //    }
 
-        if (string.Compare((Request.Cookies["LogonUserID"].Value), "", false) != 0)
+        if (luser.IndexOf("?") >= 0)
         {
 
             if (transflag == "1")

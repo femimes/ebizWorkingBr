@@ -1,29 +1,24 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using DevExpress.Web;
 
-public partial class Request_TestingGrid :  System.Web.UI.Page
+/// <summary>Test page: reads back text boxes inside grid rows. Plain ASP.NET controls (no DevExpress).</summary>
+public partial class Request_TestingGrid : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (!IsCallback && !IsPostBack)
-        {
-
-        }
-      }
+    }
 
     protected void Button1_Click(object sender, EventArgs e)
     {
-        string strcity = "";
-        GridViewDataColumn columnCity = (GridViewDataColumn)ctrlGrid.Columns["CardTypeDesc"];
-        for (int rowIndex = 0; rowIndex < ctrlGrid.VisibleRowCount; rowIndex++)
+        List<string> values = new List<string>();
+        foreach (GridViewRow row in ctrlGrid.Rows)
         {
-            TextBox aspTxtCity = (TextBox)ctrlGrid.FindRowCellTemplateControl(rowIndex, columnCity, "TextBox1");
-            strcity = aspTxtCity.Text;
+            TextBox tb = row.FindControl("TextBox1") as TextBox;
+            if (tb != null) values.Add(tb.Text);
         }
+        litResult.Text = HttpUtility.HtmlEncode(string.Format("Read {0} row(s): {1}", values.Count, string.Join(", ", values.ToArray())));
     }
 }

@@ -1,14 +1,10 @@
-﻿Imports System
+﻿Option Strict Off
+Imports System
 Imports NETClass
 Imports System.Data.SqlClient
 Imports System.Data
 Imports System.IO
-'Imports DevExpress.Web
-'Imports DevExpress.Web.ASPxEditors
 Imports System.Net.Mail
-
-'Imports CrystalDecisions.Shared
-'Imports CrystalDecisions.CrystalReports.Engine
 Imports System.Drawing.Printing
 Imports Microsoft.ReportingServices
 Imports System.Xml
@@ -19,218 +15,233 @@ Imports System.Collections
 Imports System.Configuration
 Imports System.Net
 Imports System.Globalization
-
-
-'Imports CrystalDecisions
 Imports Microsoft.Reporting.WebForms
+Imports System.Collections.Generic
+Imports System.Web
+Imports System.Web.UI
+Imports System.Web.UI.WebControls
 
-
+''' <summary>
+''' Bulk SMS broadcast: sends the message (with account placeholders filled in) to the phone number of each selected account.
+''' Accounts: GetAllAccountCardRequest (product, branch, optional account list). Plain ASP.NET controls (no DevExpress);
+''' the sending code is the original page's.
+''' </summary>
 Partial Class Processing_FrmBulkSMS
     Inherits System.Web.UI.Page
 
+    Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
+        If Not IsPostBack Then
+            LoadFilters()
+            BindGrid()
+        End If
+    End Sub
+
+    ' Kept for the original sending code, which builds (unused) statement queries for today's date.
+    Private ReadOnly Property IssueDate As DateTime
+        Get
+            Return DateTime.Today
+        End Get
+    End Property
+
+    Private ReadOnly Property ExpiryDate As DateTime
+        Get
+            Return DateTime.Today.AddDays(1.0)
+        End Get
+    End Property
+
+    Protected Sub rblFormat_SelectedIndexChanged(ByVal sender As Object, ByVal e As EventArgs)
+        Dim html As Boolean = rblFormat.SelectedValue = "2"
+        txtMessage.Visible = Not html
+        txtHtml.Visible = html
+    End Sub
+
+    Private Function MessageText() As String
+        Return If(rblFormat.SelectedValue = "2", txtHtml.Text, txtMessage.Text).Trim()
+    End Function
+
+    Private Const DefaultBranch As String = "101"
+    Private Const DefaultProduct As String = "103"
+
+    ' =====================================================================
+    ' Accounts
+    ' =====================================================================
+    Private Sub LoadFilters()
+        Try
+            For Each r As DataRow In QueryProc("Sproc_GetAllProductsCards").Rows
+                Dim code As String = Col(r, "Product Code"), name As String = Col(r, "product"), type As String = Col(r, "Type")
+                If code = "" OrElse drp_products.Items.FindByValue(code) IsNot Nothing Then Continue For
+                drp_products.Items.Add(New ListItem(If(name = "", code, name) & If(type = "", "", " (" & type & ")"), code))
+            Next
+            For Each r As DataRow In QueryProc("Sproc_GetAllBranchesCards").Rows
+                Dim code As String = Col(r, "Headsub_code"), name As String = Col(r, "sub_name")
+                If code = "" OrElse drpbranches.Items.FindByValue(code) IsNot Nothing Then Continue For
+                drpbranches.Items.Add(New ListItem(If(name = "", code, name & " (" & code & ")"), code))
+            Next
+        Catch ex As Exception
+            ShowError("The products or branches could not be loaded: " & ex.Message)
+        End Try
+        Pick(drp_products, DefaultProduct)
+        Pick(drpbranches, DefaultBranch)
+    End Sub
+
+    Private Shared Function QueryProc(ByVal procedure As String) As DataTable
+        Dim table As New DataTable()
+        Using conn As New SqlConnection(Cfg(MainDb))
+            Using cmd As New SqlCommand(procedure, conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                Using adapter As New SqlDataAdapter(cmd)
+                    adapter.Fill(table)
+                End Using
+            End Using
+        End Using
+        Return table
+    End Function
+
+    Private Shared Sub Pick(ByVal list As DropDownList, ByVal value As String)
+        If list.Items.FindByValue(value) Is Nothing Then list.Items.Insert(0, New ListItem(value, value))
+        list.ClearSelection()
+        list.Items.FindByValue(value).Selected = True
+    End Sub
+
+    Private Function LoadAccounts() As DataTable
+        Dim t As DataTable = Query(MainDb, "EXEC GetAllAccountCardRequest @product, @branch", P("@product", drp_products.SelectedValue), P("@branch", drpbranches.SelectedValue))
+        Dim wanted As List(Of String) = AccountList(txtSpecificAcct.Text)
+        If wanted.Count > 0 AndAlso t.Columns.Contains("AccountNo") Then
+            Dim keep As New HashSet(Of String)(wanted, StringComparer.OrdinalIgnoreCase)
+            Dim filtered As DataTable = t.Clone()
+            For Each r As DataRow In t.Rows
+                If keep.Contains(Col(r, "AccountNo")) Then filtered.ImportRow(r)
+            Next
+            t = filtered
+        End If
+        For Each column As String In New String() {"AccountNo", "AccountName", "Product", "DOB", "address", "city", "Book Bal", "Cleared Bal", "Trans Status", "Account Status"}
+            If Not t.Columns.Contains(column) Then t.Columns.Add(column, GetType(String))
+        Next
+        Return t
+    End Function
+
+    Private Sub BindGrid()
+        Try
+            Dim t As DataTable = LoadAccounts()
+            ctrlGrid.DataSource = t
+            ctrlGrid.DataBind()
+            litTotal.Text = String.Format("{0:N0} account{1}", t.Rows.Count, If(t.Rows.Count = 1, "", "s"))
+        Catch ex As Exception
+            ctrlGrid.DataSource = Nothing
+            ctrlGrid.DataBind()
+            litTotal.Text = ""
+            ShowError("The accounts could not be loaded: " & ex.Message)
+        End Try
+    End Sub
+
+    Protected Sub Filter_Changed(ByVal sender As Object, ByVal e As EventArgs)
+        ctrlGrid.PageIndex = 0
+        litResult.Text = ""
+        litError.Text = ""
+        BindGrid()
+    End Sub
+
+    Protected Sub ctrlGrid_PageIndexChanging(ByVal sender As Object, ByVal e As GridViewPageEventArgs)
+        ctrlGrid.PageIndex = e.NewPageIndex
+        BindGrid()
+    End Sub
+
+    ''' <summary>Ticked accounts on this page, or every listed account when "all pages" is ticked.</summary>
+    Private Function SelectedAccounts() As List(Of String)
+        Dim accounts As New List(Of String)()
+        If chkAllRecords.Checked Then
+            For Each r As DataRow In LoadAccounts().Rows
+                Dim acct As String = Col(r, "AccountNo")
+                If acct <> "" AndAlso Not accounts.Contains(acct) Then accounts.Add(acct)
+            Next
+            Return accounts
+        End If
+        For Each row As GridViewRow In ctrlGrid.Rows
+            Dim chk As CheckBox = TryCast(row.FindControl("chkSelect"), CheckBox)
+            If row.RowType = DataControlRowType.DataRow AndAlso chk IsNot Nothing AndAlso chk.Checked Then
+                accounts.Add(Convert.ToString(ctrlGrid.DataKeys(row.RowIndex).Value))
+            End If
+        Next
+        Return accounts
+    End Function
+
+    Protected Sub Button7_Click(ByVal sender As Object, ByVal e As EventArgs)
+        Response.Redirect(Request.Path, False)
+        Context.ApplicationInstance.CompleteRequest()
+    End Sub
+
+    ''' <summary>The customer's e-mail address in core banking ("" when none).</summary>
+    Private Shared Function AccountEmail(ByVal accountNo As String) As String
+        Dim t As DataTable = Query(CoreDb, "EXEC Sproc_GetAccountEmail @acct", P("@acct", accountNo))
+        If t.Rows.Count = 0 OrElse t.Rows(0).IsNull(0) Then Return ""
+        Return Convert.ToString(t.Rows(0)(0)).Replace("'", "").Trim()
+    End Function
+
+    Private Sub Report(ByVal what As String, ByVal done As Integer, ByVal total As Integer, ByVal skipped As Integer, ByVal skippedWhy As String, ByVal failed As List(Of String))
+        ShowSuccess(String.Format("{0} for {1} of {2} account{3}.{4}", what, done, total, If(total = 1, "", "s"),
+            If(skipped = 0, "", String.Format(" {0} skipped {1}.", skipped, skippedWhy))))
+        If failed.Count > 0 Then litError.Text = HttpUtility.HtmlEncode(String.Format("{0} failed: {1}", failed.Count, String.Join("; ", failed.ToArray())))
+    End Sub
+
+    ' =====================================================================
+    ' Send broadcast
+    ' =====================================================================
+    Protected Sub Button6_Click(ByVal sender As Object, ByVal e As EventArgs)
+        Page.Validate("send")
+        If Not Page.IsValid Then Return
+        If MessageText() = "" Then ShowError("Write the message first.") : Return
+        Dim accounts As List(Of String) = SelectedAccounts()
+        If accounts.Count = 0 Then ShowError("Tick at least one account, or tick ""all pages"".") : Return
+
+        Dim useSsl As Boolean = Cfg("SMSSSL") = "1"
+        Dim smsUserName As String = Cfg("SmsUserName")
+        Dim pwds As String = Cfg("SmsPwds")
+        Dim displayname As String = Cfg("CompanyBrand")
+        Dim sent As Integer = 0, skipped As Integer = 0
+        Dim failed As New List(Of String)()
+
+        For Each accountNo As String In accounts
+            Try
+                Dim phones As DataTable = Query(MainDb, "EXEC SpSMSNoAccountNo @acct", P("@acct", accountNo))
+                Dim toPhone As String = If(phones.Rows.Count = 0, "", Col(phones.Rows(0), "msg_to"))
+                If toPhone = "" Then skipped += 1 : Continue For
+
+                If CheckBox1.Checked Then
+                    ' charged messages only go to accounts with SMS alerts switched on
+                    Dim master As DataSet = NETClass.Classes.AXGetDataset(String.Format("SpAcctMasterSelectOne '{0}'", SqlText(accountNo)))
+                    Dim enabled As String = If(master.Tables.Count = 0 OrElse master.Tables(0).Rows.Count = 0, "", Col(master.Tables(0).Rows(0), "EnableSMS"))
+                    If enabled <> "True" Then skipped += 1 : Continue For
+                End If
+
+                Dim message As String = GenerateMsg(accountNo, MessageText())
+                Dim response As String
+                If useSsl Then
+                    response = NETClass.Classes.FnPushSMSSSL(toPhone, smsUserName, pwds, displayname, message, toPhone)
+                Else
+                    response = NETClass.Classes.FnPushSMS(toPhone, smsUserName, pwds, displayname, message, toPhone)
+                End If
+
+                If CheckBox1.Checked Then
+                    ' record the message so the charge can be applied
+                    NETClass.Classes.RecordOp(String.Format("Sproc_MsgBulkPushsms '{0}','{1}','{2}','{3}'", SqlText(message), SqlText(accountNo), SqlText(toPhone), SqlText(response)))
+                End If
+                sent += 1
+            Catch ex As Exception
+                failed.Add(accountNo & ": " & ex.Message)
+            End Try
+        Next
+        Report("Broadcast sent", sent, accounts.Count, skipped, If(CheckBox1.Checked, "(no phone number or SMS alerts not enabled)", "(no phone number)"), failed)
+    End Sub
+
+    ' ---- BEGIN unchanged sending code (carried over from the original page) ----
  
 
-    Public luser As String = Context.User.Identity.Name
-        Public StrLocation As String = "101" 'luser.Substring(luser.LastIndexOf("?") + 1)
-        Public struser As String = "Axadmin" ' Mid(luser, 1, luser.LastIndexOf("?"))
-        Public guser As String = struser
         Public l_senderlist As String
         Public dt As New DataTable
 
-
-
-
-        Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
-
-            If (IsPostBack = False And IsCallback = False) Then
-            txtUserID.Text = "Axadmin" 'guser
-
-                LoadGrid()
-
-
-                drpbranches.Value = "101"
-                drp_products.Value = "103"
-                dateIssue.Date = Today.Date
-                dateexpiry.Date = Today.Date.AddDays(1.0)
-
-                Me.ASPxGridView1.PageIndex = 0
-            End If
-        End Sub
-        Sub LoadGrid()
-            luser = Context.User.Identity.Name
-            ' StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-            'struser = Mid(luser, 1, luser.LastIndexOf("?"))
-            guser = struser
-            If String.IsNullOrEmpty(Trim(txtSpecificAcct.Text)) = False Then
-
-
-
-                Dim strgetAcctDetails As String = String.Format("GetAllAccountCardRequest '{0}','{1}'", drp_products.Value, drpbranches.Value)
-            SqlacctDetails.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-                SqlacctDetails.SelectCommand = strgetAcctDetails
-                SqlacctDetails.FilterExpression = String.Format("accountno in ({0})", Trim(txtSpecificAcct.Text))
-
-                SqlacctDetails.SelectCommandType = SqlDataSourceCommandType.Text
-
-            Else
-
-                Dim strgetAcctDetails As String = String.Format("GetAllAccountCardRequest '{0}','{1}'", drp_products.Value, drpbranches.Value)
-            SqlacctDetails.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-                SqlacctDetails.SelectCommand = strgetAcctDetails
-                SqlacctDetails.SelectCommandType = SqlDataSourceCommandType.Text
-
-            End If
-            'Dim strgetOffr As String = String.Format("Sproc_GetTransApprovingOfficers {0},2,'{1}','{2}','{3}'", CDec(200), gEazy.GetTransCodeInfo("002", 2), StrLocation, guser)
-            'sqlAppr.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-            'sqlAppr.SelectCommand = strgetOffr
-            'sqlAppr.SelectCommandType = SqlDataSourceCommandType.Text
-
-            'Response.Write(strgetAcctDetails)
-        End Sub
-
-        Protected Sub ASPxGridView1_BeforePerformDataSelect(ByVal sender As Object, ByVal e As System.EventArgs) Handles ASPxGridView1.BeforePerformDataSelect
-            LoadGrid()
-        End Sub
-
-        Protected Sub drp_products_SelectedIndexChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles drp_products.SelectedIndexChanged
-
-            LoadGrid()
-        End Sub
-
-        Protected Sub drpbranches_SelectedIndexChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles drpbranches.SelectedIndexChanged
-
-            LoadGrid()
-        End Sub
-
-        Protected Sub txtSpecificAcct_TextChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles txtSpecificAcct.TextChanged
-
-            LoadGrid()
-        End Sub
-
      
 
-        Public Sub CreateMessageWithAttachmentByAcctRep(ByVal server As String, ByVal toAddress As String, ByVal AccountNo As String, ByVal strserverpath As String, ByVal lpath As String)
-            ' Create the Path to the Attachments
-            On Error Resume Next
-
-            Dim EmailServer As String = server 'EazyEmailServer
-            Dim ds As New DataSet
-            'Dim rep, cr As New ReportDocument
-            Dim str_path As String = NETClass.Classes.GetPath(1)
-        'Response.Write(str_path)
-        'rep.Load(str_path & "\" & "AccountEStatement" & ".rpt")
-        Dim warnings As Warning() = Nothing
-        Dim streamids As String() = Nothing
-            Dim mimeType As String = Nothing
-            Dim encoding As String = Nothing
-            Dim extension As String = Nothing
-            Dim deviceInfo As String
-            Dim bytes As Byte()
-
-            Dim lr As New Microsoft.Reporting.WebForms.LocalReport
-
-
-            lr.ReportPath = strserverpath
-
-            'rep.Load("C:\EazybancNET New Features\EazybancNET Reports" & "\" & "Account Statement" & ".rpt")
-            Dim str_getstr As String = String.Format("SELECT sub_name, account_no, seq_no, posted_by, post_date, trans_date, mini_account_no, curr_code,description, accountname, narrative, debit, credit, fcy_debit, fcy_credit, balance, fcy_balance, base_bf, fcy_bf, voucher_no, ref_no, headsub_code, exch_rate, deal_no,trans_code, approving_offr1, status_desc, client_name, narration, reversed,  cast('{0}' as datetime)  as startdate, cast('{1}' as datetime)  as enddate, address, city, prod_desc, prod_type_code, prod_type_desc, prod_code, trans_desc, report_head_code,report_head_desc, post_headsub_code, cheque_no, print_stmt, account_status, old_account_no, item_class, control_account_no  FROM VwTransHist WHere account_no ='{2}' AND startdate >='{3}' AND enddate <= '{4}'  order by post_date, seq_no", ((dateIssue.Date.ToShortDateString())), (dateexpiry.Date.ToShortDateString()), AccountNo, dateIssue.Date.ToShortDateString(), dateexpiry.Date.ToShortDateString())
-
-
-            Dim mysqldata As New SqlDataSource
-            mysqldata.ConnectionString = ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-            mysqldata.SelectCommand = str_getstr
-            mysqldata.DataBind()
-
-            Dim myDataSource = New ReportDataSource("DataSet2_VwTransHist", mysqldata)
-            lr.DataSources.Add(myDataSource)
-
-            bytes = lr.Render("pdf", _
-                     Nothing, mimeType, _
-                       encoding, extension, streamids, warnings)
-            Dim fileAcctNo As String = String.Format("{0}.pdf", AccountNo)
-
-            'Dim fs As New FileStream(lpath & "Statement.pdf", FileMode.Create)
-
-            Dim fs As New FileStream(lpath & fileAcctNo, FileMode.Create)
-
-            fs.Write(bytes, 0, bytes.Length)
-            fs.Close()
-
-            ' Response.Write(str_getstr)
-            ' ds = NETClass.Classes.GetDataset("SELECT * FROM VwTransHist WHere account_no ='" & AccountNo & "'")
-            'ds = NETClass.Classes.GetDataset(str_getstr)
-
-
-            'rep.SetDatabaseLogon(NETClass.Classes.GetPath(7), NETClass.Classes.GetPath(8), NETClass.Classes.GetPath(5), NETClass.Classes.GetPath(6))
-            'rep.SetDataSource(ds.Tables(0))
-            ''cr = rep
-            '  Dim lp As CrystalDecisions.CrystalReports.Engine.ReportOptions
-            ' rep.Export(lp.EnableSaveSummariesWithReport.TrueString)
-
-
-            'rep.ExportToDisk(ExportFormatType.PortableDocFormat, "C:\Statement.pdf")
-
-            'rep.ExportToDisk(ExportFormatType.PortableDocFormat, "Statement.pdf")
-
-
-
-
-
-
-            'Dim file As String = lpath & "Statement.pdf" '"Statement.pdf"
-            Dim file As String = String.Format("{0}.pdf", AccountNo)
-
-            '// Create a message and set up the recipients.
-            'Dim message As MailMessage = New MailMessage("eStatement@GTHomes" & EmailServer & ".com", "temmy54@yahoo.com", "Estatement Of Account.:-" & AccountNo, "Pls, See the Your attached Statements of Accounts.")
-            ' Dim message As MailMessage = New MailMessage("eStatement@GTHomes", "kazeem.owolabi@gthomes.com", "Estatement Of Account.:-" & AccountNo, "Pls, See the Your attached Statements of Accounts.")
-            Dim message As MailMessage = New MailMessage("eStatement@Resortng.com", toAddress, "Estatement Of Account.:-" & AccountNo, "Please, see your attached statements of accounts.")
-
-
-            ''// Create  the file attachment for this e-mail message.
-            'Dim data As Attachment = New Attachment(file, Net.Mime.MediaTypeNames.Application.Octet)
-            'Dim disposition As Net.Mime.ContentDisposition = data.ContentDisposition
-            'disposition.CreationDate = System.IO.File.GetCreationTime(file)
-            'disposition.ModificationDate = System.IO.File.GetLastWriteTime(file)
-            'disposition.ReadDate = System.IO.File.GetLastAccessTime(file)
-            'message.Attachments.Add(data)
-            'Dim client As SmtpClient = New SmtpClient(server)
-            '' // Add credentials if the SMTP server requires them.
-            'client.Credentials = Net.CredentialCache.DefaultNetworkCredentials
-            '' client.Send(message)
-            'l_senderlist = l_senderlist + AccountNo & ":(" & toAddress & "),"
-
-            '' // Display the values in the ContentDisposition for the attachment.
-            'Dim cd As Net.Mime.ContentDisposition = data.ContentDisposition
-            'Console.Write("Content disposition")
-            'Console.Write(cd.ToString())
-            'Console.WriteLine("File {0}", cd.FileName)
-            'Console.WriteLine("Size {0}", cd.Size)
-            'Console.WriteLine("Creation {0}", cd.CreationDate)
-            'Console.WriteLine("Modification {0}", cd.ModificationDate)
-            'Console.WriteLine("Read {0}", cd.ReadDate)
-            'Console.WriteLine("Inline {0}", cd.Inline)
-            'Console.WriteLine("Parameters: {0}", cd.Parameters.Count)
-            'Dim d As DictionaryEntry
-            'For Each d In cd.Parameters
-
-            '    Console.WriteLine("{0} = {1}", d.Key, d.Value)
-            'Next
-            'data.Dispose()
-
-        End Sub
-
-
  
-
-        Protected Sub cmdClear_Command(ByVal sender As Object, ByVal e As System.Web.UI.WebControls.CommandEventArgs) Handles cmdClear.Command
-            ASPxListBox1.Dispose()
-
-            ASPxGridView1.DataBind()
-        End Sub
-
-        Protected Sub cmdClear_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles cmdClear.Click
-            ASPxListBox1.Items.Clear()
-        End Sub
 
      
         Function GenerateMsg(ByVal AccountNo As String, ByVal rulestr As String) As String
@@ -273,17 +284,14 @@ Partial Class Processing_FrmBulkSMS
             Next
             Return Replace(msg, "}", "")
 
-
         End Function
         Function formmsg(ByVal item_code As String, ByVal AccountNo As String) As String
             Dim k As Integer = 0
             ' For k = 0 To DataGrid1.Attributes("NoOfCols") - 1
         If Trim(item_code) = "AccountNo" Then
 
-
             Return AccountNo
         ElseIf Trim(item_code) = "AccountDesc" Then
-
 
             Dim strgetToInfo As String = String.Format("SELECT [dbo].[FnAccountName]('{0}')", AccountNo)
 
@@ -338,183 +346,109 @@ Partial Class Processing_FrmBulkSMS
             ' Next
 
     End Function
-
-        Protected Sub ASPxRadioButtonList1_SelectedIndexChanged(sender As Object, e As System.EventArgs) Handles ASPxRadioButtonList1.SelectedIndexChanged
-            If ASPxRadioButtonList1.SelectedItem.Value = 1 Then
-                txtMessage.Visible = True
-                ASPxHtmlEditor1.Visible = False
-
-            Else
-                txtMessage.Visible = False
-                ASPxHtmlEditor1.Visible = True
-
-            End If
-        End Sub
-
-    Protected Sub Button6_Click(sender As Object, e As System.EventArgs) Handles Button6.Click
-        'Try
-
-
-        Dim item As ListItem, i As Integer = 0
-
-        ' For Each item In ASPxListBox1.Items
-
-        'For i = 0 To (ASPxListBox1.Items.Count)
-        Dim SSLTypeInfo As String = ConfigurationManager.ConnectionStrings("SMSSSL").ConnectionString
-        For Each key As String In ASPxGridView1.GetSelectedFieldValues("AccountNo")
-
-
-            If (ASPxGridView1.Selection.IsRowSelectedByKey(key)) = True Then
-                Dim l_refNo As String = ASPxGridView1.GetRowValuesByKeyValue(key, "AccountNo").ToString()
-                If Me.CheckBox1.Checked = True Then
-                    Dim dks As New DataSet
-                    Dim strgetToAddress As String = String.Format("SpSMSNoAccountNo '{0}'", l_refNo)
-                    Dim strSMSEnabled As String = "0"
-                    Dim strconn As String = ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-                    Dim sqlConn As Data.SqlClient.SqlConnection = New SqlClient.SqlConnection(strconn)
-                    Dim sqlDataAdapter As Data.SqlClient.SqlDataAdapter = New SqlDataAdapter(strgetToAddress, sqlConn)
-                    Dim Ds As New DataSet()
-                    sqlDataAdapter.Fill(Ds)
-                    Dim smsUserName As String = ConfigurationManager.ConnectionStrings("SmsUserName").ConnectionString
-                    Dim pwds As String = ConfigurationManager.ConnectionStrings("SmsPwds").ConnectionString
-
-                    Dim displayname As String = ConfigurationManager.ConnectionStrings("CompanyBrand").ConnectionString
-                    Dim strQrySMSstatus As String = String.Format("SpAcctMasterSelectOne '{0}'", l_refNo)
-                    Dim str_ToPhoneNo As String = Nothing
-                    If Ds.Tables(0).Rows.Count > 0 Then
-                        str_ToPhoneNo = Ds.Tables(0).Rows(0)("msg_to").ToString()
-                        strSMSEnabled = Classes.AXGetDataset(strQrySMSstatus).Tables(0).Rows(0)("EnableSMS").ToString()
-                        If strSMSEnabled = "True" Then
-                            Dim strmsg As String = ""
-                            If ASPxRadioButtonList1.SelectedItem.Value = 1 Then
-
-                                'strmsg = txtMessage.Text 'GenerateMsg(String.Format("{0}", txtMessage.Text), ASPxListBox1.Items(i).Value)
-                                strmsg = GenerateMsg(l_refNo, String.Format("{0}", txtMessage.Text))
-                            Else
-
-                                'strmsg = ASPxHtmlEditor1.Html 'GenerateMsg(String.Format("{0}", ASPxHtmlEditor1.Html), ASPxListBox1.Items(i).Value)
-                                strmsg = GenerateMsg(l_refNo, String.Format("{0}", ASPxHtmlEditor1.Html))
-                            End If
-                            Dim strresponse As String = ""
-
-                            If SSLTypeInfo = "1" Then
-
-                                strresponse = NETClass.Classes.FnPushSMSSSL(str_ToPhoneNo, smsUserName, pwds, displayname, strmsg, str_ToPhoneNo)
-
-
-                            Else
-                                strresponse = NETClass.Classes.FnPushSMS(str_ToPhoneNo, smsUserName, pwds, displayname, strmsg, str_ToPhoneNo)
-
-                            End If
-
-                            'insert msgs for charges
-
-                            Dim strpushmsg As String = String.Format("Sproc_MsgBulkPushsms '{0}','{1}','{2}','{3}'", strmsg, l_refNo, str_ToPhoneNo, strresponse)
-                            'NETClass.Classes.GetDataset(strpushmsg)
-                            NETClass.Classes.RecordOp(strpushmsg)
-                        End If
-
-                        i = i + 1
-                    End If
-
-                Else
-                    '  Dim str_getActive As String = String.Format("SELECT accountno FROM   TransHist WHere postingdateAdded between  '{0}' AND '{1}'  AND accountno  = '{2}'  AND transcode < '731' ", ((dateIssue.Date.ToShortDateString())), (dateexpiry.Date.ToShortDateString()), ASPxListBox1.Items(i).Value)
-
-                    ' If NETClass.Classes.GetDataset(str_getActive).Tables(0).Rows.Count > 0 Then
-
-
-                    Dim strgetToAddress As String = String.Format("SpSMSNoAccountNo '{0}'", l_refNo)
-
-                    Dim strconn As String = ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-                    Dim sqlConn As Data.SqlClient.SqlConnection = New SqlClient.SqlConnection(strconn)
-                    Dim sqlDataAdapter As Data.SqlClient.SqlDataAdapter = New SqlDataAdapter(strgetToAddress, sqlConn)
-                    Dim Ds As New DataSet()
-                    sqlDataAdapter.Fill(Ds)
-                    Dim smsUserName As String = ConfigurationManager.ConnectionStrings("SmsUserName").ConnectionString
-                    Dim pwds As String = ConfigurationManager.ConnectionStrings("SmsPwds").ConnectionString
-                    Dim displayname As String = ConfigurationManager.ConnectionStrings("CompanyBrand").ConnectionString
-                    Dim str_ToPhoneNo As String = Nothing
-                    If Ds.Tables(0).Rows.Count > 0 Then
-                        str_ToPhoneNo = Ds.Tables(0).Rows(0)("msg_to").ToString()
-                        Dim strmsg As String = ""
-                        If ASPxRadioButtonList1.SelectedItem.Value = 1 Then
-
-                            ' strmsg = txtMessage.Text ' GenerateMsg(String.Format("{0}", txtMessage.Text), ASPxListBox1.Items(i).Value)
-                            strmsg = GenerateMsg(l_refNo, String.Format("{0}", txtMessage.Text))
-
-
-                        Else
-
-                            'strmsg = ASPxHtmlEditor1.Html ' GenerateMsg(String.Format("{0}", ASPxHtmlEditor1.Html), ASPxListBox1.Items(i).Value)
-                            strmsg = GenerateMsg(l_refNo, String.Format("{0}", ASPxHtmlEditor1.Html))
-                        End If
-
-                        Dim strresponse As String = ""
-
-                        If SSLTypeInfo = "1" Then
-
-                            strresponse = NETClass.Classes.FnPushSMSSSL(str_ToPhoneNo, smsUserName, pwds, displayname, strmsg, str_ToPhoneNo)
-
-
-                        Else
-                            strresponse = NETClass.Classes.FnPushSMS(str_ToPhoneNo, smsUserName, pwds, displayname, strmsg, str_ToPhoneNo)
-
-                        End If
-                        ' NETClass.Classes.FnPushSMS(str_ToPhoneNo, smsUserName, pwds, displayname, strmsg, str_ToPhoneNo)
-                        i = i + 1
-                    End If
-
-
-
-
-
-
-
-
-                End If
-
-
-
-            End If
-
-
-
-        Next
-
-
-
-        'Next
-
-        'If item.Selected = True Then
-
-
-
-
-
-
-
-        'End If
-
-        'Next
-        If dt.Rows.Count > 0 Then
-            'Me.GridView1.DataSource = dt
-            'Me.GridView1.DataBind()
-
-
-        Else
-            'Me.GridView1.DataSource = Nothing
-            'Me.GridView1.Dispose()
-
-
-        End If
-        Response.Write("<script>alert('Broadcast Sucessfully Sent for " & i & "') </script>")
-
-        'Catch ex As Exception
-        '    Response.Write("<script>alert('The Following error has occured " & ex.Message & "') </script>")
-
-
-        'End Try
+    ' ---- END unchanged sending code ----
+
+    ' =====================================================================
+    ' Shared Request-page helpers (same code in every rewritten Request page)
+    ' =====================================================================
+    Private Const MainDb As String = "EazyConnect"
+    Private Const CoreDb As String = "EazyConnectSource"
+
+    ''' <summary>Signed-in officer: the LogonUserID cookie is "user?branch".</summary>
+    Private Function CurrentUser() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Dim name As String = If(split >= 0, luser.Substring(0, split), luser)
+        Return If(name = "", "system", name)
+    End Function
+
+    ''' <summary>Branch of the signed-in officer (the part after "?" in the cookie).</summary>
+    Private Function CurrentBranch() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Return If(split >= 0, luser.Substring(split + 1), "")
+    End Function
+
+    Private Shared Function Cfg(ByVal name As String) As String
+        Dim s As ConnectionStringSettings = ConfigurationManager.ConnectionStrings(name)
+        Return If(s Is Nothing, "", s.ConnectionString)
+    End Function
+
+    Private Shared Function SqlText(ByVal value As String) As String
+        Return If(value, "").Replace("'", "''")
+    End Function
+
+    Private Shared Sub Audit(ByVal code As String, ByVal message As String, ByVal actor As String)
+        Classes.RecordOp(String.Format("Sproc_AddAuditLog '{0}','{1}','{2}',''", code, SqlText(message), SqlText(actor)))
     End Sub
 
+    ''' <summary>Runs a stored procedure on the main database.</summary>
+    Private Shared Sub Exec(ByVal procedure As String, ByVal ParamArray parameters As SqlParameter())
+        Using conn As New SqlConnection(Cfg(MainDb))
+            Using cmd As New SqlCommand(procedure, conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddRange(parameters)
+                conn.Open()
+                cmd.ExecuteNonQuery()
+            End Using
+        End Using
+    End Sub
+
+    ''' <summary>Runs a query with parameters (never string concatenation) and returns the first table.</summary>
+    Private Shared Function Query(ByVal connectionName As String, ByVal sql As String, ByVal ParamArray parameters As SqlParameter()) As DataTable
+        Dim table As New DataTable()
+        Using conn As New SqlConnection(Cfg(connectionName))
+            Using cmd As New SqlCommand(sql, conn)
+                cmd.Parameters.AddRange(parameters)
+                Using adapter As New SqlDataAdapter(cmd)
+                    adapter.Fill(table)
+                End Using
+            End Using
+        End Using
+        Return table
+    End Function
+
+    Private Shared Function P(ByVal name As String, ByVal value As Object) As SqlParameter
+        Return New SqlParameter(name, If(value, DBNull.Value))
+    End Function
+
+    Private Shared Function Col(ByVal row As DataRow, ByVal column As String) As String
+        If row Is Nothing OrElse Not row.Table.Columns.Contains(column) OrElse row.IsNull(column) Then Return ""
+        Return Convert.ToString(row(column))
+    End Function
+
+    ''' <summary>Splits "123, 456 789" into a clean list of account numbers.</summary>
+    Private Shared Function AccountList(ByVal text As String) As List(Of String)
+        Dim result As New List(Of String)()
+        For Each part As String In If(text, "").Split(New Char() {","c, ";"c, " "c, Convert.ToChar(13), Convert.ToChar(10), Convert.ToChar(9)}, StringSplitOptions.RemoveEmptyEntries)
+            Dim acct As String = part.Trim().Trim("'"c)
+            If acct <> "" AndAlso Not result.Contains(acct) Then result.Add(acct)
+        Next
+        Return result
+    End Function
+
+    Private Shared Function TryDate(ByVal value As String, ByRef result As DateTime) As Boolean
+        Return DateTime.TryParseExact(If(value, "").Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, result)
+    End Function
+
+    ''' <summary>Formats a date for an HTML date input (yyyy-MM-dd).</summary>
+    Protected Shared Function DateInput(ByVal value As Object) As String
+        If TypeOf value Is DateTime Then Return CType(value, DateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Dim d As DateTime
+        If DateTime.TryParse(Convert.ToString(value), d) Then Return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Return ""
+    End Function
+
+    Private Sub ShowSuccess(ByVal message As String)
+        litResult.Text = HttpUtility.HtmlEncode(message)
+        litError.Text = ""
+    End Sub
+
+    Private Sub ShowError(ByVal message As String)
+        litError.Text = HttpUtility.HtmlEncode(message)
+        litResult.Text = ""
+    End Sub
 End Class
 

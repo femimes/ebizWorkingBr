@@ -1,495 +1,302 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
 using System.Web;
+using System.Web.Script.Serialization;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using Newtonsoft.Json;
 using iBankPoints;
-using System.Data;
-using System.Web.UI.HtmlControls;
-using System.Drawing;
-using System.Web.Script.Serialization;
-using DevExpress.Web;
-using System.Threading;
 using WebRefVanzo;
-using System.Configuration;
-using System.Data.SqlClient;
 
-public partial class Request_CardActivityAuth :  System.Web.UI.Page
+/// <summary>
+/// Verify card maintenance (?RefNo=MNT...): the approving officer confirms a maintenance batch with a hardware-token code
+/// (WebRefVanzo two-factor service). Each card in the batch is then sent to the card switch (ICardProcess):
+/// 100004 block (status only), 100005 unblock, 100006 unlink, 100007 PIN re-issue, 100008 link.
+/// When every card succeeds the batch is set to status 3 (Sproc_UpdateCardMaintenance) and the officer goes back
+/// to the approvals list. Plain ASP.NET controls (no DevExpress).
+/// </summary>
+public partial class Request_CardActivityAuth : System.Web.UI.Page
 {
-    public string gUser = HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name;
-    public string luser = HttpContext.Current.User.Identity.Name;
-    public string StrLocation = "";
-    public string struser = "";
+    private const string ApprovalsPage = "../Approvals/ApproveCardMaint.aspx";
+
+    private string RefNo { get { return (Request.QueryString["RefNo"] ?? "").Trim(); } }
 
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (!IsPostBack && !IsCallback)
-        //if (IsCallback)
-        {
-            luser = HttpContext.Current.User.Identity.Name;
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1);
-            struser = luser.Substring(0, luser.LastIndexOf("?"));
-            gUser = struser;
-
-            //txtPin.Text = "";
-            lblUser.Text = gUser;// Request.Cookies["eLogonUserID"].Value;
-            //loadDetails();
-            //LoadingPanel.ContainerElementID = false ? "Panel" : "";
-            LoadingPanel.ContainerElementID = false ? "Panel" : "";
-            Thread.Sleep(7500);
-        }
-
-        //Thread.Sleep(7500);
+        if (!IsPostBack) LoadDetails();
     }
 
-    void loadDetails()
+    // =====================================================================
+    // Officer and data helpers
+    // =====================================================================
+
+    private string Identity()
     {
-        string RefNo = ""; string TransType = "002";
-        string strRespCode = ""; string strRespDesc = "";
-        decimal amount = 0;
-        decimal Fee = 0;
-        string strResults = ""; DataTable dt = new DataTable();
-        decimal TotalAmts = 0;
-        dt = iPoints.ProcessGetTempTrans(Request.QueryString["RefNo"], lblUser.Text, "2", Request.Cookies["Token"].Value);
-        foreach (DataRow item in dt.Rows)
-        {
-            //AccountNo = item["AccountNo"].ToString();
-            //creditAccountNo = item["BenAcctNo"].ToString();
-            //mobileNo = "";// item["mobileNo"].ToString();
-            //Location = item["Location"].ToString();
-            amount = decimal.Parse(item["amount"].ToString());
-            Fee = decimal.Parse(item["Fee"].ToString());
-            TransType = item["TransType"].ToString();
-            //creditBankcode = item["BenSortCode"].ToString();
-            TotalAmts += amount + Fee;
-        }
-
-        lblwebRefNo.Text = string.Format("Payment Reference: {0}", Request.QueryString["RefNo"]);
-        lblAmount.Text = string.Format("NGN {0:0,0.00}", TotalAmts);
-
-        if (TransType == "001")
-        {
-            lblwebRefNo.Visible = false;
-            customSwitch1.Visible = false;
-        }
-
-
-        if (TransType == "002")
-        {
-            lblwebRefNo.Visible = false;
-
-        }
-
-
+        string id = User != null && User.Identity != null ? User.Identity.Name : "";
+        if (string.IsNullOrEmpty(id) && Request.Cookies["LogonUserID"] != null) id = Request.Cookies["LogonUserID"].Value;
+        return id ?? "";
     }
+
+    private string CurrentUser()
+    {
+        string id = Identity();
+        int split = id.LastIndexOf('?');
+        return split >= 0 ? id.Substring(0, split) : id;
+    }
+
+    private string CurrentBranch()
+    {
+        string id = Identity();
+        int split = id.LastIndexOf('?');
+        return split >= 0 ? id.Substring(split + 1) : "";
+    }
+
+    private static string ConnectionString(string name)
+    {
+        ConnectionStringSettings s = ConfigurationManager.ConnectionStrings[name];
+        return s == null ? "" : s.ConnectionString;
+    }
+
+    private static DataTable Query(string connectionName, string sql, CommandType type, params SqlParameter[] parameters)
+    {
+        DataTable table = new DataTable();
+        using (SqlConnection conn = new SqlConnection(ConnectionString(connectionName)))
+        using (SqlCommand cmd = new SqlCommand(sql, conn))
+        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+        {
+            cmd.CommandType = type;
+            cmd.Parameters.AddRange(parameters);
+            adapter.Fill(table);
+        }
+        return table;
+    }
+
+    private static string Col(DataRow row, string column)
+    {
+        if (row == null || !row.Table.Columns.Contains(column) || row.IsNull(column)) return "";
+        return Convert.ToString(row[column]);
+    }
+
+    private void ShowError(string message)
+    {
+        litEmmorMsg.Text = HttpUtility.HtmlEncode(message);
+    }
+
+    // =====================================================================
+    // Request details
+    // =====================================================================
+
+    private static bool IsSecret(string column)
+    {
+        string c = column.ToLowerInvariant();
+        return c.Contains("cvv") || c.EndsWith("pin") || c.Contains("cardpin");
+    }
+
+    private void LoadDetails()
+    {
+        lblwebRefNo.Text = HttpUtility.HtmlEncode(RefNo);
+        List<KeyValuePair<string, string>> items = new List<KeyValuePair<string, string>>();
+        try
+        {
+            if (RefNo != "")
+            {
+                DataTable t = Query("EazyConnect", "EXEC SpGetBatRecCardMaintenance @RefNo", CommandType.Text, new SqlParameter("@RefNo", RefNo));
+                if (t.Rows.Count > 0)
+                {
+                    foreach (DataColumn c in t.Columns)
+                    {
+                        if (IsSecret(c.ColumnName)) continue;
+                        items.Add(new KeyValuePair<string, string>(c.ColumnName, Col(t.Rows[0], c.ColumnName)));
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError("The request details could not be loaded: " + ex.Message);
+        }
+        rptDetails.DataSource = items;
+        rptDetails.DataBind();
+        rptDetails.Visible = items.Count > 0;
+        phNoDetails.Visible = items.Count == 0;
+        btnConfirm.Enabled = items.Count > 0;
+    }
+
+    // =====================================================================
+    // Confirm
+    // =====================================================================
+
+    /// <summary>Card account type for the switch, from the account's product category in core banking.</summary>
+    private static string AccountType(string accountNo)
+    {
+        string prodType = "1";
+        foreach (DataRow r in Query("EazyConnectIBank", "SpAcctMasterSelectOne", CommandType.StoredProcedure, new SqlParameter("@AccountNo", accountNo)).Rows)
+            prodType = Col(r, "ProdCatCode");
+        switch (prodType)
+        {
+            case "1": return "20";
+            case "2": return "10";
+            case "3":
+            case "4": return "50";
+            case "6": return "30";
+            default: return "10";
+        }
+    }
+
+    /// <summary>True when the switch reply has "success": true.</summary>
+    private static bool SwitchSucceeded(string reply, out string message)
+    {
+        message = "";
+        try
+        {
+            Dictionary<string, object> json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(reply);
+            foreach (string k in new[] { "message", "responseMessage", "description", "error" })
+                if (json != null && json.ContainsKey(k) && json[k] != null) { message = Convert.ToString(json[k]); break; }
+            bool ok;
+            return json != null && json.ContainsKey("success") && bool.TryParse(Convert.ToString(json["success"]), out ok) && ok;
+        }
+        catch (Exception)
+        {
+            message = "unreadable reply from the card switch";
+            return false;
+        }
+    }
+
+    private void SetBatchStatus(int status)
+    {
+        using (SqlConnection conn = new SqlConnection(ConnectionString("EazyConnect")))
+        using (SqlCommand cmd = new SqlCommand("Sproc_UpdateCardMaintenance", conn))
+        {
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.Add(new SqlParameter("@eBatRefNo", RefNo));
+            cmd.Parameters.Add(new SqlParameter("@status", status));
+            conn.Open();
+            cmd.ExecuteNonQuery();
+        }
+    }
+
     protected void btnConfirm_Click(object sender, EventArgs e)
     {
+        Page.Validate();
+        if (!Page.IsValid) return;
+        if (RefNo == "") { ShowError("No request reference was given."); return; }
 
-        luser = HttpContext.Current.User.Identity.Name;
-        StrLocation = luser.Substring(luser.LastIndexOf("?") + 1);
-        struser = luser.Substring(0, luser.LastIndexOf("?"));
-        gUser = struser;
-
-        if (this.Page.IsValid == true)
+        string user = CurrentUser();
+        bool allDone = false;
+        try
         {
-            string RefNo = ""; string TransType = "002";
-            string strRespCode = ""; string strRespDesc = "";
-            string strResults = ""; DataTable dt = new DataTable();
-            #region Initalise and get parameters
-            string Token2FAUserId = "";string Token2FAClientId = "";
-            string CardISWClientId = ""; string CardISWClientKey = ""; string CardISWBankCode = "";string CardlinkAcctNo = "";
-            foreach (DataRow  item in NETClass.Classes.SqlDbGetDataset("Sproc_GetPref").Tables[0].Rows)
+            // switch credentials from the preferences
+            string clientId2FA = "", iswClientId = "", iswClientKey = "", iswBankCode = "";
+            foreach (DataRow r in NETClass.Classes.SqlDbGetDataset("Sproc_GetPref").Tables[0].Rows)
             {
-                  Token2FAUserId = item["Token2FAUserId"].ToString(); Token2FAClientId = item["Token2FAClientId"].ToString();
-                  CardISWClientId = item["CardISWClientId"].ToString(); CardISWClientKey = item["CardISWClientKey"].ToString();
-                  CardISWBankCode = item["CardISWBankCode"].ToString();
-                CardlinkAcctNo = item["linkedAccountNo"].ToString();
+                clientId2FA = Col(r, "Token2FAClientId");
+                iswClientId = Col(r, "CardISWClientId");
+                iswClientKey = Col(r, "CardISWClientKey");
+                iswBankCode = Col(r, "CardISWBankCode");
             }
-            Token2FAUserId = gUser;
-            #endregion
 
-            WebRefVanzo.TwoFactorService hardToken = new TwoFactorService();
-
-          
-            var respToken = hardToken.doResponseAuthentication(Token2FAUserId, Token2FAClientId, psword.Text);
-            
-            if (respToken.status.ToString() == "1")
-        
+            TwoFactorService hardToken = new TwoFactorService();
+            var respToken = hardToken.doResponseAuthentication(user, clientId2FA, psword.Text);
+            if (Convert.ToString(respToken.status) != "1")
             {
-                ////                "PIN":"3333","AccountNo":"0000081182","creditAccountNo":"0000081292","mobileNo":null,
-                //"Location":null,"amount":100,"Fee":10.75,"narration":"TestLocal","UserName":"femmes","creditBankcode":"090003"}
-                string AccountNo = "";
-                string creditAccountNo = "";
+                ShowError("The token code was not accepted. Check the code and try again.");
+                return;
+            }
+
+            DataTable cards = Query("EazyConnect", "EXEC SpGetBatRecCardMaintInfo @RefNo", CommandType.Text, new SqlParameter("@RefNo", RefNo));
+            if (cards.Rows.Count == 0) { ShowError("No cards were found in this request."); return; }
+
+            List<string> failed = new List<string>();
+            foreach (DataRow item in cards.Rows)
+            {
+                string accountNo = Col(item, "accountNo");
+                string cardPin = Col(item, "depCardpin");
+                string cardCVV = Col(item, "depcardcvv");
+                string cardPanNo = Col(item, "CardInstno");
+                string cardMonth = Col(item, "depcardmonth");
+                string linkAccountNo = Col(item, "LinkedAccountNo");
+                string maintType = Col(item, "maintType");
+
                 string mobileNo = "";
-                string Location = "";
-                decimal amount = 0;
-                decimal Fee = 0;
-                string narration = "";
-                string UserName = "";
-                string creditBankcode = "";
-                string creditAccountName = "";
+                foreach (DataRow dr in Query("EazyConnect", "EXEC SpAXMobileNo @acct", CommandType.Text, new SqlParameter("@acct", accountNo)).Rows)
+                    mobileNo = Col(dr, "SMSNo");
 
-                string cardPin = "";
-                string cardCVV = "";
-                string cardPanNo = "";
-                string cardMonth = "";
-                string cardAccount = "";
-                string cardMaintTyoe = "";
-                dt = NETClass.Classes.SqlDbGetDataset(string.Format("SpGetBatRecCardMaintInfo {0}", Request.QueryString["RefNo"])).Tables[0];//iPoints.ProcessGetTempTrans(Request.QueryString["RefNo"], lblUser.Text, "2", Request.Cookies["Token"].Value);
-                foreach (DataRow item in dt.Rows)
+                string reply = null, label = null;
+                switch (maintType)
                 {
-                    AccountNo = item["accountNo"].ToString();
-                    cardPin = item["depCardpin"].ToString();
-                    cardCVV = item["depcardcvv"].ToString();
-                    cardPanNo =  item["CardInstno"].ToString();
-                    cardMonth = item["depcardmonth"].ToString();
-                    cardAccount = item["accountNo"].ToString();
-                    CardlinkAcctNo = item["LinkedAccountNo"].ToString();
-                    cardMaintTyoe = item["maintType"].ToString();
-                    TransType = item["maintType"].ToString();
-                    string strGetCustInfo = string.Format("SpAXMobileNo '{0}'",AccountNo);
-                    foreach (DataRow dr in NETClass.Classes.SqlDbGetDataset(strGetCustInfo).Tables[0].Rows)
-                    {
-                        mobileNo = dr["SMSNo"].ToString();
-                    }
-
-                    if (TransType == "100004")
-                    {
-                        //strResults = iPoints.ProcessTellerInterFTOTP(psword.Text, AccountNo, creditAccountNo, Request.QueryString["RefNo"], Location, amount, Fee, narration, lblUser.Text, creditBankcode, Request.QueryString["RefNo"], Request.Cookies["Token"].Value);
-                        //strResults = ICardProcess.Blockcards(CardISWBankCode, gUser, CardISWClientId, CardISWClientKey,
-                        //    "1",cardPanNo,cardPin,cardMonth,cardCVV);
-
-                        JavaScriptSerializer jss = new JavaScriptSerializer();
-                        //dynamic json = jss.DeserializeObject(strResults);
-                        //string strResp = "";
-                        //strRespDesc = "Success";
-                        //ICardProcess.AddtoLogFile(strResults, "Block Details");
-                        //strResp = json["success"].ToString();
-
-                        //if (bool.Parse(strResp) == false)
-                        //{
-                        //    btnConfirm.Enabled = true;
-                        //    litEmmorMsg.Text = strRespDesc;
-
-                        //}
-                        //else
-                        {
-                            // update approval records
-                            string l_refNo = Request.QueryString["RefNo"];
-                            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-                            SqlCommand commandApd = new SqlCommand();
-                            connection.Open();
-                            commandApd.CommandText = "Sproc_UpdateCardMaintenance";
-                            commandApd.Connection = connection;
-
-                            commandApd.CommandType = CommandType.StoredProcedure;
-                            commandApd.Parameters.Add(new SqlParameter("@eBatRefNo", l_refNo));
-
-                            commandApd.Parameters.Add(new SqlParameter("@status", 3));
-                            commandApd.ExecuteNonQuery();
-                            connection.Close();
-                            Response.Redirect(string.Format("../Approvals/ApproveCardMaint.aspx", Request.QueryString["RefNo"], psword.Text));
-
-                        }
-
-                    }
-                    if (TransType == "100005")
-                    {
-                        //strResults = iPoints.ProcessTellerInterFTOTP(psword.Text, AccountNo, creditAccountNo, Request.QueryString["RefNo"], Location, amount, Fee, narration, lblUser.Text, creditBankcode, Request.QueryString["RefNo"], Request.Cookies["Token"].Value);
-
-                        #region Determine Card account Type
-                        string accountType = "10"; string strProdtype = "1";
-                        string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectIBank"].ConnectionString;
-
-                        SqlConnection Conn = new SqlConnection(strBenCon);DataTable dtcard = new DataTable();
-                        SqlCommand cmd = new SqlCommand();
-                        SqlDataAdapter cmdAdapter = new SqlDataAdapter("SpAcctMasterSelectOne", Conn);
-                        cmdAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
-                        cmdAdapter.SelectCommand.Parameters.Add(new SqlParameter("@AccountNo", cardAccount));
-                        cmdAdapter.Fill(dtcard);
-                        foreach (DataRow itemRows in dtcard.Rows)
-                        {
-                            strProdtype = itemRows["ProdCatCode"].ToString();
-                        }
-                        if (strProdtype =="1")
-                        {
-                            accountType = "20";
-                        }
-                        if (strProdtype == "2")
-                        {
-                            accountType = "10";
-                        }
-                        
-                        if (strProdtype == "3" || strProdtype == "4")
-                        {
-                            accountType = "50";
-                        }
-                        if (strProdtype == "6")
-                        {
-                            accountType = "30";
-                        }
-                        #endregion
-
-                        strResults = ICardProcess.UnBlockcards(CardISWBankCode, gUser, CardISWClientId, CardISWClientKey,
-                            accountType, cardPanNo, cardPin, cardMonth, cardCVV);
-
-
-                        JavaScriptSerializer jss = new JavaScriptSerializer();
-                        dynamic json = jss.DeserializeObject(strResults);
-                        string strResp = "";
-                        strRespDesc = "Success";
-                        ICardProcess.AddtoLogFile(strResults, "Unblock Details");
-                        strResp = json["success"].ToString();
-
-                        if (bool.Parse(strResp) == false)
-                        {
-                            btnConfirm.Enabled = true;
-                            litEmmorMsg.Text = strRespDesc;
-
-                        }
-                        else
-                        {
-                            // update approval records
-                            string l_refNo = Request.QueryString["RefNo"];
-                            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-                            SqlCommand commandApd = new SqlCommand();
-                            connection.Open();
-                            commandApd.CommandText = "Sproc_UpdateCardMaintenance";
-                            commandApd.Connection = connection;
-
-                            commandApd.CommandType = CommandType.StoredProcedure;
-                            commandApd.Parameters.Add(new SqlParameter("@eBatRefNo", l_refNo));
-
-                            commandApd.Parameters.Add(new SqlParameter("@status", 3));
-                            commandApd.ExecuteNonQuery();
-                            connection.Close();
-                            Response.Redirect(string.Format("../Approvals/ApproveCardMaint.aspx", Request.QueryString["RefNo"], psword.Text));
-
-                        }
-
-                    }
-
-                    if (TransType == "100006")
-                    {
-                        //strResults = iPoints.ProcessTellerInterFTOTP(psword.Text, AccountNo, creditAccountNo, Request.QueryString["RefNo"], Location, amount, Fee, narration, lblUser.Text, creditBankcode, Request.QueryString["RefNo"], Request.Cookies["Token"].Value);
-                        strResults = ICardProcess.UnLinkcards(CardISWBankCode, gUser, CardISWClientId, CardISWClientKey,
-                            "1", cardPanNo, cardPin, cardMonth, cardCVV, AccountNo);
-
-
-                        JavaScriptSerializer jss = new JavaScriptSerializer();
-                        dynamic json = jss.DeserializeObject(strResults);
-                        string strResp = "";
-                        strRespDesc = "Success";
-                        ICardProcess.AddtoLogFile(strResults, "Unlink Details");
-                        strResp = json["success"].ToString();
-
-                        if (bool.Parse(strResp) == false)
-                        {
-                            btnConfirm.Enabled = true;
-                            litEmmorMsg.Text = strRespDesc;
-
-                        }
-                        else
-                        {
-                            string l_refNo = Request.QueryString["RefNo"];
-                            // update approval records
-                            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-                            SqlCommand commandApd = new SqlCommand();
-                            connection.Open();
-                            commandApd.CommandText = "Sproc_UpdateCardMaintenance";
-                            commandApd.Connection = connection;
-
-                            commandApd.CommandType = CommandType.StoredProcedure;
-                            commandApd.Parameters.Add(new SqlParameter("@eBatRefNo", l_refNo));
-
-                            commandApd.Parameters.Add(new SqlParameter("@status", 3));
-                            commandApd.ExecuteNonQuery();
-                            connection.Close();
-                            Response.Redirect(string.Format("../Approvals/ApproveCardMaint.aspx", Request.QueryString["RefNo"], psword.Text));
-
-                        }
-
-                    }
-                    if (TransType == "100007")
-                    {
-
-
-                        #region Determine Card account Type
-                        string accountType = "10"; string strProdtype = "1";
-                        string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectIBank"].ConnectionString;
-
-                        SqlConnection Conn = new SqlConnection(strBenCon); DataTable dtcard = new DataTable();
-                        SqlCommand cmd = new SqlCommand();
-                        SqlDataAdapter cmdAdapter = new SqlDataAdapter("SpAcctMasterSelectOne", Conn);
-                        cmdAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
-                        cmdAdapter.SelectCommand.Parameters.Add(new SqlParameter("@AccountNo", cardAccount));
-                        cmdAdapter.Fill(dtcard);
-                        foreach (DataRow itemRows in dtcard.Rows)
-                        {
-                            strProdtype = itemRows["ProdCatCode"].ToString();
-                        }
-                        if (strProdtype == "1")
-                        {
-                            accountType = "20";
-                        }
-                        if (strProdtype == "2")
-                        {
-                            accountType = "10";
-                        }
-
-                        if (strProdtype == "3" || strProdtype == "4")
-                        {
-                            accountType = "50";
-                        }
-                        if (strProdtype == "6")
-                        {
-                            accountType = "30";
-                        }
-                        #endregion
-
-                        //strResults = iPoints.ProcessTellerInterFTOTP(psword.Text, AccountNo, creditAccountNo, Request.QueryString["RefNo"], Location, amount, Fee, narration, lblUser.Text, creditBankcode, Request.QueryString["RefNo"], Request.Cookies["Token"].Value);
-                        strResults = ICardProcess.PinReIssuance(CardISWBankCode, gUser, CardISWClientId, CardISWClientKey,
-                            accountType, cardPanNo, cardPin, cardMonth, cardCVV,"72",AccountNo,mobileNo,gUser);
-
-
-                        JavaScriptSerializer jss = new JavaScriptSerializer();
-                        dynamic json = jss.DeserializeObject(strResults);
-                        string strResp = "";
-                        strRespDesc = "Success";
-                        ICardProcess.AddtoLogFile(strResults, "Pin ReIssueance Details");
-                        strResp = json["success"].ToString();
-
-                        if (bool.Parse(strResp) == true)
-                        {
-                            //Response.Write("informations" + strResp);
-                            string l_refNo = Request.QueryString["RefNo"];
-                            litEmmorMsg.Text = strRespDesc;
-
-                            //        // update approval records
-
-                            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-                            SqlCommand commandApd = new SqlCommand();
-                            connection.Open();
-                            commandApd.CommandText = "Sproc_UpdateCardMaintenance";
-                            commandApd.Connection = connection;
-
-                            commandApd.CommandType = CommandType.StoredProcedure;
-                            commandApd.Parameters.Add(new SqlParameter("@eBatRefNo", l_refNo));
-
-                            commandApd.Parameters.Add(new SqlParameter("@status", 3));
-                            commandApd.ExecuteNonQuery();
-                            connection.Close();
-
-                            Response.Redirect(string.Format("../Approvals/ApproveCardMaint.aspx", Request.QueryString["RefNo"], psword.Text));
-
-                            //    }
-                        }
-                        else
-                        {
-                            strRespDesc = "Failed";
-                            litEmmorMsg.Text = strRespDesc;
-                        }
-
-                    }
-                    if (TransType == "100008")
-                    {
-                        string l_refNo = Request.QueryString["RefNo"];
-                        //check account bal and status
-                        #region section check
-
-                        SqlConnection connectionChk = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-                        //  string str12 = Guid.NewGuid().ToString().Substring(0, 12).ToUpper().Replace("-", "");
-                        //string str14 = NETClass.NETClass.GetRequestDataSet(string.Format("SELECT dbo.FnEncryptString('{0}') AS EnCryptValues", str12)).Tables[0].Rows[0]["EnCryptValues"].ToString();
-                        SqlCommand commandCheck = new SqlCommand();
-                        connectionChk.Open();
-                        commandCheck.CommandText = "SpCheckCardLink";
-                        commandCheck.Connection = connectionChk;
-
-                        commandCheck.CommandType = CommandType.StoredProcedure;
-                        commandCheck.Parameters.Add(new SqlParameter("@eBatRefNo", l_refNo));
-                        commandCheck.Parameters.Add(new SqlParameter("@status", 3));
-                        commandCheck.Parameters.Add(new SqlParameter("@MaintLocation", StrLocation));
-                        SqlParameter parameterCode = commandCheck.Parameters.Add(new SqlParameter("@ResponseCode", SqlDbType.VarChar, 5000));
-                        parameterCode.Direction = ParameterDirection.Output;
-                        SqlParameter parameterMsg = commandCheck.Parameters.Add(new SqlParameter("@ResponseDesc", SqlDbType.VarChar, 5000));
-                        parameterMsg.Direction = ParameterDirection.Output;
-                        commandCheck.ExecuteNonQuery();
-                        connectionChk.Close();
-                        #endregion
-                        if (parameterCode.Value.ToString() == "0")
-                        {
-                            //strResults = iPoints.ProcessTellerInterFTOTP(psword.Text, AccountNo, creditAccountNo, Request.QueryString["RefNo"], Location, amount, Fee, narration, lblUser.Text, creditBankcode, Request.QueryString["RefNo"], Request.Cookies["Token"].Value);
-                            strResults = ICardProcess.Linkcards(CardISWBankCode, gUser, CardISWClientId, CardISWClientKey,
-                                "1", cardPanNo, cardPin, cardMonth, cardCVV, CardlinkAcctNo);
-
-
-                            JavaScriptSerializer jss = new JavaScriptSerializer();
-                            dynamic json = jss.DeserializeObject(strResults);
-                            string strResp = "";
-                            strRespDesc = "Success";
-                            ICardProcess.AddtoLogFile(strResults, "Linking Details");
-                            strResp = json["success"].ToString();
-
-                            if (bool.Parse(strResp) == true)
-                            {
-                                Response.Write("informations" + strResp);
-
-                                litEmmorMsg.Text = strRespDesc;
-
-                                //        // update approval records
-
-                                SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-                                SqlCommand commandApd = new SqlCommand();
-                                connection.Open();
-                                commandApd.CommandText = "Sproc_UpdateCardMaintenance";
-                                commandApd.Connection = connection;
-
-                                commandApd.CommandType = CommandType.StoredProcedure;
-                                commandApd.Parameters.Add(new SqlParameter("@eBatRefNo", l_refNo));
-                                commandApd.Parameters.Add(new SqlParameter("@status", 3));
-                                //commandApd.Parameters.Add(new SqlParameter("@status", int.Parse("3")));
-                                commandApd.ExecuteNonQuery();
-                                connection.Close();
-
-                                Response.Redirect(string.Format("../Approvals/ApproveCardMaint.aspx", Request.QueryString["RefNo"], psword.Text));
-
-                                //    }
-                            }
-                            else
-                            {
-                                strRespDesc = "Failed";
-                                litEmmorMsg.Text = strRespDesc;
-                                lblwebRefNo.Text = "Failed";
-                            }
-
-
-
-                        }
-
-                        else
-                        {
-                            strRespDesc = "Failed";
-                            litEmmorMsg.Text = parameterMsg.Value.ToString();
-                            lblwebRefNo.Text = "Failed";
-
-                        }
-                    
-                    }
-
-
+                    case "100004":   // block: recorded only, no call to the switch
+                        continue;
+                    case "100005":
+                        label = "Unblock Details";
+                        reply = ICardProcess.UnBlockcards(iswBankCode, user, iswClientId, iswClientKey, AccountType(accountNo), cardPanNo, cardPin, cardMonth, cardCVV);
+                        break;
+                    case "100006":
+                        label = "Unlink Details";
+                        reply = ICardProcess.UnLinkcards(iswBankCode, user, iswClientId, iswClientKey, "1", cardPanNo, cardPin, cardMonth, cardCVV, accountNo);
+                        break;
+                    case "100007":
+                        label = "Pin ReIssueance Details";
+                        reply = ICardProcess.PinReIssuance(iswBankCode, user, iswClientId, iswClientKey, AccountType(accountNo), cardPanNo, cardPin, cardMonth, cardCVV, "72", accountNo, mobileNo, user);
+                        break;
+                    case "100008":
+                        string check = CheckLink();
+                        if (check != "") { failed.Add(accountNo + ": " + check); continue; }
+                        label = "Linking Details";
+                        reply = ICardProcess.Linkcards(iswBankCode, user, iswClientId, iswClientKey, "1", cardPanNo, cardPin, cardMonth, cardCVV, linkAccountNo);
+                        break;
+                    default:
+                        failed.Add(accountNo + ": unknown maintenance type " + maintType);
+                        continue;
                 }
 
-
-
+                ICardProcess.AddtoLogFile(reply, label);
+                string message;
+                if (!SwitchSucceeded(reply, out message))
+                    failed.Add(accountNo + ": declined by the card switch" + (message == "" ? "" : " (" + message + ")"));
             }
 
+            if (failed.Count > 0)
+            {
+                ShowError(string.Format("{0} card(s) were not processed, so the request is still open: {1}", failed.Count, string.Join("; ", failed.ToArray())));
+                return;
+            }
+
+            SetBatchStatus(3);
+            allDone = true;
+        }
+        catch (Exception ex)
+        {
+            ShowError("The request could not be completed: " + ex.Message);
         }
 
-
+        if (allDone)
+        {
+            Response.Redirect(ApprovalsPage, false);
+            Context.ApplicationInstance.CompleteRequest();
+        }
     }
 
-    
-
+    /// <summary>Runs SpCheckCardLink for a link request; "" when linking may go ahead, otherwise the reason.</summary>
+    private string CheckLink()
+    {
+        using (SqlConnection conn = new SqlConnection(ConnectionString("EazyConnect")))
+        using (SqlCommand cmd = new SqlCommand("SpCheckCardLink", conn))
+        {
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.Add(new SqlParameter("@eBatRefNo", RefNo));
+            cmd.Parameters.Add(new SqlParameter("@status", 3));
+            cmd.Parameters.Add(new SqlParameter("@MaintLocation", CurrentBranch()));
+            SqlParameter code = cmd.Parameters.Add(new SqlParameter("@ResponseCode", SqlDbType.VarChar, 5000));
+            code.Direction = ParameterDirection.Output;
+            SqlParameter desc = cmd.Parameters.Add(new SqlParameter("@ResponseDesc", SqlDbType.VarChar, 5000));
+            desc.Direction = ParameterDirection.Output;
+            conn.Open();
+            cmd.ExecuteNonQuery();
+            if (Convert.ToString(code.Value) == "0") return "";
+            string reason = Convert.ToString(desc.Value);
+            return reason == "" ? "link check failed" : reason;
+        }
+    }
 }

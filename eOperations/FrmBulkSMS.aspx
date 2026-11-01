@@ -1,429 +1,425 @@
-﻿<%@ Page Language="VB" AutoEventWireup="false" CodeFile="FrmBulkSMS.aspx.vb" Inherits="Processing_FrmBulkSMS" %>
+﻿<%@ Page Language="VB" AutoEventWireup="false" CodeFile="FrmBulkSMS.aspx.vb" Inherits="Processing_FrmBulkSMS" MaintainScrollPositionOnPostback="true" %>
 
-<%@ Register Assembly="DevExpress.Web.ASPxHtmlEditor.v19.1, Version=19.1.4.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" Namespace="DevExpress.Web.ASPxHtmlEditor" TagPrefix="dx" %>
-<%@ Register assembly="DevExpress.Web.v19.1, Version=19.1.4.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" namespace="DevExpress.Web" tagprefix="dx" %>
-
-<%@ Register Assembly="Microsoft.ReportViewer.WebForms, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91"
-    Namespace="Microsoft.Reporting.WebForms" TagPrefix="rsweb" %>
- <html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head id="Head1" runat="server">
-    <title></title>
-    <link href="../Styles/SiteAll.css" rel="stylesheet" type="text/css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bulk SMS broadcast</title>
+    <link rel="shortcut icon" href="/Resources/images/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style type="text/css">
-        .style1
-        {
-            font-size: xx-small;
+        :root {
+            --brand: #0F4C81; --brand-dark: #0a355a;
+            --ink: #14212e; --muted: #5d6b7a;
+            --line: #e1e8ef; --field: #d3dce6;
+            --page: #f4f7fa; --surface: #ffffff; --tint: #eaf1f8;
+            --ok: #1b6e3c; --ok-bg: #e6f4ea;
+            --bad: #b3261e; --bad-bg: #fdeceb;
+            --ring: rgba(15, 76, 129, .22);
         }
-        .style2
-        {
-            height: 29px;
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 24px;
+            font-family: "Plus Jakarta Sans", "Segoe UI", Roboto, Arial, sans-serif;
+            font-size: 13px; color: var(--ink); background: var(--page);
+            -webkit-font-smoothing: antialiased;
         }
+        .wrap { max-width: 1100px; margin: 0 auto; }
+
+        .page-head {
+            margin: 0 0 16px; padding: 20px 22px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-left: 4px solid var(--brand); border-radius: 12px;
+        }
+        .page-head h1 { margin: 0 0 2px; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+        .page-head p { margin: 0; font-size: 12px; color: var(--muted); }
+
+        .notice, .alert { display: block; margin-bottom: 12px; padding: 12px 14px; border-radius: 8px; line-height: 1.5; word-break: break-word; }
+        .notice { font-weight: 600; color: var(--ok); background: var(--ok-bg); border-left: 4px solid var(--ok); }
+        .alert { font-weight: 500; color: var(--bad); background: var(--bad-bg); border-left: 4px solid var(--bad); }
+        .notice:empty, .alert:empty { display: none; }
+
+        .card { margin-bottom: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .card-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+            padding: 14px 20px; border-bottom: 1px solid var(--line);
+        }
+        .card-head h2 { margin: 0; font-size: 14px; font-weight: 700; }
+        .card-head .sub { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .card-body { padding: 18px 20px; }
+
+        /* ---------- Forms ---------- */
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+        .form-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+        .form-hint { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); }
+        .form-control, input.form-control, select.form-control {
+            display: block; width: 100%; height: 36px; padding: 0 10px;
+            font: inherit; font-size: 13px; color: var(--ink); background-color: var(--surface);
+            border: 1.5px solid var(--field); border-radius: 9px; outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .form-control:hover { border-color: #aebbc9; }
+        .form-control:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--ring); }
+        textarea.form-control { height: auto; min-height: 72px; padding: 8px 10px; resize: vertical; }
+        select.form-control {
+            appearance: none; -webkit-appearance: none; padding-right: 34px; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%235d6b7a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+        }
+        .inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .inline .form-control { flex: 1 1 180px; width: auto; }
+        .field-error { display: block; margin-top: 5px; font-size: 12px; font-weight: 500; color: var(--bad); }
+        .lookup { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--brand); }
+        .lookup:empty { display: none; }
+
+        .check { display: inline-flex; align-items: center; gap: 9px; }
+        .check input[type="checkbox"] { width: 17px; height: 17px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+        .check label { cursor: pointer; font-weight: 500; }
+        .check-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .check-list .check {
+            padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px;
+            transition: border-color .15s ease, background-color .15s ease;
+        }
+        .check-list .check:hover { border-color: #aebbc9; }
+        .check-list .check:has(input:checked) { border-color: var(--brand); background: var(--tint); }
+        .check.danger input[type="checkbox"] { accent-color: var(--bad); }
+        .check.danger:has(input:checked) label { color: var(--bad); }
+
+        /* ---------- Grids ---------- */
+        .table-wrap { overflow-x: auto; }
+        table.data-grid { width: 100%; border: 0; border-collapse: collapse; }
+        table.data-grid th, table.data-grid td { padding: 10px 14px; text-align: left; vertical-align: middle; border-top: 1px solid var(--line); }
+        table.data-grid tr.grid-head th {
+            border-top: 0; background: #f8fafc; white-space: nowrap;
+            font-size: 11px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        table.data-grid tr.grid-head a { color: var(--muted); text-decoration: none; }
+        table.data-grid tr.grid-head a:hover { color: var(--brand); }
+        table.data-grid tr:hover td { background: #f8fafc; }
+        table.data-grid tr.is-selected td, table.data-grid tr.grid-edit td { background: var(--tint); }
+        table.data-grid .c { text-align: center; }
+        table.data-grid .nowrap { white-space: nowrap; }
+        table.data-grid .strong { font-weight: 600; }
+        table.data-grid .muted { color: var(--muted); }
+        table.data-grid .actions { white-space: nowrap; text-align: right; }
+        table.data-grid .form-control { min-width: 140px; height: 34px; }
+        table.data-grid input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--brand); cursor: pointer; vertical-align: middle; }
+
+        .pill { display: inline-block; padding: 3px 9px; font-size: 11px; font-weight: 600; border-radius: 999px; white-space: nowrap; }
+        .pill.on { color: var(--ok); background: var(--ok-bg); }
+        .pill.off { color: var(--muted); background: #eef2f6; }
+
+        .link-btn {
+            display: inline-block; margin-left: 4px; padding: 6px 12px; border: 0; cursor: pointer;
+            font: inherit; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 8px;
+        }
+        .link-btn.edit, .link-btn.cancel { color: var(--brand); background: var(--tint); }
+        .link-btn.edit:hover, .link-btn.cancel:hover { background: #dbe7f3; }
+        .link-btn.save { color: #fff; background: var(--brand); }
+        .link-btn.save:hover { background: var(--brand-dark); }
+        .link-btn.delete { color: var(--bad); background: var(--bad-bg); }
+        .link-btn.delete:hover { background: #f9d9d6; }
+
+        table.data-grid tr.grid-pager td { padding: 12px; text-align: center; background: var(--surface); }
+        table.data-grid tr.grid-pager:hover td { background: var(--surface); }
+        table.data-grid tr.grid-pager table { margin: 0 auto; }
+        table.data-grid tr.grid-pager table td { padding: 0; border: 0; }
+        table.data-grid tr.grid-pager a,
+        table.data-grid tr.grid-pager span {
+            display: inline-block; min-width: 30px; margin: 0 2px; padding: 5px 8px;
+            font-weight: 600; text-decoration: none; border-radius: 7px;
+        }
+        table.data-grid tr.grid-pager a { color: var(--brand); }
+        table.data-grid tr.grid-pager a:hover { background: var(--tint); }
+        table.data-grid tr.grid-pager span { color: #fff; background: var(--brand); }
+        .empty { padding: 28px; text-align: center; color: var(--muted); }
+
+        /* ---------- Buttons ---------- */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            height: 36px; padding: 0 16px; font: inherit; font-size: 13px; font-weight: 600;
+            text-decoration: none; white-space: nowrap; border: 1.5px solid transparent;
+            border-radius: 9px; cursor: pointer; transition: background-color .15s ease, border-color .15s ease;
+        }
+        .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
+        .btn-primary { color: #fff; background: var(--brand); }
+        .btn-primary:hover { background: var(--brand-dark); }
+        .btn-secondary { color: var(--ink); background: var(--surface); border-color: var(--field); }
+        .btn-secondary:hover { background: #f1f5f9; }
+        .btn-danger { color: var(--bad); background: var(--surface); border-color: #f0c4c0; }
+        .btn-danger:hover { background: var(--bad-bg); }
+        .btn-link { color: var(--brand); background: none; padding: 0 6px; }
+        .btn-link:hover { text-decoration: underline; }
+        .text-link { font-weight: 600; color: var(--brand); text-decoration: none; white-space: nowrap; }
+        .text-link:hover { text-decoration: underline; }
+
+        .action-bar {
+            position: sticky; bottom: 0; z-index: 5;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 12px 20px; background: var(--surface);
+            border: 1px solid var(--line); border-radius: 12px;
+            box-shadow: 0 -6px 18px rgba(20, 33, 46, .06);
+        }
+        .action-bar .count {
+            display: inline-flex; align-items: center; gap: 6px; margin-right: 6px;
+            padding: 6px 12px; font-weight: 600; color: var(--brand);
+            background: var(--tint); border-radius: 999px;
+        }
+        .action-bar .spacer { flex: 1; }
+        .form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+        @media (max-width: 760px) {
+            body { padding: 14px; }
+            .form-grid, .form-grid.cols-3, .check-list { grid-template-columns: 1fr; }
+            .card-body { padding: 14px; }
+            .action-bar .spacer { display: none; }
+            .action-bar .btn { flex: 1 1 auto; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+        /* ---------- Extras ---------- */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        .stat { padding: 12px 14px; background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; }
+        .stat .label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+        .stat input.stat-value {
+            display: block; width: 100%; margin-top: 4px; padding: 0; border: 0; background: transparent;
+            font: inherit; font-size: 18px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; outline: none;
+        }
+        .stat.key { background: var(--tint); border-color: #c9dbee; }
+        .stat.good input.stat-value { color: var(--ok); }
+        .stat.bad input.stat-value { color: var(--bad); }
+        .scroll-y { max-height: 520px; overflow: auto; }
+        table.data-grid .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        table.data-grid thead th, table.data-grid tr.grid-head th { position: sticky; top: 0; z-index: 1; }
+        .busy-overlay {
+            position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+            background: rgba(244, 247, 250, .8); font-weight: 600; color: var(--brand);
+        }
+        .busy-overlay.show { display: flex; }
+        .busy-overlay .spinner {
+            width: 28px; height: 28px; margin-right: 12px; border-radius: 50%;
+            border: 3px solid #c9dbee; border-top-color: var(--brand); animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 760px) { .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .schedule-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+        .schedule-every { display: inline-flex; align-items: center; gap: 8px; }
+        .schedule-every .form-control { width: auto; min-width: 130px; }
+        .schedule-info { margin: 10px 0 0; }
+    </style>
+    <style type="text/css">
+        .pill.bad { color: var(--bad); background: var(--bad-bg); }
+        .page-head .back { display: inline-block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--brand); text-decoration: none; }
+        .page-head .back:hover { text-decoration: underline; }
+        .req { color: var(--bad); }
+        .readonly { background-color: #f8fafc !important; color: var(--muted); }
+        .details { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; margin: 0; }
+        .details dt, .details dd { margin: 0; padding: 9px 0; border-top: 1px solid var(--line); }
+        .details dt { font-size: 12px; font-weight: 600; color: var(--muted); }
+        .details dd { font-weight: 500; word-break: break-word; }
+        .details dt:first-of-type, .details dt:first-of-type + dd { border-top: 0; }
+        @media (max-width: 760px) { .details { grid-template-columns: 1fr; } .details dd { border-top: 0; padding-top: 0; } }
+    </style>
+    <style type="text/css">
+        .wrap { max-width: 1360px; }
+        .placeholders { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .placeholders code { padding: 3px 8px; border-radius: 6px; background: var(--tint); color: var(--brand); font-size: 12px; cursor: pointer; }
+        .radio-row { display: flex; gap: 18px; align-items: center; }
+        .radio-row label { font-weight: 500; margin-left: 4px; }
+        .check-row { display: flex; align-items: center; gap: 8px; }
+        .check-row label { font-weight: 500; }
+        textarea.form-control.message { min-height: 120px; }
+        textarea.form-control.html { min-height: 220px; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
     </style>
 </head>
 <body>
     <form id="form1" runat="server">
-    <div>
-       
+    <div class="wrap">
+
+        <header class="page-head">
+            <h1>Bulk SMS broadcast</h1>
+            <p>Send a text message to the selected customers. Write the message (placeholders are filled in for each account), tick the accounts and click <strong>Send broadcast</strong>.</p>
+        </header>
+
+        <div class="notice" role="status"><asp:Literal ID="litResult" runat="server" /></div>
+        <div class="alert" role="alert"><asp:Literal ID="litError" runat="server" /></div>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Accounts</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div>
+                        <asp:Label runat="server" AssociatedControlID="drp_products" CssClass="form-label">Product</asp:Label>
+                        <asp:DropDownList ID="drp_products" runat="server" CssClass="form-control" AutoPostBack="true" CausesValidation="false" OnSelectedIndexChanged="Filter_Changed" />
+                    </div>
+                    <div>
+                        <asp:Label runat="server" AssociatedControlID="drpbranches" CssClass="form-label">Branch</asp:Label>
+                        <asp:DropDownList ID="drpbranches" runat="server" CssClass="form-control" AutoPostBack="true" CausesValidation="false" OnSelectedIndexChanged="Filter_Changed" />
+                    </div>
+                    <div class="full">
+                        <asp:Label runat="server" AssociatedControlID="txtSpecificAcct" CssClass="form-label">Specific accounts (optional)</asp:Label>
+                        <asp:TextBox ID="txtSpecificAcct" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2" placeholder="Account numbers separated by commas, spaces or new lines" />
+                        <span class="form-hint">Leave empty to list every account for the product and branch.</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <asp:Button ID="Button4" runat="server" Text="Show accounts" CssClass="btn btn-secondary" CausesValidation="false" OnClick="Filter_Changed" />
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Message</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="full check-row">
+                        <asp:CheckBox ID="CheckBox1" runat="server" />
+                        <asp:Label runat="server" AssociatedControlID="CheckBox1">Charge the SMS to the accounts (only accounts with SMS alerts enabled are sent to)</asp:Label>
+                    </div>
+                    <div class="full">
+                        <asp:Label runat="server" AssociatedControlID="rblFormat" CssClass="form-label">Message format</asp:Label>
+                        <asp:RadioButtonList ID="rblFormat" runat="server" RepeatDirection="Horizontal" RepeatLayout="Flow" CssClass="radio-row" AutoPostBack="true" CausesValidation="false" OnSelectedIndexChanged="rblFormat_SelectedIndexChanged">
+                            <asp:ListItem Text="Plain message" Value="1" Selected="True" />
+                            <asp:ListItem Text="HTML message" Value="2" />
+                        </asp:RadioButtonList>
+                    </div>
+                    <div class="full">
+                        <asp:Label runat="server" AssociatedControlID="txtMessage" CssClass="form-label">Message <span class="req">*</span></asp:Label>
+                        <asp:TextBox ID="txtMessage" runat="server" CssClass="form-control message" TextMode="MultiLine" Rows="5" />
+                        <asp:TextBox ID="txtHtml" runat="server" CssClass="form-control html" TextMode="MultiLine" Rows="10" Visible="false" placeholder="&lt;p&gt;HTML content&lt;/p&gt;" />
+                        <span class="form-hint">Personalise with placeholders; click one to insert it:</span>
+                        <div class="placeholders">
+                            <code onclick="insertTag('{AccountNo}')">{AccountNo}</code>
+                            <code onclick="insertTag('{AccountDesc}')">{AccountDesc}</code>
+                            <code onclick="insertTag('{AccountBookBal}')">{AccountBookBal}</code>
+                            <code onclick="insertTag('{AccountAvailableBal}')">{AccountAvailableBal}</code>
+                            <code onclick="insertTag('{AccountBranchName}')">{AccountBranchName}</code>
+                            <code onclick="insertTag('{AccountProductName}')">{AccountProductName}</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Accounts listed <span class="sub"><asp:Literal ID="litTotal" runat="server" /></span></h2>
+            </div>
+            <div class="card-body" style="padding-bottom:0;">
+                <div class="check-row">
+                    <asp:CheckBox ID="chkAllRecords" runat="server" />
+                    <asp:Label runat="server" AssociatedControlID="chkAllRecords">Send to every listed account (all pages)</asp:Label>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <asp:GridView ID="ctrlGrid" runat="server" AutoGenerateColumns="False" CssClass="data-grid" GridLines="None" UseAccessibleHeader="True"
+                    DataKeyNames="AccountNo" AllowPaging="True" PageSize="80" OnPageIndexChanging="ctrlGrid_PageIndexChanging">
+                    <HeaderStyle CssClass="grid-head" />
+                    <PagerStyle CssClass="grid-pager" />
+                    <PagerSettings Mode="NumericFirstLast" PageButtonCount="10" Position="TopAndBottom" />
+                    <EmptyDataTemplate><div class="empty">No accounts found for this product, branch and account list.</div></EmptyDataTemplate>
+                    <Columns>
+                        <asp:TemplateField ItemStyle-CssClass="c" HeaderStyle-CssClass="c">
+                            <HeaderTemplate><input type="checkbox" id="chkAll" title="Select or unselect all rows on this page" onclick="selectAllRows(this.checked);" /></HeaderTemplate>
+                            <ItemTemplate><asp:CheckBox ID="chkSelect" runat="server" CssClass="row-select" ToolTip="Select this account" /></ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:BoundField DataField="AccountNo" HeaderText="Account no" ItemStyle-CssClass="nowrap" />
+                        <asp:BoundField DataField="AccountName" HeaderText="Account name" ItemStyle-CssClass="strong" />
+                        <asp:BoundField DataField="Product" HeaderText="Product" ItemStyle-CssClass="muted" />
+                        <asp:BoundField DataField="DOB" HeaderText="Date of birth" DataFormatString="{0:dd MMM yyyy}" ItemStyle-CssClass="nowrap" />
+                        <asp:BoundField DataField="address" HeaderText="Address" ItemStyle-CssClass="muted" />
+                        <asp:BoundField DataField="city" HeaderText="City" ItemStyle-CssClass="muted" />
+                        <asp:BoundField DataField="Book Bal" HeaderText="Book bal" DataFormatString="{0:N2}" ItemStyle-CssClass="num" HeaderStyle-CssClass="num" />
+                        <asp:BoundField DataField="Cleared Bal" HeaderText="Cleared bal" DataFormatString="{0:N2}" ItemStyle-CssClass="num" HeaderStyle-CssClass="num" />
+                        <asp:BoundField DataField="Trans Status" HeaderText="Transaction status" ItemStyle-CssClass="nowrap muted" />
+                        <asp:BoundField DataField="Account Status" HeaderText="Account status" ItemStyle-CssClass="nowrap muted" />
+                    </Columns>
+                </asp:GridView>
+            </div>
+        </section>
+
+        <div class="action-bar">
+            <span class="count"><span id="selCount">0</span> selected on this page</span>
+            <asp:Button ID="Button6" runat="server" Text="Send broadcast" CssClass="btn btn-primary" OnClick="Button6_Click" ValidationGroup="send"
+                OnClientClick="return confirmSend('Send the broadcast to {n} account(s)?');" />
+            <span class="spacer"></span>
+            <asp:Button ID="Button7" runat="server" Text="Reset" CssClass="btn btn-secondary" CausesValidation="false" OnClick="Button7_Click" />
+        </div>
+
+        <div id="busy" class="busy-overlay"><span class="spinner"></span>Sending messages&hellip;</div>
+    </div>
     <script type="text/javascript">
-
-        function ctrlGrid_SelectionChanged(s, e) {
-
-
-            s.GetSelectedFieldValues("AccountNo", GetSelectedFieldValuesCallback);
-
-        }
-
-        function OnAllCheckedChanged(s, e) {
-
-
-            if (s.GetChecked())
-                ASPxGridView1.SelectRows();
-            else
-                ASPxGridView1.UnselectRows();
-
-        }
-
-        function GetSelectedFieldValuesCallback(values) {
-            selList.Visible = true;
-            selList.BeginUpdate();
-
-            try {
-                selList.ClearItems();
-
-                for (var i = 0; i < values.length; i++) {
-                    selList.AddItem(values[i].toString());
-                }
-            } finally {
-                selList.EndUpdate();
+        (function () {
+            function rowBoxes() {
+                return document.querySelectorAll('#<%= ctrlGrid.ClientID %> .row-select input[type="checkbox"]');
             }
-            document.getElementById("selCount").innerHTML = ASPxGridView1.GetSelectedRowCount();
-            //           selList.Visible = false;
-        }
-
-
-
+            function refresh() {
+                var boxes = rowBoxes(), n = 0;
+                for (var i = 0; i < boxes.length; i++) {
+                    var tr = boxes[i].closest('tr');
+                    if (boxes[i].checked) { n++; if (tr) tr.classList.add('is-selected'); }
+                    else if (tr) { tr.classList.remove('is-selected'); }
+                }
+                var c = document.getElementById('selCount');
+                if (c) c.textContent = n;
+                var all = document.getElementById('chkAll');
+                if (all) { all.checked = boxes.length > 0 && n === boxes.length; all.indeterminate = n > 0 && n < boxes.length; }
+                return n;
+            }
+            window.selectAllRows = function (checked) {
+                var boxes = rowBoxes();
+                for (var i = 0; i < boxes.length; i++) { boxes[i].checked = checked; }
+                refresh();
+            };
+            window.confirmAction = function (question) {
+                var n = refresh();
+                if (n === 0) { alert('Tick at least one row first.'); return false; }
+                if (!confirm(question.replace('{n}', n))) return false;
+                document.getElementById('busy').classList.add('show');
+                return true;
+            };
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.closest && e.target.closest('.row-select')) { refresh(); }
+            });
+            refresh();
+        })();
+    </script>
+    <script type="text/javascript">
+        // with "all pages" ticked the button works without ticking rows
+        (function () {
+            var all = document.getElementById('<%= chkAllRecords.ClientID %>');
+            var send = window.confirmAction;
+            window.confirmSend = function (question) {
+                if (typeof(Page_ClientValidate) == 'function' && !Page_ClientValidate('send')) return false;
+                if (all && all.checked) {
+                    if (!confirm(question.replace('{n}', 'every listed'))) return false;
+                    document.getElementById('busy').classList.add('show');
+                    return true;
+                }
+                return send(question);
+            };
+        })();
     </script>
 
-
-
-     
-    <div>
-     
-         <script type="text/javascript">
-
-             function ctrlGrid_SelectionChanged(s, e) {
-
-
-                 s.GetSelectedFieldValues("AccountNo", GetSelectedFieldValuesCallback);
-
-             }
-
-             function GetSelectedFieldValuesCallback(values) {
-                 selList.Visible = true;
-                 selList.BeginUpdate();
-
-                 try {
-                     selList.ClearItems();
-
-                     for (var i = 0; i < values.length; i++) {
-                         selList.AddItem(values[i].toString());
-                     }
-                 } finally {
-                     selList.EndUpdate();
-                 }
-                 document.getElementById("selCount").innerHTML = ASPxGridView1.GetSelectedRowCount();
-                 //           selList.Visible = false;
-             }
-
-
-
-   </script>           
-                    
-                    
-    <table id="TABLE1" border="0" 
-        style="border-right:   thin outset; border-top: thin outset; font-size: 7pt; border-left: thin outset;
-        width: 80%; color:DarkBlue; border-bottom: thin outset; font-family: Verdana,  'Microsoft Sans Serif';
-        height: 1px; margin-left:5%">
-        <tr style="color: #9999cc">
-            <td align="center" colspan="6" style="height: 29px; text-align: left">
-                <strong>ACCOUNT BULK NOTIFICATION (SMS) </strong>&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
-                <asp:Literal ID="Literal1" runat="server"></asp:Literal>
-                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;
-                &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; </td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="center" colspan="6" style="text-align: left" class="style2">
-                  <div class="TopPadding">
-                                    Selected count: <span id="selCount" style="font-weight: bold">0</span>
-                                </div>
-                <asp:ValidationSummary ID="ValidationSummary1" runat="server" />
-            </td>
-        </tr>
-        <tr style="color: #9999cc">
-             
-            <td align="left" colspan="6">
-                <asp:CheckBox ID="CheckBox1" runat="server" 
-                    Text="charge transactions to  Accounts?" />
-                <asp:TextBox ID="seqno" runat="server"
-                    Visible="False">0</asp:TextBox>
-                </td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="right" >
-                Produts</td>
-            <td align="center" colspan="1" style="height: 30px; text-align: left; width: 289px;">
-                <dx:ASPxComboBox ID="drp_products" EnableIncrementalFiltering="True" EnableSynchronization="False" IncrementalFilteringMode="StartsWith"  runat="server" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua"   ShowShadow="False" SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" CssClass="TableRuling" DataSourceID="sqlproducts" TextField="product" ValueField="Product Code" AutoPostBack="True">
-                    <LoadingPanelImage Url="~/App_Themes/Aqua/Editors/Loading.gif">
-                    </LoadingPanelImage>
-                    <DropDownButton>
-                        <Image>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtDropDownHover_Aqua" PressedCssClass="dxEditors_edtDropDownPressed_Aqua" />
-                        </Image>
-                    </DropDownButton>
-                    <ValidationSettings>
-                        <ErrorFrameStyle ImageSpacing="4px">
-                            <ErrorTextPaddings PaddingLeft="4px" />
-                        </ErrorFrameStyle>
-                    </ValidationSettings>
-                    <Columns>
-                        <dx:ListBoxColumn Caption="Product" FieldName="Product" Name="Product" />
-                        <dx:ListBoxColumn Caption="Type" FieldName="Type" Name="Type" />
-                    </Columns>
-                    <ItemStyle Wrap="True" />
-                </dx:ASPxComboBox>
-            </td>
-            <td align="right" >
-                Branch</td>
-            <td align="left" >
-                
-                <table border="0" cellpadding="0" cellspacing="0" style="border-top-style: none;
-                    border-right-style: none; border-left-style: none; border-bottom-style: none">
-                    <tr>
-                        <td align="left">
-                <dx:ASPxComboBox ID="drpbranches"  EnableIncrementalFiltering="True" EnableSynchronization="False" IncrementalFilteringMode="StartsWith" runat="server" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua"   ShowShadow="False" SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" DataSourceID="sqlBranches" ValueField="Headsub_code" AutoPostBack="True">
-                    <LoadingPanelImage Url="~/App_Themes/Aqua/Editors/Loading.gif">
-                    </LoadingPanelImage>
-                    <DropDownButton>
-                        <Image>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtDropDownHover_Aqua" PressedCssClass="dxEditors_edtDropDownPressed_Aqua" />
-                        </Image>
-                    </DropDownButton>
-                    <ValidationSettings>
-                        <ErrorFrameStyle ImageSpacing="4px">
-                            <ErrorTextPaddings PaddingLeft="4px" />
-                        </ErrorFrameStyle>
-                    </ValidationSettings>
-                    <Columns>
-                        <dx:ListBoxColumn Caption="Branch" FieldName="sub_name" />
-                        <dx:ListBoxColumn Caption="Branch Code" FieldName="Headsub_code" Name="Headsub_code" />
-                    </Columns>
-                </dx:ASPxComboBox>
-                        </td>
-                        <td align="left">
-                            <asp:Button ID="Button4" runat="server" Text="go" /></td>
-                    </tr>
-                </table>
-            </td>
-            <td align="center" colspan="1" rowspan="6" style="text-align: left">
-                &nbsp;</td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="right">
-                Specific AccountList</td>
-            <td align="left" colspan="3">
-                <dx:ASPxMemo ID="txtSpecificAcct" runat="server" AutoPostBack="True" Height="71px"
-                    Width="376px" >
-                </dx:ASPxMemo>
-            </td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td class="dxtcLeftAlignCell_Aqua" colspan="4" > 
-                <div style="margin-left:18%">
-                        <dx:ASPxRadioButtonList ID="ASPxRadioButtonList1" runat="server" 
-                    AutoPostBack="True" RepeatDirection="Horizontal" RepeatLayout="OrderedList" 
-                    SelectedIndex="0" Width="246px">
-                    <Paddings Padding="5px" />
-                    <Items>
-                        <dx:ListEditItem Selected="True" Text="Plain Message" Value="1" />
-                        <dx:ListEditItem Text="Html Message" Value="2" />
-                    </Items>
-                </dx:ASPxRadioButtonList>
-
-                </div>
-            
-            </td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="right">
-                Message Content</td>
-            <td align="left" colspan="3">
-            <table><tr><td><dx:ASPxMemo ID="txtMessage" runat="server" AutoPostBack="True" Height="71px"
-                    Width="376px">
-                </dx:ASPxMemo><a href="#" > 
-                <dx:ASPxHtmlEditor ID="ASPxHtmlEditor1" runat="server" Visible="False">
-                </dx:ASPxHtmlEditor>
-                </a></td><td class="style1">&nbsp;</td></tr></table>
-                
-             
-            </td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="center" colspan="4">
-                <asp:Button ID="Button6" runat="server" Text="Send Broadcast" />
-                <asp:Button ID="Button7" runat="server" Text="Reset" Width="123px" />
-            </td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="center" colspan="4" style="height: 117px; text-align: left">
-                &nbsp;<dx:ASPxCheckBox   ID="chkAllRecords" runat="server" 
-                    Text="Select All Pages?"   ClientSideEvents-CheckedChanged="OnAllCheckedChanged"   >
-                </dx:ASPxCheckBox>
-                <dx:ASPxGridView ID="ASPxGridView1" ClientInstanceName="ASPxGridView1"
-                runat="server" DataSourceID="SqlacctDetails" AutoGenerateColumns="False" 
-                    KeyFieldName="AccountNo" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" 
-                    CssPostfix="Aqua"  Width="100%"  >
-                   
-                    <Columns>
-                       <dx:GridViewCommandColumn ShowSelectCheckbox="True" VisibleIndex="0" Width ="30px" FixedStyle="Left"  >
-                                    <HeaderTemplate>
-                                     <dx:ASPxCheckBox ID="SelectAllCheckBox" runat="server" ToolTip="Select/Unselect all rows on the page"
-                                            ClientSideEvents-CheckedChanged="function(s, e) { ASPxGridView1.SelectAllRowsOnPage(s.GetChecked()); }" />
-                                    </HeaderTemplate>
-                                    <HeaderStyle HorizontalAlign="Center" />
-                                </dx:GridViewCommandColumn>
-                        <dx:GridViewDataTextColumn Caption="Account No" FieldName="AccountNo" VisibleIndex="1" Width="12%">
-                           
-                            <HeaderStyle Wrap="False" />
-                            <CellStyle Wrap="False">
-                            </CellStyle>
-                             
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Date of Birth" FieldName="DOB" VisibleIndex="3">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Account Name" FieldName="AccountName" VisibleIndex="2"  Width="15%">
-                            <HeaderStyle Wrap="False" />
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Address" FieldName="address" VisibleIndex="4">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Product" FieldName="Product" VisibleIndex="2">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="SeqNo" FieldName="seq" Visible="False" VisibleIndex="18">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Issue Counter" FieldName="CardIssueCounter" VisibleIndex="23">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="City" FieldName="city" VisibleIndex="5">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Book Bal" FieldName="Book Bal" VisibleIndex="19">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Cleared Bal" FieldName="Cleared Bal" VisibleIndex="21">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Transaction Status" FieldName="Trans Status"
-                            VisibleIndex="22">
-                        </dx:GridViewDataTextColumn>
-                        <dx:GridViewDataTextColumn Caption="Account Status" FieldName="Account Status" VisibleIndex="23">
-                        </dx:GridViewDataTextColumn>
-                    </Columns>
-                    <Settings ShowFilterBar="Visible" ShowGroupedColumns="True" ShowGroupPanel="True"
-                        ShowStatusBar="Visible" ShowVerticalScrollBar="True" 
-                        VerticalScrollBarStyle="Virtual"  />
-                    <SettingsPager PageSize="80" Position="TopAndBottom" SEOFriendly="CrawlerOnly">
-                    </SettingsPager>
-                    <Styles CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua" Cell-Font-Size="X-Small">
-                        <LoadingPanel ImageSpacing="8px" >
-                        </LoadingPanel>
-                    </Styles>
-                    <SettingsLoadingPanel ImagePosition="Top" />
-                    <ImagesFilterControl>
-                        <LoadingPanel Url="~/App_Themes/Aqua/Editors/Loading.gif">
-                        </LoadingPanel>
-                    </ImagesFilterControl>
-                    <Images SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css">
-                        <LoadingPanelOnStatusBar Url="~/App_Themes/Aqua/GridView/gvLoadingOnStatusBar.gif">
-                        </LoadingPanelOnStatusBar>
-                        <LoadingPanel Url="~/App_Themes/Aqua/GridView/Loading.gif">
-                        </LoadingPanel>
-                    </Images>
-                    <StylesEditors>
-                        <CalendarHeader Spacing="1px">
-                        </CalendarHeader>
-                        <ProgressBar Height="25px">
-                        </ProgressBar>
-                    </StylesEditors>
-                    <ImagesEditors>
-                        <DropDownEditDropDown>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtDropDownHover_Aqua" PressedCssClass="dxEditors_edtDropDownPressed_Aqua" />
-                        </DropDownEditDropDown>
-                        <SpinEditIncrement>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtSpinEditIncrementImageHover_Aqua"
-                                PressedCssClass="dxEditors_edtSpinEditIncrementImagePressed_Aqua" />
-                        </SpinEditIncrement>
-                        <SpinEditDecrement>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtSpinEditDecrementImageHover_Aqua"
-                                PressedCssClass="dxEditors_edtSpinEditDecrementImagePressed_Aqua" />
-                        </SpinEditDecrement>
-                        <SpinEditLargeIncrement>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtSpinEditLargeIncImageHover_Aqua"
-                                PressedCssClass="dxEditors_edtSpinEditLargeIncImagePressed_Aqua" />
-                        </SpinEditLargeIncrement>
-                        <SpinEditLargeDecrement>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtSpinEditLargeDecImageHover_Aqua"
-                                PressedCssClass="dxEditors_edtSpinEditLargeDecImagePressed_Aqua" />
-                        </SpinEditLargeDecrement>
-                    </ImagesEditors>
-                        
-<ClientSideEvents SelectionChanged="ctrlGrid_SelectionChanged"  />
-                </dx:ASPxGridView>
-            </td>
-        </tr>
-        <tr style="color: #9999cc">
-                   
-            <td align="center" colspan="5" style="height: 23px">
-                  <dx:ASPxListBox ID="ASPxListBox1" ClientInstanceName="selList" runat="server" Height="0px"
-                                     ReadOnly ="True" 
-                                    CssFilePath="~/App_Themes/Aqua/{0}/styles.css" CssPostfix="Aqua" 
-                                     
-                                    SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css"  >
-                                    <LoadingPanelImage Url="~/App_Themes/Aqua/Editors/Loading.gif">
-                                    </LoadingPanelImage>
-                                    <ValidationSettings>
-                                        <ErrorFrameStyle ImageSpacing="4px">
-                                            <ErrorTextPaddings PaddingLeft="4px" />
-                                        </ErrorFrameStyle>
-                                    </ValidationSettings>
-                                </dx:ASPxListBox>
-                                <asp:Button runat ="server" Text ="clear" ID="cmdClear" 
-                    CausesValidation="False" Visible="false" />
-                    </div>
-                 <asp:SqlDataSource ID="sqlproducts" runat="server" SelectCommand = "Sproc_GetAllProductsCards" SelectCommandType="StoredProcedure"  ConnectionString="<%$ ConnectionStrings:EazyConnect %>" ></asp:SqlDataSource>
-                <asp:SqlDataSource ID="sqlBranches" runat="server" SelectCommand = "Sproc_GetAllBranchesCards" SelectCommandType="StoredProcedure"  ConnectionString="<%$ ConnectionStrings:EazyConnect %>" ></asp:SqlDataSource>
-                <asp:SqlDataSource ID="SqlacctDetails" runat="server" ></asp:SqlDataSource>
-                <dx:ASPxCheckBox ID="ASPxCheckBox1" runat="server" Visible="False">
-                </dx:ASPxCheckBox>
-                <asp:SqlDataSource ID="sqlAppr" runat="server"  ></asp:SqlDataSource>
-                <asp:SqlDataSource ID="SqlDataSource5" runat="server"></asp:SqlDataSource>
-                <asp:TextBox ID="txtUserID" runat="server" Wrap="False" Visible="False"></asp:TextBox>
-                <asp:TextBox ID="txtref_no" runat="server" Visible="False"></asp:TextBox></td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="center" colspan="5" style="height: 23px">
-                <dx:ASPxDateEdit ID="dateexpiry" 
-                    runat="server"  DisplayFormatString="D"
-                    EditFormat="Custom" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" 
-                    CssPostfix="Aqua" ShowShadow="False" 
-                    SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" NullText="Select End Date" 
-                    Visible="False" >
-                    <DropDownButton>
-                        <Image>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtDropDownHover_Aqua" PressedCssClass="dxEditors_edtDropDownPressed_Aqua" />
-                        </Image>
-                    </DropDownButton>
-                    <CalendarProperties>
-                        <HeaderStyle Spacing="1px" />
-                        <FooterStyle Spacing="17px" />
-                    </CalendarProperties>
-                    <ValidationSettings Display="Dynamic" ErrorDisplayMode="ImageWithTooltip" SetFocusOnError="True">
-                        <ErrorFrameStyle ImageSpacing="4px">
-                            <ErrorTextPaddings PaddingLeft="4px" />
-                        </ErrorFrameStyle>
-                        <RequiredField ErrorText="End Date is required" IsRequired="True" />
-                    </ValidationSettings>
-                </dx:ASPxDateEdit>
-                <dx:ASPxTextBox ID="txtSubject0" runat="server" Width="371px" Visible="False">
-                </dx:ASPxTextBox>
-                <dx:ASPxDateEdit ID="dateIssue" runat="server"   DisplayFormatString="D"
-                    EditFormat="Custom" CssFilePath="~/App_Themes/Aqua/{0}/styles.css" 
-                    CssPostfix="Aqua" ShowShadow="False" 
-                    SpriteCssFilePath="~/App_Themes/Aqua/{0}/sprite.css" 
-                    NullText="Select Start Date" Visible="False">
-                    <DropDownButton>
-                        <Image>
-                            <SpriteProperties HottrackedCssClass="dxEditors_edtDropDownHover_Aqua" PressedCssClass="dxEditors_edtDropDownPressed_Aqua" />
-                        </Image>
-                    </DropDownButton>
-                    <CalendarProperties>
-                        <HeaderStyle Spacing="1px" />
-                        <FooterStyle Spacing="17px" />
-                    </CalendarProperties>
-                    <ValidationSettings  Display="Dynamic" ErrorDisplayMode="ImageWithTooltip" SetFocusOnError="True">
-                        <ErrorFrameStyle ImageSpacing="4px">
-                            <ErrorTextPaddings PaddingLeft="4px" />
-                        </ErrorFrameStyle>
-                        <RequiredField ErrorText="Start Date is required" IsRequired="True" />
-                    </ValidationSettings>
-                </dx:ASPxDateEdit>
-            </td>
-        </tr>
-        <tr style="color: #9999cc">
-            <td align="center" colspan="6" style="height: 23px">
-                &nbsp;
-                <asp:Button ID="Button3" runat="server" Text="Reset" Width="123px" 
-                    Visible="False" />
-            </td>
-        </tr>
-    </table>
-    </div>
-</div>
+    <script type="text/javascript">
+        function insertTag(tag) {
+            var box = document.getElementById('<%= If(txtMessage.Visible, txtMessage.ClientID, txtHtml.ClientID) %>');
+            if (!box) return;
+            var s = box.selectionStart || box.value.length, e = box.selectionEnd || s;
+            box.value = box.value.substring(0, s) + tag + box.value.substring(e);
+            box.focus(); box.selectionStart = box.selectionEnd = s + tag.length;
+        }
+    </script>
     </form>
 </body>
 </html>

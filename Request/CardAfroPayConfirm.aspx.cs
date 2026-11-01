@@ -1,12 +1,12 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Web;
-
 
 using System.IO;
 using System.Data;
 using System.Text;
 using System.Net;
 using System.Web.UI;
+using System.Web.UI.WebControls;
 using System.Web.Script.Serialization;
 using System.Web.Security;
 
@@ -16,7 +16,6 @@ using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Xml;
 using System;
-//using System.Net.Http;
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
@@ -29,7 +28,6 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Asn1;
 using System.Globalization;
-using DevExpress.Web;
 public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
 {
     public string gUser = HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name;
@@ -46,19 +44,19 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
         {
             using (StreamWriter writer = new StreamWriter(filepath, true))
             {
-                writer.WriteLine("——————-START————-" + DateTime.Now);
+                writer.WriteLine("\u2014\u2014\u2014\u2014\u2014\u2014-START\u2014\u2014\u2014\u2014-" + DateTime.Now);
                 writer.WriteLine("Source :" + WebPage);
                 writer.WriteLine(Message);
-                writer.WriteLine("——————-END————-" + DateTime.Now);
+                writer.WriteLine("\u2014\u2014\u2014\u2014\u2014\u2014-END\u2014\u2014\u2014\u2014-" + DateTime.Now);
             }
         }
         else
         {
             StreamWriter writer = File.CreateText(filepath);
-            writer.WriteLine("——————-START————-" + DateTime.Now);
+            writer.WriteLine("\u2014\u2014\u2014\u2014\u2014\u2014-START\u2014\u2014\u2014\u2014-" + DateTime.Now);
             writer.WriteLine("Source :" + WebPage);
             writer.WriteLine(Message);
-            writer.WriteLine("——————-END————-" + DateTime.Now);
+            writer.WriteLine("\u2014\u2014\u2014\u2014\u2014\u2014-END\u2014\u2014\u2014\u2014-" + DateTime.Now);
             writer.Close();
         }
     }
@@ -66,30 +64,19 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
     {
         string LogPath = System.Web.HttpContext.Current.Server.MapPath("~/log/cardFile/");// ConfigurationManager.AppSettings["LogPath"].ToString();
 
-        //foreach (DataRow item in NETClass.Classes.GetDataset("Sproc_GetPref").Tables[0].Rows)
-        //{
-        //    LogPath = item["AfriGopayApiKey"].ToString();
-
-        //}
         string filename = "AfriCardFile_" + DateTime.Now.ToString("dd-MM-yyyy") + ".txt";
         string filepath = LogPath + filename;
         if (File.Exists(filepath))
         {
             using (StreamWriter writer = new StreamWriter(filepath, true))
             {
-                //writer.WriteLine("——————-START————-" + DateTime.Now);
-                //writer.WriteLine("Source :" + WebPage);
                 writer.WriteLine(Message);
-                //writer.WriteLine("——————-END————-" + DateTime.Now);
             }
         }
         else
         {
             StreamWriter writer = File.CreateText(filepath);
-            //writer.WriteLine("——————-START————-" + DateTime.Now);
-            //writer.WriteLine("Source :" + WebPage);
             writer.WriteLine(Message);
-            //writer.WriteLine("——————-END————-" + DateTime.Now);
             writer.Close();
         }
     }
@@ -99,12 +86,16 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
     }
     protected void Button3_Click(object sender, EventArgs e)
     {
+        RunAction("Remove selection", delegate { Button3_Work(sender, e); });
+    }
+
+    private void Button3_Work(object sender, EventArgs e)
+    {
         char[] delimiterChars = { ',' };
         string[] words = null;// txtAcctList.Text.Split(delimiterChars);
 
         string strConchk = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
         string strConeBiz = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
 
         SqlConnection Connchk = new SqlConnection(strConchk); DataSet chkds = new DataSet();
 
@@ -116,24 +107,20 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
         
 
         DataTable dtAcctListFrows = new DataTable();
-        
-        GridViewDataColumn columnSeqNum = (GridViewDataColumn)ctrlGrid.Columns["SeqNum"];
-        columnSeqNum.Visible = true;
-        foreach (var key in ctrlGrid.GetSelectedFieldValues("SeqNum"))
+        foreach (var key in SelectedKeys())
         {
-            if (ctrlGrid.Selection.IsRowSelectedByKey(key))
+            if (key != null)
             {
                 
-                //ctrlGrid.GetRowValuesByKeyValue(key, "payerPhoneNumber").ToString();
                 string panNo = ""; string panNoEncrypted = ""; string strAccountNo = ""; string panNoMasked = ""; string plainPanno = "";
                 DataTable dtAcctList = new DataTable();
-                string BatchRefNo = ctrlGrid.GetRowValuesByKeyValue(key, "RefNo").ToString();
-                string SeqNo = ctrlGrid.GetRowValuesByKeyValue(key, "SeqNum").ToString();
-                panNo = ctrlGrid.GetRowValuesByKeyValue(key, "TrackID").ToString();
-                strAccountNo = ctrlGrid.GetRowValuesByKeyValue(key, "AccountNo").ToString();
-                panNoMasked = ctrlGrid.GetRowValuesByKeyValue(key, "PANno").ToString();
-                string sCardIssueDate = ctrlGrid.GetRowValuesByKeyValue(key, "CardIssueDate").ToString();
-                string sCardExpiryDate = ctrlGrid.GetRowValuesByKeyValue(key, "CardExpiryDate").ToString();
+                string BatchRefNo = RowValue(key, "RefNo").ToString();
+                string SeqNo = RowValue(key, "SeqNum").ToString();
+                panNo = RowValue(key, "TrackID").ToString();
+                strAccountNo = RowValue(key, "AccountNo").ToString();
+                panNoMasked = RowValue(key, "PANno").ToString();
+                string sCardIssueDate = RowValue(key, "CardIssueDate").ToString();
+                string sCardExpiryDate = RowValue(key, "CardExpiryDate").ToString();
 
                 panNoEncrypted = panNo;
 
@@ -149,42 +136,10 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
 
                 string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
 
-                //var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-                //httpWebRequest.ContentType = "application/json";
-
-                //httpWebRequest.Method = "POST";
-                //httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-
-
                 #endregion
 
                 if (panNo != "")
                 {
-
-
-                    //    Cmd.CommandText = "Sproc_ApproveCardRequestDisConfirm"
-                    //Cmd.Connection = sqlConn
-                    //Cmd.CommandType = CommandType.StoredProcedure
-
-                    //sqlConn.Open()
-
-                //    Cmd.Parameters.Add(New SqlParameter("@AccountNo", AccountNo.Text))
-                //        Cmd.Parameters.Add(New SqlParameter("@CardIssueDate", ctrlGrid.GetRowValues(rowIndex, "CardIssueDate")))
-                //Cmd.Parameters.Add(New SqlParameter("@CardExipryDate", ctrlGrid.GetRowValues(rowIndex, "CardExpiryDate")))
-
-                //Cmd.Parameters.Add(New SqlParameter("@PANno", AccountNo.ToolTip))
-
-                //Cmd.Parameters.Add(New SqlParameter("@CardCounter", CardCounter))
-                //Cmd.Parameters.Add(New SqlParameter("@status", 20))
-
-
-                //Cmd.Parameters.Add(New SqlParameter("@RefNo", drpBatchRefNo.Value))
-
-                //Cmd.Parameters.Add(New SqlParameter("@ComfirmBy", guser))
-
-
-
 
                     DateTime CardIssueDate; DateTime CardExipryDate;
                     CardIssueDate = DateTime.Parse(sCardIssueDate);
@@ -205,13 +160,11 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
 
                     cmdAdapterAcctUpd.Fill(dtAcctList);
 
-
                 }
             }
 
             // write to file the Cardfile
         }
-        columnSeqNum.Visible = false;
         ctrlGrid.DataBind();
     }
 
@@ -221,15 +174,18 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
         Response.Redirect("CardAfroPayConfirm.aspx");
     }
 
-
     protected void Button5_Click(object sender, EventArgs e)
+    {
+        RunAction("Activate cards", delegate { Button5_Work(sender, e); });
+    }
+
+    private void Button5_Work(object sender, EventArgs e)
     {
         char[] delimiterChars = { ',' };
         string[] words = null;// txtAcctList.Text.Split(delimiterChars);
 
         string strConchk = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
         string strConeBiz = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
 
         SqlConnection Connchk = new SqlConnection(strConchk); DataSet chkds = new DataSet();
 
@@ -238,38 +194,21 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
 
         SqlConnection Connbiz = new SqlConnection(strConeBiz);
         SqlCommand cmdbiz = new SqlCommand();
-        //SqlDataAdapter cmdAdapterchkval = new SqlDataAdapter("SpAcctMasterSelectOne", Connchk);
-        //SqlDataAdapter cmdAdapterchkval = new SqlDataAdapter("spAfrigoPayCardAcctsAll", Connchk);
-
-        //cmdAdapterchkval.SelectCommand.CommandType = CommandType.StoredProcedure;
-
-
-        //cmdAdapterchkval.Fill(dtAcctList);
 
         DataTable dtAcctListFrows = new DataTable();
-        //DataRow[] findrows = dtAcctListFrows.Select(string.Format("AccountNo in ({0})", ""));
-        //foreach (var key in ctrlGrid.GetSelectedFieldValues("RefNo"))
-        //foreach (DataRow item in findrows)
-        GridViewDataColumn columnSeqNum = (GridViewDataColumn)ctrlGrid.Columns["SeqNum"];
-        columnSeqNum.Visible = true;
-        foreach (var key in ctrlGrid.GetSelectedFieldValues("SeqNum"))
+        foreach (var key in SelectedKeys())
         {
-            if (ctrlGrid.Selection.IsRowSelectedByKey(key))
+            if (key != null)
             {
-                //System.Console.WriteLine($"<{word}>");
-                //if (ctrlGrid.Selection.IsRowSelectedByKey(key))
-                //{
-                //}
-                //ctrlGrid.GetRowValuesByKeyValue(key, "payerPhoneNumber").ToString();
                 string panNo = ""; string panNoEncrypted = "";string strAccountNo = ""; string panNoMasked = ""; string plainPanno = "";
                 DataTable dtAcctList = new DataTable();
-                string BatchRefNo = ctrlGrid.GetRowValuesByKeyValue(key, "RefNo").ToString();
-                string SeqNo = ctrlGrid.GetRowValuesByKeyValue(key, "SeqNum").ToString();
-                  panNo = ctrlGrid.GetRowValuesByKeyValue(key, "TrackID").ToString();
-                strAccountNo = ctrlGrid.GetRowValuesByKeyValue(key, "AccountNo").ToString();
-                panNoMasked = ctrlGrid.GetRowValuesByKeyValue(key, "PANno").ToString();
-                string sCardIssueDate= ctrlGrid.GetRowValuesByKeyValue(key, "CardIssueDate").ToString();
-                string sCardExpiryDate = ctrlGrid.GetRowValuesByKeyValue(key, "CardExpiryDate").ToString();
+                string BatchRefNo = RowValue(key, "RefNo").ToString();
+                string SeqNo = RowValue(key, "SeqNum").ToString();
+                  panNo = RowValue(key, "TrackID").ToString();
+                strAccountNo = RowValue(key, "AccountNo").ToString();
+                panNoMasked = RowValue(key, "PANno").ToString();
+                string sCardIssueDate= RowValue(key, "CardIssueDate").ToString();
+                string sCardExpiryDate = RowValue(key, "CardExpiryDate").ToString();
 
                 panNoEncrypted = panNo;
 
@@ -285,23 +224,13 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
 
                 string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
 
-                //var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-                //httpWebRequest.ContentType = "application/json";
-
-                //httpWebRequest.Method = "POST";
-                //httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-
-
                 #endregion
              
                 if (panNo != "")
                 {
 
-
                     string cardNo = panNo;
                     // Decrypt cardinfo
-                    //panNo = AesDecrypt(panNoEncrypted, "tnWvYXRLaARMQrtQubsfzbaUcaRQBABV");
                     string ActrequestUrl = string.Format("{0}/{1}", AfroGOPAYHost, "Cards/ActivateEncryptedCard"); ;
                     var httpWebActRequest = (HttpWebRequest)WebRequest.Create(ActrequestUrl);
 
@@ -317,10 +246,7 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
 
                             cardNo
 
-
-
                         });
-                        // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
                         streamWriter.Write(ljson);
                         streamWriter.Flush();
                         streamWriter.Close();
@@ -344,8 +270,6 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
                     try
                     {
                         JavaScriptSerializer jssp = new JavaScriptSerializer();
-                        //dynamic jsonp = jssp.DeserializeObject(result);
-
 
                         var jsonSmsInfo = JsonConvert.DeserializeObject(Activateresult, serializerSettings);
                         dynamic jsonp = jssp.DeserializeObject(Activateresult);
@@ -353,7 +277,6 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
                         string respcode = ""; string data = ""; string respdesc = "";
                         respcode = jsonp["responseCode"];
                         respdesc = jsonp["responseText"];
-
 
                         if (respcode == "00")
                         {
@@ -365,17 +288,9 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
                     catch (Exception)
                     {
 
-                        //throw;
                     }
 
-
-
-
-
-
-
                     string cardfileRec = string.Format("{0},{1},{2}", panNoMasked, strAccountNo, ActivationResp);
-
 
                     AddtoLogFile(cardfileRec, "CardfileInfo Activated");
 
@@ -398,16 +313,97 @@ public partial class Request_CardAfroPayConfirm :  System.Web.UI.Page
                     
                     cmdAdapterAcctUpd.Fill(dtAcctList);
 
-
                 }
             }
 
             // write to file the Cardfile
         }
-        columnSeqNum.Visible = false;
         ctrlGrid.DataBind();
     }
 
 
+    // =====================================================================
+    // Page plumbing for the plain GridView (selection, row values, feedback)
+    // =====================================================================
 
+    /// <summary>Keys (SeqNum) of the rows ticked on the current page.</summary>
+    private List<string> SelectedKeys()
+    {
+        List<string> keys = new List<string>();
+        foreach (GridViewRow row in ctrlGrid.Rows)
+        {
+            if (row.RowType != DataControlRowType.DataRow) continue;
+            CheckBox chk = row.FindControl("chkSelect") as CheckBox;
+            if (chk != null && chk.Checked) keys.Add(Convert.ToString(ctrlGrid.DataKeys[row.RowIndex].Value));
+        }
+        return keys;
+    }
+
+    private DataView _rows;
+
+    /// <summary>A column of the listed row with this key ("" when the row or column is missing).</summary>
+    private object RowValue(object key, string column)
+    {
+        if (_rows == null) _rows = SqlDataSource1.Select(DataSourceSelectArguments.Empty) as DataView;
+        if (_rows == null || !_rows.Table.Columns.Contains(column)) return "";
+        foreach (DataRowView r in _rows)
+        {
+            if (Convert.ToString(r["SeqNum"]) == Convert.ToString(key)) return r[column] ?? "";
+        }
+        return "";
+    }
+
+    /// <summary>Runs an action for the ticked rows and reports the outcome.</summary>
+    private void RunAction(string what, Action work)
+    {
+        int count = SelectedKeys().Count;
+        if (count == 0) { ShowError("Tick at least one row first."); return; }
+        try
+        {
+            work();
+            ShowSuccess(string.Format("{0}: done for {1} {2}{3}. Details are in the log file.", what, count, "card", count == 1 ? "" : "s"));
+        }
+        catch (System.Threading.ThreadAbortException) { throw; }
+        catch (Exception ex)
+        {
+            ShowError(what + " stopped: " + ex.Message);
+        }
+        _rows = null;
+        ctrlGrid.DataBind();
+    }
+
+    private void ShowSuccess(string message)
+    {
+        litResult.Text = HttpUtility.HtmlEncode(message);
+        Literal1.Text = "";
+    }
+
+    private void ShowError(string message)
+    {
+        Literal1.Text = HttpUtility.HtmlEncode(message);
+        litResult.Text = "";
+    }
+
+    protected void ctrlGrid_PageIndexChanging(object sender, GridViewPageEventArgs e)
+    {
+        ctrlGrid.PageIndex = e.NewPageIndex;
+    }
+
+    protected void SqlDataSource1_Selected(object sender, SqlDataSourceStatusEventArgs e)
+    {
+        litTotal.Text = e.Exception == null ? string.Format("{0:N0} {1}{2}", e.AffectedRows, "card", e.AffectedRows == 1 ? "" : "s") : "";
+    }
+
+    /// <summary>Shows each batch as "reference - request title".</summary>
+    protected void drpBatchRefNo_DataBound(object sender, EventArgs e)
+    {
+        DataView view = SqlDataSource2.Select(DataSourceSelectArguments.Empty) as DataView;
+        if (view == null || !view.Table.Columns.Contains("RequestTitle")) return;
+        foreach (DataRowView r in view)
+        {
+            ListItem item = drpBatchRefNo.Items.FindByValue(Convert.ToString(r["RefNo"]));
+            string title = Convert.ToString(r["RequestTitle"]);
+            if (item != null && title != "") item.Text = item.Value + " - " + title;
+        }
+    }
 }

@@ -67,7 +67,7 @@ public partial class NDD_NDDBulkServicePush : System.Web.UI.Page
         NDDMandateRecovery.RunSummary last = _thisRun ?? NDDMandateRecovery.LastJobRun;
         if (last == null || last.Skipped)
         {
-            txtChecked.Text = txtRecovered.Text = txtFailed.Text = "–";
+            txtChecked.Text = txtRecovered.Text = txtFailed.Text = "\u2013";
             litLast.Text = running ? "A run is in progress now." : "No run recorded since the site last started.";
             return;
         }

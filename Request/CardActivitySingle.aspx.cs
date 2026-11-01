@@ -1,190 +1,205 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Globalization;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using DevExpress.Web;
-using System.Security.Cryptography;
-using System.IO;
-using System.Text;
-using System.Data;
-using System.Data.SqlClient;
-using NETClass;
-using System.Net;
-using System.Configuration;
 
+/// <summary>
+/// Single card maintenance: the card is found with Sproc_GetAcctCardNoInfo and a one-card maintenance batch
+/// "MNT..." is raised with Sproc_AddCardMaint. Plain ASP.NET controls (no DevExpress).
+/// </summary>
 public partial class Request_CardActivitySingle : System.Web.UI.Page
 {
-    public string gUser = HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name;
-    public string luser = HttpContext.Current.User.Identity.Name;
-    public string StrLocation = "";
-    public string struser = "";
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (!IsCallback && !IsPostBack)
-        {
-
-            luser = HttpContext.Current.User.Identity.Name;
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1);
-            struser = luser.Substring(0, luser.LastIndexOf("?"));
-            gUser = struser;
-
-            //loadMsgs();
-            txtUserID.Text = gUser;
-
-        }
     }
 
-    public String GetIPAddress()
+    protected void Button4_Click(object sender, EventArgs e)
     {
-        //The X-Forwarded-For (XFF) HTTP header field is a de facto standard for identifying the originating IP address of a 
-        //client connecting to a web server through an HTTP proxy or load balancer
-        String ip = HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
-
-        if (string.IsNullOrEmpty(ip))
-        {
-            ip = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
-        }
-
-        return ip;
+        Response.Redirect(Request.Path, false);
+        Context.ApplicationInstance.CompleteRequest();
     }
-    private string checkValidateRequest(string Cardno)
-    {
-        #region Validate Records
-
-        SqlConnection connValidate = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-
-
-        SqlCommand commandValidate = new SqlCommand();
-        connValidate.Open();
-        commandValidate.CommandText = "Sproc_GetAllCardNoInfo";
-        commandValidate.Connection = connValidate;
-        commandValidate.CommandType = CommandType.StoredProcedure;
-
-        commandValidate.Parameters.Add(new SqlParameter("@CardNo", Cardno));
-        //commandValidate.Parameters.Add(new SqlParameter("@requestType", requestType));
-        //commandValidate.Parameters.Add(new SqlParameter("@userId", userId));
-        //commandValidate.Parameters.Add(new SqlParameter("@locationID", LocationCode));
-
-        SqlParameter parameterMsg = commandValidate.Parameters.Add(new SqlParameter("@AccountNo", SqlDbType.VarChar, 5000));
-        parameterMsg.Direction = ParameterDirection.Output;
-        commandValidate.ExecuteNonQuery();
-        connValidate.Close();
-
-
-
-
-        #endregion
-
-
-
-
-
-        return parameterMsg.Value.ToString();
-    }
-
-
 
     protected void Button3_Click(object sender, EventArgs e)
     {
-        #region Keep Records
-     
-       
-        string RefNo = string.Format("MNT{0}", Guid.NewGuid().ToString().Substring(0, 12).ToUpper().Replace("-", ""));
+        Page.Validate();
+        if (!Page.IsValid) return;
 
+        string cardNo = txtCardNo.Text.Trim();
+        string month = txtMonth.Text.Trim();   // yyyy-MM from the month box
+        if (month.Length < 7) { ShowError("Enter the expiry month."); return; }
 
-
-        #region Section Maint
-
-
-        string strlblerror = "";
         try
         {
-            luser = HttpContext.Current.User.Identity.Name;
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1);
-            struser = luser.Substring(0, luser.LastIndexOf("?"));
-            gUser = struser;
-
-            string strAccountNo = "";string seqNo = "";
-            //GridViewDataColumn columnDateExpiry = (GridViewDataColumn)ASPxGridView1.Columns["CardExpiryDate"];
-            #region For section
-            string strsel = string.Format("Sproc_GetAcctCardNoInfo '{0}'", txtCardNo.Text);
-            foreach (DataRow item in NETClass.Classes.SqlDbGetDataset(strsel).Tables[0].Rows)
+            string accountNo = "", seqNo = "";
+            foreach (DataRow r in Query("EXEC Sproc_GetAcctCardNoInfo @cardNo", P("@cardNo", cardNo)).Rows)
             {
-                strAccountNo = item["depCardAccountNo"].ToString();
-                seqNo = item["SeqCardNo"].ToString();
+                accountNo = Col(r, "depCardAccountNo");
+                seqNo = Col(r, "SeqCardNo");
             }
+            if (accountNo == "") { ShowError("Invalid card information, or the card is not in use."); return; }
 
+            string refNo = string.Format("MNT{0}", Guid.NewGuid().ToString().Substring(0, 12).ToUpper().Replace("-", ""));
+            string response = Exec("Sproc_AddCardMaint",
+                P("@eBatRefNo", refNo),
+                P("@requestTitle", txtTitle.Text.Trim()),
+                P("@accountNo", accountNo),
+                P("@eIssueDate", DateTime.Today),
+                P("@eExipryDate", DateTime.Today),
+                P("@reason", txtRemarks.Text.Trim()),
+                P("@UserID", CurrentUser()),
+                P("@SeqNum", seqNo),
+                P("@maintType", DrpMaithType.SelectedValue),
+                P("@CardInstno", cardNo),
+                P("@Cardcvv", txtCVV.Text),
+                P("@Cardpin", txtPin.Text),
+                P("@Cardmonth", month.Substring(2).Replace("-", "")),   // yyMM
+                Out("@ResponseDesc"));
 
-               //string strAccountNo = checkValidateRequest(txtCardNo.Text);
+            if (response != "" && response != "Success") { ShowError("The request was not saved: " + response); return; }
 
-        if (string.IsNullOrEmpty(strAccountNo) == true)
-            {
-                errMsg.Text = "Invalid Card information or card not in use";
-                return;
-            }
-
-                    #region Validate Records
-
-            SqlConnection connValidate = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-
-
-
-                    SqlCommand commandValidate = new SqlCommand();
-                    connValidate.Open();
-                    commandValidate.CommandText = "Sproc_AddCardMaint";
-                    commandValidate.Connection = connValidate;
-                    commandValidate.CommandType = CommandType.StoredProcedure;
-                    commandValidate.Parameters.Add(new SqlParameter("@eBatRefNo", RefNo));
-                    commandValidate.Parameters.Add(new SqlParameter("@requestTitle", txtTitle.Text));
-                    commandValidate.Parameters.Add(new SqlParameter("@accountNo", strAccountNo));
-                    commandValidate.Parameters.Add(new SqlParameter("@eIssueDate", DateTime.Today.Date));
-                    commandValidate.Parameters.Add(new SqlParameter("@eExipryDate", DateTime.Today.Date));
-
-                    commandValidate.Parameters.Add(new SqlParameter("@reason", txtRemarks.Text));
-                    commandValidate.Parameters.Add(new SqlParameter("@UserID", gUser));
-
-                    commandValidate.Parameters.Add(new SqlParameter("@SeqNum", seqNo));
-                    commandValidate.Parameters.Add(new SqlParameter("@maintType", DrpMaithType.SelectedValue));
-                    commandValidate.Parameters.Add(new SqlParameter("@CardInstno", txtCardNo.Text));
-
-                    commandValidate.Parameters.Add(new SqlParameter("@Cardcvv", txtCVV.Text));
-                    commandValidate.Parameters.Add(new SqlParameter("@Cardpin", txtPin.Text));
-                    commandValidate.Parameters.Add(new SqlParameter("@Cardmonth", txtMonth.Text.Substring(2).Replace("-","")));
-
-                    SqlParameter parameterMsg = commandValidate.Parameters.Add(new SqlParameter("@ResponseDesc", SqlDbType.VarChar, 5000));
-                    parameterMsg.Direction = ParameterDirection.Output;
-
-                    commandValidate.ExecuteNonQuery();
-                    connValidate.Close();
-
-
-                    if (parameterMsg.Value.ToString() != "Success")
-                    {
-
-                        strlblerror += parameterMsg.Value + "; ";
-                    }
-
-
-            #endregion
-
-            #endregion
-  Classes.alertwindow(this.Page, "A New Card Maintenance Batch Request Reference Generated : - " + RefNo, "Halt");
-        Response.Write("<script>alert('Request Successful') </script>");
-            errMsg.Text = "Successful";
+            ShowSuccess(string.Format("Maintenance batch {0} raised for account {1} ({2}). It now needs approval.", refNo, accountNo, DrpMaithType.SelectedItem.Text));
+            txtCardNo.Text = "";
+            txtMonth.Text = "";
+            txtRemarks.Text = "";
         }
-        catch (Exception ex) {
-            errMsg.Text = ex.Message;
+        catch (Exception ex)
+        {
+            ShowError("The request could not be saved: " + ex.Message);
         }
-
-
-        //ASPxGridView1.DataBind();
-        #endregion
-
-        #endregion
-      
-        //Response.Redirect("CardRequestInstant.aspx");
     }
 
+    // =====================================================================
+    // Shared Request-page helpers (same code in every rewritten C# Request page)
+    // =====================================================================
+
+    /// <summary>Signed-in identity "user?branch" (forms identity, else the LogonUserID cookie).</summary>
+    private string Identity()
+    {
+        string id = User != null && User.Identity != null ? User.Identity.Name : "";
+        if (string.IsNullOrEmpty(id) && Request.Cookies["LogonUserID"] != null) id = Request.Cookies["LogonUserID"].Value;
+        return id ?? "";
+    }
+
+    private string CurrentUser()
+    {
+        string id = Identity();
+        int split = id.LastIndexOf('?');
+        return split >= 0 ? id.Substring(0, split) : id;
+    }
+
+    private string CurrentBranch()
+    {
+        string id = Identity();
+        int split = id.LastIndexOf('?');
+        return split >= 0 ? id.Substring(split + 1) : "";
+    }
+
+    private static string ConnectionString(string name)
+    {
+        ConnectionStringSettings s = ConfigurationManager.ConnectionStrings[name];
+        return s == null ? "" : s.ConnectionString;
+    }
+
+    private static string MainDb { get { return ConnectionString("EazyConnect"); } }
+
+    /// <summary>Runs a query with parameters (never string concatenation) and returns the first table.</summary>
+    private static DataTable Query(string sql, params SqlParameter[] parameters)
+    {
+        return QueryOn(MainDb, sql, CommandType.Text, parameters);
+    }
+
+    private static DataTable QueryOn(string connection, string sql, CommandType type, params SqlParameter[] parameters)
+    {
+        DataTable table = new DataTable();
+        using (SqlConnection conn = new SqlConnection(connection))
+        using (SqlCommand cmd = new SqlCommand(sql, conn))
+        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+        {
+            cmd.CommandType = type;
+            cmd.Parameters.AddRange(parameters);
+            adapter.Fill(table);
+        }
+        return table;
+    }
+
+    /// <summary>Runs a stored procedure on the main database; returns the value of its first output parameter (or "").</summary>
+    private static string Exec(string procedure, params SqlParameter[] parameters)
+    {
+        using (SqlConnection conn = new SqlConnection(MainDb))
+        using (SqlCommand cmd = new SqlCommand(procedure, conn))
+        {
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddRange(parameters);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+        }
+        foreach (SqlParameter p in parameters)
+        {
+            if (p.Direction == ParameterDirection.Output || p.Direction == ParameterDirection.InputOutput)
+                return p.Value == null || p.Value == DBNull.Value ? "" : Convert.ToString(p.Value);
+        }
+        return "";
+    }
+
+    private static SqlParameter P(string name, object value)
+    {
+        return new SqlParameter(name, value ?? DBNull.Value);
+    }
+
+    private static SqlParameter Out(string name)
+    {
+        SqlParameter p = new SqlParameter(name, SqlDbType.VarChar, 5000);
+        p.Direction = ParameterDirection.Output;
+        return p;
+    }
+
+    private static string Col(DataRow row, string column)
+    {
+        if (row == null || !row.Table.Columns.Contains(column) || row.IsNull(column)) return "";
+        return Convert.ToString(row[column]);
+    }
+
+    /// <summary>yyyy-MM-dd for an HTML date box.</summary>
+    protected static string DateInput(object value)
+    {
+        DateTime d;
+        if (value is DateTime) return ((DateTime)value).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        if (value != null && value != DBNull.Value && DateTime.TryParse(Convert.ToString(value), out d) && d.Year > 1900)
+            return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        return "";
+    }
+
+    private static bool TryDate(string text, out DateTime value)
+    {
+        return DateTime.TryParseExact((text ?? "").Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out value);
+    }
+
+    /// <summary>Splits "123, 456 789" into a clean list of account numbers.</summary>
+    private static List<string> AccountList(string text)
+    {
+        List<string> result = new List<string>();
+        foreach (string part in (text ?? "").Split(new[] { ',', ';', ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            string acct = part.Trim().Trim('\'');
+            if (acct != "" && !result.Contains(acct)) result.Add(acct);
+        }
+        return result;
+    }
+
+    private void ShowSuccess(string message)
+    {
+        litResult.Text = HttpUtility.HtmlEncode(message);
+        litError.Text = "";
+    }
+
+    private void ShowError(string message)
+    {
+        litError.Text = HttpUtility.HtmlEncode(message);
+        litResult.Text = "";
+    }
 }

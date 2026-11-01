@@ -1,436 +1,340 @@
-﻿Imports System
-Imports NETClass
-Imports System.Data.SqlClient
+Imports System
+Imports System.Collections.Generic
+Imports System.Configuration
 Imports System.Data
-Imports System.IO
-Imports DevExpress.Web
-Imports DevExpress
+Imports System.Data.SqlClient
+Imports System.Globalization
+Imports System.Web
+Imports System.Web.UI
+Imports System.Web.UI.WebControls
+Imports NETClass
 
+''' <summary>
+''' Card request for USSD customers (existing cards).
+''' Lists accounts with GetAllAccountCardRequestUSSD (product, branch) and saves each chosen account with Sproc_AddCardRequestMob
+''' under one new batch reference. Plain ASP.NET controls (no DevExpress).
+''' </summary>
 Partial Class Request_CardRequestUSSD
     Inherits System.Web.UI.Page
-    Public luser As String
-    Public StrLocation As String
-    Public struser As String
-    Public guser As String
 
-    Function ValidateEntries() As String
-        Dim ds As New DataSet, item As DataGridItem, str_err As String
+    Private Const ListProcedure As String = "GetAllAccountCardRequestUSSD"
+    Private Const AddProcedure As String = "Sproc_AddCardRequestMob"
+    Private Const SendPhoneNumber As Boolean = True
+    Private Const FixedDateOfBirth As String = "1970-01-01"
 
-        'If drp_appr.Value = "" Then
-        '    str_err = str_err + drp_appr.Text + "<br>" + ","
+    ''' <summary>One card to request.</summary>
+    Private NotInheritable Class CardLine
+        Public AccountNo As String = ""
+        Public DisplayName As String = ""
+        Public Address As String = ""
+        Public City As String = ""
+        Public Phone As String = ""
+        Public Pan As String = ""
+        Public DateOfBirth As String = FixedDateOfBirth
+    End Class
 
-        'End If
+    Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load
+        If Not IsPostBack Then
+            LoadLists()
+            txtIssueDate.Text = DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+            BindGrid()
+        End If
+    End Sub
 
-        'Public luser As String = Context.User.Identity.Name
-        'Public StrLocation As String = luser.Substring(luser.LastIndexOf("?") + 1)
-        'Public struser As String = Mid(luser, 1, luser.LastIndexOf("?"))
-        'Public guser As String = struser
+    ' =====================================================================
+    ' Drop-down lists
+    ' =====================================================================
+    Private Sub LoadLists()
+        ddlProduct.Items.Clear()
+        For Each r As DataRow In Query(MainDb, "EXEC Sproc_GetAllProductsCards").Rows
+            Dim text As String = Col(r, "Product")
+            If Col(r, "Type") <> "" Then text &= " (" & Col(r, "Type") & ")"
+            ddlProduct.Items.Add(New ListItem(text, Col(r, "Product Code")))
+        Next
+        ddlBranch.Items.Clear()
+        For Each r As DataRow In Query(MainDb, "EXEC Sproc_GetAllBranchesCards").Rows
+            ddlBranch.Items.Add(New ListItem(Col(r, "sub_name") & " (" & Col(r, "Headsub_code") & ")", Col(r, "Headsub_code")))
+        Next
+        SelectValue(ddlProduct, "103")
+        SelectValue(ddlBranch, "00")
+    End Sub
 
+    Private Shared Sub SelectValue(ByVal list As DropDownList, ByVal value As String)
+        Dim item As ListItem = list.Items.FindByValue(value)
+        If item IsNot Nothing Then
+            list.ClearSelection()
+            item.Selected = True
+        End If
+    End Sub
 
-        Return str_err
+    ' =====================================================================
+    ' Account list
+    ' =====================================================================
+    Protected Sub Filter_Changed(ByVal sender As Object, ByVal e As EventArgs)
+        grid.PageIndex = 0
+        BindGrid()
+        ShowSuccess("")
+    End Sub
+
+    Protected Sub grid_PageIndexChanging(ByVal sender As Object, ByVal e As GridViewPageEventArgs)
+        grid.PageIndex = e.NewPageIndex
+        BindGrid()
+    End Sub
+
+    Private Function LoadAccounts() As DataView
+        Dim table As DataTable = Query(MainDb, "EXEC " & ListProcedure & " @product, @branch",
+            P("@product", ddlProduct.SelectedValue), P("@branch", ddlBranch.SelectedValue))
+        Dim view As New DataView(table)
+        Dim accounts As List(Of String) = AccountList(txtSpecificAccounts.Text)
+        If accounts.Count > 0 AndAlso table.Columns.Contains("AccountNo") Then
+            Dim quoted As New List(Of String)()
+            For Each a As String In accounts
+                quoted.Add("'" & a.Replace("'", "''") & "'")
+            Next
+            view.RowFilter = String.Format("Convert(AccountNo, 'System.String') IN ({0})", String.Join(",", quoted.ToArray()))
+        End If
+        Return view
     End Function
-    Protected Sub Button1_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles Button1.Click
-        Dim iferror As String = ValidateEntries()
-        If iferror = "" Then
 
-
-
-            Dim str_sel As String, strauthUser As String, strgetauthcookies As String
-            strgetauthcookies = "master?101" 'Request.Cookies("LogonUserID").Value
-            If strgetauthcookies <> Nothing Then
-
-                guser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"))
-            Else
-                luser = Context.User.Identity.Name
-                StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-                struser = luser.Substring(0, luser.LastIndexOf("?")) ' Mid(luser, 1, luser.LastIndexOf("?"))
-                guser = struser
-
-            End If
-            Dim strcon As String = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-
-            If Me.txtref_no.Text = Nothing Then
-
-                txtref_no.Text = Guid.NewGuid().ToString().Substring(0, 12).ToUpper()
-                Classes.alertwindow(Me.Page, "A New Batch Request Reference Generated : - " & Me.txtref_no.Text, "Halt")
-
-                If chkAllRecords.Checked = False Then
-
-
-                    Dim AccountNoHead As GridViewDataColumn = CType(ASPxGridView1.Columns("AccountNo"), GridViewDataColumn)
-                    Dim VisibleRowsCount As Integer = 0
-
-                    If ((ASPxGridView1.VisibleRowCount / ASPxGridView1.SettingsPager.PageSize) > 1) Then
-                        VisibleRowsCount = ASPxGridView1.SettingsPager.PageSize
-                    Else
-                        VisibleRowsCount = ASPxGridView1.VisibleRowCount
-                    End If
-                    Dim rowIndex As Integer
-
-
-                    For rowIndex = 0 To VisibleRowsCount - 1
-
-                        Dim AccountNo As ASPxCheckBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AccountNoHead, "ASPxCheckBox1"), ASPxCheckBox)
-
-                        If AccountNo.Checked = True Then
-                            Dim Cmd As New SqlCommand, sqlConn As New SqlConnection(strcon), result As SqlParameter
-                            Dim DisplNameHead As GridViewDataColumn = CType(ASPxGridView1.Columns("AccountName"), GridViewDataColumn)
-                            Dim AddressHead As GridViewDataColumn = CType(ASPxGridView1.Columns("Address"), GridViewDataColumn)
-                            Dim CityHead As GridViewDataColumn = CType(ASPxGridView1.Columns("city"), GridViewDataColumn)
-                            Dim PANnoHead As GridViewDataColumn = CType(ASPxGridView1.Columns("PANno"), GridViewDataColumn)
-
-                            Dim SeqHead As GridViewDataColumn = CType(ASPxGridView1.Columns("Address"), GridViewDataColumn)
-                            Dim CounterHead As GridViewDataColumn = CType(ASPxGridView1.Columns("city"), GridViewDataColumn)
-                            Dim DOBHead As GridViewDataColumn = CType(ASPxGridView1.Columns("DOB"), GridViewDataColumn)
-                            Dim PhoneNoHead As GridViewDataColumn = CType(ASPxGridView1.Columns("PhoneNo"), GridViewDataColumn)
-                            Dim DisplName As ASPxLabel = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, DisplNameHead, "ASPxTextBox2"), ASPxLabel)
-                            'Dim AddressName As ASPxTextBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AddressHead, "ASPxTextBox1"), ASPxTextBox)
-                            Dim PANno As ASPxLabel = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, PANnoHead, "ASPxTextBox2"), ASPxLabel)
-
-                            Dim AddressName As Label = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AddressHead, "txtaddress"), Label)
-
-                            Dim CityName As ASPxLabel = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, CityHead, "ASPxTextBox3"), ASPxLabel)
-                            Dim DOB As ASPxDateEdit = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, DOBHead, "ASPxDateEdit1"), ASPxDateEdit)
-
-                            If String.IsNullOrEmpty(DOB.Date.ToShortDateString()) = True Then
-                                DOB.Date = "1970-01-01"
-
-                            End If
-
-                            Dim PhoneNo As ASPxTextBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, PhoneNoHead, "ASPxTextBox4"), ASPxTextBox)
-
-
-
-                            Cmd.CommandText = "Sproc_AddCardRequestMob"
-                            Cmd.Connection = sqlConn
-                            Cmd.CommandType = CommandType.StoredProcedure
-
-                            sqlConn.Open()
-                            Cmd.Parameters.Add(New SqlParameter("@RefNo", txtref_no.Text))
-                            Cmd.Parameters.Add(New SqlParameter("@AccountNo", AccountNo.Text))
-                            Cmd.Parameters.Add(New SqlParameter("@Description", DisplName.Text))
-                            Cmd.Parameters.Add(New SqlParameter("@PanNo", PANno.CssClass))
-                            Cmd.Parameters.Add(New SqlParameter("@Address", AddressName.Text))
-                            Cmd.Parameters.Add(New SqlParameter("@City", CityName.Text))
-                            Cmd.Parameters.Add(New SqlParameter("@CountryCode", "NGA"))
-                            Cmd.Parameters.Add(New SqlParameter("@CardBrand", drpbrand.SelectedItem.Value))
-                            Cmd.Parameters.Add(New SqlParameter("@CardIssueDate", dateIssue.Date))
-
-                            Cmd.Parameters.Add(New SqlParameter("@CardExpiryDate", dateexpiry.Date))
-                            'Cmd.Parameters.Add(New SqlParameter("@CardCounter", ASPxGridView1.GetRowValuesByKeyValue(AccountNo.Text, "CardIssueCounter")))
-                            Cmd.Parameters.Add(New SqlParameter("@CardCounter", 0))
-
-                            'Cmd.Parameters.Add(New SqlParameter("@Seq", ASPxGridView1.GetRowValuesByKeyValue(AccountNo.Text, "seq")))
-                            Cmd.Parameters.Add(New SqlParameter("@Seq", 2))
-
-                            Cmd.Parameters.Add(New SqlParameter("@RequestTitle", txtTitle.Text))
-
-
-                            '   Cmd.Parameters.Add(New SqlParameter("@DOB", DOB.Date))
-                            Cmd.Parameters.Add(New SqlParameter("@DOB", "1970-01-01"))
-                            Cmd.Parameters.Add(New SqlParameter("@AddedBy", guser))
-
-                            '  Cmd.Parameters.Add(New SqlParameter("@ApprovedBy", drp_appr.Value))
-                            Cmd.Parameters.Add(New SqlParameter("@ApprovedBy", "System"))
-
-                            Cmd.Parameters.Add(New SqlParameter("@CardPhoneNo", PhoneNo.Text))
-
-                            Cmd.ExecuteNonQuery()
-
-
-                            sqlConn.Close()
-                        End If
-                    Next
-                Else
-                    'Select all records
-                    Dim OldPageSize As Integer = ASPxGridView1.SettingsPager.PageSize
-                    ASPxGridView1.SettingsPager.Mode = GridViewPagerMode.ShowAllRecords
-                    'For pageindex = 0 To ASPxGridView1.PageCount
-                    Dim VisibleRowsCount As Integer = 0
-                    Dim AccountNoHead As GridViewDataColumn = CType(ASPxGridView1.Columns("AccountNo"), GridViewDataColumn)
-
-                    If ((ASPxGridView1.VisibleRowCount / ASPxGridView1.SettingsPager.PageSize) > 1) Then
-                        VisibleRowsCount = ASPxGridView1.SettingsPager.PageSize
-                    Else
-                        VisibleRowsCount = ASPxGridView1.VisibleRowCount
-                    End If
-
-
-                    Dim rowIndex As Integer
-                    Dim lp As Integer = 0
-                    ASPxGridView1.DataBind()
-                    For rowIndex = 0 To ASPxGridView1.VisibleRowCount - 1
-
-                        Dim AccountNo As ASPxCheckBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AccountNoHead, "ASPxCheckBox1"), ASPxCheckBox)
-
-
-                        Dim Cmd As New SqlCommand, sqlConn As New SqlConnection(strcon), result As SqlParameter
-                        Dim DisplNameHead As GridViewDataColumn = CType(ASPxGridView1.Columns("AccountName"), GridViewDataColumn)
-                        Dim AddressHead As GridViewDataColumn = CType(ASPxGridView1.Columns("Address"), GridViewDataColumn)
-                        Dim CityHead As GridViewDataColumn = CType(ASPxGridView1.Columns("city"), GridViewDataColumn)
-                        Dim PANnoHead As GridViewDataColumn = CType(ASPxGridView1.Columns("PANno"), GridViewDataColumn)
-                        Dim SeqHead As GridViewDataColumn = CType(ASPxGridView1.Columns("Address"), GridViewDataColumn)
-                        Dim CounterHead As GridViewDataColumn = CType(ASPxGridView1.Columns("city"), GridViewDataColumn)
-                        Dim DOBHead As GridViewDataColumn = CType(ASPxGridView1.Columns("DOB"), GridViewDataColumn)
-                        Dim PhoneNoHead As GridViewDataColumn = CType(ASPxGridView1.Columns("PhoneNo"), GridViewDataColumn)
-                        Dim DisplName As ASPxLabel = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, DisplNameHead, "ASPxTextBox2"), ASPxLabel)
-                        'Dim AddressName As ASPxTextBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AddressHead, "ASPxTextBox1"), ASPxTextBox)
-                        Dim PANno As ASPxLabel = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, PANnoHead, "ASPxTextBox2"), ASPxLabel)
-
-                        Dim AddressName As Label = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AddressHead, "txtaddress"), Label)
-
-                        Dim CityName As ASPxLabel = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, CityHead, "ASPxTextBox3"), ASPxLabel)
-                        Dim DOB As ASPxDateEdit = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, DOBHead, "ASPxDateEdit1"), ASPxDateEdit)
-
-                        If String.IsNullOrEmpty(DOB.Date.ToShortDateString()) = True Then
-                            DOB.Date = "1970-01-01"
-
-                        End If
-
-                        Dim PhoneNo As ASPxTextBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, PhoneNoHead, "ASPxTextBox4"), ASPxTextBox)
-
-
-
-
-
-                        Cmd.CommandText = "Sproc_AddCardRequestMob"
-                        Cmd.Connection = sqlConn
-                        Cmd.CommandType = CommandType.StoredProcedure
-
-                        sqlConn.Open()
-                        Cmd.Parameters.Add(New SqlParameter("@RefNo", txtref_no.Text))
-                        Cmd.Parameters.Add(New SqlParameter("@AccountNo", AccountNo.Text))
-                        Cmd.Parameters.Add(New SqlParameter("@Description", DisplName.Text))
-                        Cmd.Parameters.Add(New SqlParameter("@PanNo", PANno.CssClass))
-                        Cmd.Parameters.Add(New SqlParameter("@Address", AddressName.Text))
-                        Cmd.Parameters.Add(New SqlParameter("@City", CityName.Text))
-                        Cmd.Parameters.Add(New SqlParameter("@CountryCode", "NGA"))
-                        Cmd.Parameters.Add(New SqlParameter("@CardBrand", drpbrand.SelectedItem.Value))
-                        Cmd.Parameters.Add(New SqlParameter("@CardIssueDate", dateIssue.Date))
-
-                        Cmd.Parameters.Add(New SqlParameter("@CardExpiryDate", dateexpiry.Date))
-                        'Cmd.Parameters.Add(New SqlParameter("@CardCounter", ASPxGridView1.GetRowValuesByKeyValue(AccountNo.Text, "CardIssueCounter")))
-                        Cmd.Parameters.Add(New SqlParameter("@CardCounter", 0))
-
-                        'Cmd.Parameters.Add(New SqlParameter("@Seq", ASPxGridView1.GetRowValuesByKeyValue(AccountNo.Text, "seq")))
-                        Cmd.Parameters.Add(New SqlParameter("@Seq", 2))
-
-                        Cmd.Parameters.Add(New SqlParameter("@RequestTitle", txtTitle.Text))
-
-
-                        Cmd.Parameters.Add(New SqlParameter("@DOB", DOB.Date))
-
-                        Cmd.Parameters.Add(New SqlParameter("@AddedBy", guser))
-                        Cmd.Parameters.Add(New SqlParameter("@ApprovedBy", drp_appr.Value))
-                        Cmd.Parameters.Add(New SqlParameter("@CardPhoneNo", PhoneNo.Text))
-
-
-                        Cmd.ExecuteNonQuery()
-
-
-                        sqlConn.Close()
-
-
-                    Next
-
-                    ASPxGridView1.SettingsPager.Mode = GridViewPagerMode.ShowPager
-                    ASPxGridView1.SettingsPager.PageSize = OldPageSize
-
-                End If
-                Response.Write("<script>alert('Request Successful') </script>")
-                txtref_no.Text = Nothing
-            End If
-
-
-
-        Else
-            Dim stringinfo As String = String.Format("<script>alert('{0}') </script>", iferror)
-            Response.Write(stringinfo)
-            ASPxGridView1.DataBind()
-
-        End If
+    Private Sub BindGrid()
+        Try
+            Dim view As DataView = LoadAccounts()
+            grid.DataSource = view
+            grid.DataBind()
+            litTotal.Text = String.Format("{0:N0} account{1}", view.Count, If(view.Count = 1, "", "s"))
+        Catch ex As Exception
+            grid.DataSource = Nothing
+            grid.DataBind()
+            litTotal.Text = ""
+            ShowError("The accounts could not be loaded: " & ex.Message)
+        End Try
     End Sub
 
+    ' =====================================================================
+    ' Submit
+    ' =====================================================================
+    Protected Sub btnSubmit_Click(ByVal sender As Object, ByVal e As EventArgs)
+        If Not IsValid Then Return
+        Dim user As String = CurrentUser()
 
-    Sub LoadBoxes()
-        'Dim ds As New DataSet
-        'sqlproducts.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-        'sqlproducts.SelectCommand = "Sproc_GetAllProducts"
-        'sqlproducts.SelectCommandType = SqlDataSourceCommandType.Text
+        Dim issueDate, expiryDate As DateTime
+        If Not TryDate(txtIssueDate.Text, issueDate) Then ShowError("Enter a valid card issue date.") : Return
+        If Not TryDate(txtExpiryDate.Text, expiryDate) Then ShowError("Enter a valid card expiry date.") : Return
+        If expiryDate <= issueDate Then ShowError("The expiry date must be after the issue date.") : Return
+        If ddlBrand.SelectedValue = "" Then ShowError("Choose the card brand.") : Return
 
+        ' Values typed on the current page win over the stored values
+        Dim onPage As New Dictionary(Of String, CardLine)()
+        Dim ticked As New List(Of CardLine)()
+        For Each row As GridViewRow In grid.Rows
+            If row.RowType <> DataControlRowType.DataRow Then Continue For
+            Dim line As CardLine = LineFromRow(row)
+            onPage(line.AccountNo) = line
+            Dim chk As CheckBox = TryCast(row.FindControl("chkSelect"), CheckBox)
+            If chk IsNot Nothing AndAlso chk.Checked Then ticked.Add(line)
+        Next
 
-        'sqlBranches.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-        'sqlBranches.SelectCommand = "Sproc_GetAllBranches"
-        'sqlBranches.SelectCommandType = SqlDataSourceCommandType.Text
-
-        '
-        'Dim strgetOffr As String = String.Format("Sproc_GetTransApprovingOfficers {0},2,'{1}','{2}','{3}'", CDec(200), gEazy.GetTransCodeInfo("002", 2), StrLocation, guser)
-        'sqlAppr.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-        'sqlAppr.SelectCommand = strgetOffr
-        'sqlAppr.SelectCommandType = SqlDataSourceCommandType.Text
-
-
-
-        Dim str_sel As String, strauthUser As String, strgetauthcookies As String
-        strgetauthcookies = "master?101" 'Request.Cookies("LogonUserID").Value 
-        If strgetauthcookies <> Nothing Then
-
-            guser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"))
-        Else
-            luser = Context.User.Identity.Name
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-            struser = luser.Substring(0, luser.LastIndexOf("?")) ' Mid(luser, 1, luser.LastIndexOf("?"))
-            guser = struser
-
-        End If
-
-
-        Dim strgetAcctDetails As String = String.Format("Sproc_GetTransApprovingOfficers {0},2,'{1}','{2}','{3}'", CDec(200), "002", StrLocation, guser)
-        sqlAppr.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-        sqlAppr.SelectCommand = strgetAcctDetails
-        sqlAppr.SelectCommandType = SqlDataSourceCommandType.Text
-
-
-
-    End Sub
-    Sub LoadGrid()
-        Dim str_sel As String, strauthUser As String, strgetauthcookies As String
-        strgetauthcookies = "master?101" 'Request.Cookies("LogonUserID").Value  Request.Cookies("LogonUserID").Value
-        If strgetauthcookies <> Nothing Then
-
-            guser = strgetauthcookies.Substring(0, strgetauthcookies.LastIndexOf("?"))
-        Else
-            luser = Context.User.Identity.Name
-            StrLocation = luser.Substring(luser.LastIndexOf("?") + 1)
-            struser = luser.Substring(0, luser.LastIndexOf("?")) ' Mid(luser, 1, luser.LastIndexOf("?"))
-            guser = struser
-
-        End If
-        If String.IsNullOrEmpty(Trim(txtSpecificAcct.Text)) = False Then
-
-
-
-            Dim strgetAcctDetails As String = String.Format("GetAllAccountCardRequestUSSD '{0}','{1}'", drp_products.Value, drpbranches.Value)
-            SqlacctDetails.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-            SqlacctDetails.SelectCommand = strgetAcctDetails
-            SqlacctDetails.FilterExpression = String.Format("accountno in ({0})", Trim(txtSpecificAcct.Text))
-
-            SqlacctDetails.SelectCommandType = SqlDataSourceCommandType.Text
-
-        Else
-
-            Dim strgetAcctDetails As String = String.Format("GetAllAccountCardRequestUSSD '{0}','{1}'", drp_products.Value, drpbranches.Value)
-            SqlacctDetails.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-            SqlacctDetails.SelectCommand = strgetAcctDetails
-            SqlacctDetails.SelectCommandType = SqlDataSourceCommandType.Text
-
-        End If
-        'Dim strgetOffr As String = String.Format("Sproc_GetTransApprovingOfficers {0},2,'{1}','{2}','{3}'", CDec(200), gEazy.GetTransCodeInfo("002", 2), StrLocation, guser)
-        'sqlAppr.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings("EazyConnect").ConnectionString
-        'sqlAppr.SelectCommand = strgetOffr
-        'sqlAppr.SelectCommandType = SqlDataSourceCommandType.Text
-
-        'Response.Write(strgetAcctDetails)
-    End Sub
-    Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
-        'If (IsPostBack = False) Then
-        '    txtUserID.Text = guser
-        '    LoadBoxes()
-        '    LoadGrid()
-        'End If
-
-        If (IsPostBack = False And IsCallback = False) Then
-
-            txtUserID.Text = guser
-
-            LoadBoxes()
-            LoadGrid()
-
-
-            drpbranches.Value = "00"
-            drp_products.Value = "103"
-
-
-            Me.ASPxGridView1.PageIndex = 0
-        End If
-    End Sub
-
-
-
-    Protected Sub ASPxGridView1_BeforePerformDataSelect(ByVal sender As Object, ByVal e As System.EventArgs) Handles ASPxGridView1.BeforePerformDataSelect
-        LoadGrid()
-    End Sub
-
-    Protected Sub drp_products_SelectedIndexChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles drp_products.SelectedIndexChanged
-        LoadBoxes()
-        LoadGrid()
-    End Sub
-
-    Protected Sub drpbranches_SelectedIndexChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles drpbranches.SelectedIndexChanged
-        LoadBoxes()
-        LoadGrid()
-    End Sub
-
-    Protected Sub Button3_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles Button3.Click
-        Response.Redirect("CardRequestUSSD.aspx")
-    End Sub
-
-    Protected Sub Button4_Click(ByVal sender As Object, ByVal e As System.EventArgs) Handles Button4.Click
-        LoadGrid()
-    End Sub
-
-
-    Protected Sub ASPxCheckBox2_CheckedChanged(ByVal sender As Object, ByVal e As System.EventArgs)
-
-        Dim chkAll As ASPxCheckBox = CType(sender, ASPxCheckBox)
-        'Response.Write("i got here")
-        Dim AccountNoHead As GridViewDataColumn = CType(ASPxGridView1.Columns("AccountNo"), GridViewDataColumn)
-        Dim VisibleRowsCount As Integer = 0
-
-        If ((ASPxGridView1.VisibleRowCount / ASPxGridView1.SettingsPager.PageSize) > 1) Then
-            VisibleRowsCount = ASPxGridView1.SettingsPager.PageSize
-        Else
-            VisibleRowsCount = ASPxGridView1.VisibleRowCount
-        End If
-        If (chkAll.Checked = True) Then
-            Dim rowIndex As Integer
-
-
-            For rowIndex = 0 To VisibleRowsCount - 1
-
-
-
-                'CheckBox ChkFirstName = (CheckBox)ctrlGrid.FindRowCellTemplateControl(rowIndex, columnFirstName, "CheckBox1")
-                Dim AccountNo As ASPxCheckBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AccountNoHead, "ASPxCheckBox1"), ASPxCheckBox)
-
-                AccountNo.Checked = True
+        Dim lines As List(Of CardLine)
+        If chkAllPages.Checked Then
+            lines = New List(Of CardLine)()
+            For Each r As DataRowView In LoadAccounts()
+                Dim acct As String = Col(r.Row, "AccountNo")
+                lines.Add(If(onPage.ContainsKey(acct), onPage(acct), LineFromData(r.Row)))
             Next
         Else
-            Dim rowIndex As Integer
-            For rowIndex = 0 To VisibleRowsCount - 1
-
-
-
-                'CheckBox ChkFirstName = (CheckBox)ctrlGrid.FindRowCellTemplateControl(rowIndex, columnFirstName, "CheckBox1")
-                Dim AccountNo As ASPxCheckBox = CType(ASPxGridView1.FindRowCellTemplateControl(rowIndex, AccountNoHead, "ASPxCheckBox1"), ASPxCheckBox)
-
-                AccountNo.Checked = False
-            Next
+            lines = ticked
         End If
+        If lines.Count = 0 Then ShowError("Tick at least one account, or tick ""Include every page"".") : Return
 
+        Dim refNo As String = Guid.NewGuid().ToString("N").Substring(0, 12).ToUpperInvariant()
+        Dim saved As Integer = 0
+        Dim failed As New List(Of String)()
+        For Each line As CardLine In lines
+            Try
+                Dim ps As New List(Of SqlParameter)()
+                ps.Add(P("@RefNo", refNo))
+                ps.Add(P("@AccountNo", line.AccountNo))
+                ps.Add(P("@Description", line.DisplayName))
+                ps.Add(P("@PanNo", line.Pan))
+                ps.Add(P("@Address", line.Address))
+                ps.Add(P("@City", line.City))
+                ps.Add(P("@CountryCode", "NGA"))
+                ps.Add(P("@CardBrand", ddlBrand.SelectedValue))
+                ps.Add(P("@CardIssueDate", issueDate))
+                ps.Add(P("@CardExpiryDate", expiryDate))
+                ps.Add(P("@CardCounter", 0))
+                ps.Add(P("@Seq", 2))
+                ps.Add(P("@RequestTitle", txtTitle.Text.Trim()))
+                ps.Add(P("@DOB", line.DateOfBirth))
+                ps.Add(P("@AddedBy", user))
+                ps.Add(P("@ApprovedBy", "System"))
+                If SendPhoneNumber Then ps.Add(P("@CardPhoneNo", line.Phone))
+                Exec(AddProcedure, ps.ToArray())
+                saved += 1
+            Catch ex As Exception
+                failed.Add(line.AccountNo & " (" & ex.Message & ")")
+            End Try
+        Next
+
+        If saved > 0 Then
+            Audit("044", String.Format("{0} card request batch {1} ({2}); {3} account(s) requested; issue {4:yyyy-MM-dd}; expiry {5:yyyy-MM-dd}; brand {6}",
+                "USSD", refNo, txtTitle.Text.Trim(), saved, issueDate, expiryDate, ddlBrand.SelectedValue), user)
+        End If
+        If failed.Count = 0 Then
+            ShowSuccess(String.Format("Batch {0} submitted: {1} card request{2}.", refNo, saved, If(saved = 1, "", "s")))
+            chkAllPages.Checked = False
+            BindGrid()
+        Else
+            ShowSuccess(If(saved > 0, String.Format("Batch {0}: {1} card request(s) saved.", refNo, saved), ""))
+            litError.Text = HttpUtility.HtmlEncode(String.Format("{0} account(s) were not saved: {1}", failed.Count, String.Join("; ", failed.ToArray())))
+        End If
     End Sub
 
-
-    Protected Sub txtSpecificAcct_TextChanged(ByVal sender As Object, ByVal e As System.EventArgs) Handles txtSpecificAcct.TextChanged
-        LoadBoxes()
-        LoadGrid()
+    Protected Sub btnReset_Click(ByVal sender As Object, ByVal e As EventArgs)
+        Response.Redirect(Request.Path, False)
+        Context.ApplicationInstance.CompleteRequest()
     End Sub
 
-    Protected Sub ASPxButton1_Click(sender As Object, e As System.EventArgs) Handles ASPxButton1.Click
-        Button1_Click(sender, e)
+    ' =====================================================================
+    ' Reading a row (edited values) or a data row (stored values)
+    ' =====================================================================
+    Private Function LineFromRow(ByVal row As GridViewRow) As CardLine
+        Dim line As New CardLine()
+        line.AccountNo = Convert.ToString(grid.DataKeys(row.RowIndex)("AccountNo"))
+        line.DisplayName = ValueOf(row, "txtName", "hidName")
+        line.Address = ValueOf(row, "txtAddress", "hidAddress")
+        line.City = ValueOf(row, "txtCity", "hidCity")
+        line.Phone = ValueOf(row, "txtPhone", "hidPhone")
+        line.Pan = ValueOf(row, "", "hidPan")
+        Dim dob As String = ValueOf(row, "txtDob", "")
+        Dim d As DateTime
+        If TryDate(dob, d) Then line.DateOfBirth = d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Return line
+    End Function
+
+    Private Shared Function LineFromData(ByVal r As DataRow) As CardLine
+        Dim line As New CardLine()
+        line.AccountNo = Col(r, "AccountNo")
+        line.DisplayName = Col(r, "AccountName")
+        line.Address = Col(r, "Address")
+        line.City = Col(r, "city")
+        line.Phone = Col(r, "PhoneNo")
+        line.Pan = Col(r, "PANno")
+        Return line
+    End Function
+
+    Private Shared Function ValueOf(ByVal row As GridViewRow, ByVal textBoxId As String, ByVal hiddenId As String) As String
+        If textBoxId <> "" Then
+            Dim tb As TextBox = TryCast(row.FindControl(textBoxId), TextBox)
+            If tb IsNot Nothing Then Return tb.Text.Trim()
+        End If
+        If hiddenId <> "" Then
+            Dim hf As HiddenField = TryCast(row.FindControl(hiddenId), HiddenField)
+            If hf IsNot Nothing Then Return hf.Value.Trim()
+        End If
+        Return ""
+    End Function
+
+    ' =====================================================================
+    ' Shared Request-page helpers (same code in every rewritten Request page)
+    ' =====================================================================
+    Private Const MainDb As String = "EazyConnect"
+    Private Const CoreDb As String = "EazyConnectSource"
+
+    ''' <summary>Signed-in officer: the LogonUserID cookie is "user?branch".</summary>
+    Private Function CurrentUser() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Dim name As String = If(split >= 0, luser.Substring(0, split), luser)
+        Return If(name = "", "system", name)
+    End Function
+
+    ''' <summary>Branch of the signed-in officer (the part after "?" in the cookie).</summary>
+    Private Function CurrentBranch() As String
+        Dim cookie As HttpCookie = Request.Cookies("LogonUserID")
+        Dim luser As String = If(cookie IsNot Nothing AndAlso Not String.IsNullOrEmpty(cookie.Value), cookie.Value, If(User.Identity.Name, ""))
+        Dim split As Integer = luser.LastIndexOf("?"c)
+        Return If(split >= 0, luser.Substring(split + 1), "")
+    End Function
+
+    Private Shared Function Cfg(ByVal name As String) As String
+        Dim s As ConnectionStringSettings = ConfigurationManager.ConnectionStrings(name)
+        Return If(s Is Nothing, "", s.ConnectionString)
+    End Function
+
+    Private Shared Function SqlText(ByVal value As String) As String
+        Return If(value, "").Replace("'", "''")
+    End Function
+
+    Private Shared Sub Audit(ByVal code As String, ByVal message As String, ByVal actor As String)
+        Classes.RecordOp(String.Format("Sproc_AddAuditLog '{0}','{1}','{2}',''", code, SqlText(message), SqlText(actor)))
     End Sub
 
-    Protected Sub ASPxButton2_Click(sender As Object, e As System.EventArgs) Handles ASPxButton2.Click
-        Response.Redirect("CardRequestUSSD.aspx")
+    ''' <summary>Runs a stored procedure on the main database.</summary>
+    Private Shared Sub Exec(ByVal procedure As String, ByVal ParamArray parameters As SqlParameter())
+        Using conn As New SqlConnection(Cfg(MainDb))
+            Using cmd As New SqlCommand(procedure, conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddRange(parameters)
+                conn.Open()
+                cmd.ExecuteNonQuery()
+            End Using
+        End Using
+    End Sub
+
+    ''' <summary>Runs a query with parameters (never string concatenation) and returns the first table.</summary>
+    Private Shared Function Query(ByVal connectionName As String, ByVal sql As String, ByVal ParamArray parameters As SqlParameter()) As DataTable
+        Dim table As New DataTable()
+        Using conn As New SqlConnection(Cfg(connectionName))
+            Using cmd As New SqlCommand(sql, conn)
+                cmd.Parameters.AddRange(parameters)
+                Using adapter As New SqlDataAdapter(cmd)
+                    adapter.Fill(table)
+                End Using
+            End Using
+        End Using
+        Return table
+    End Function
+
+    Private Shared Function P(ByVal name As String, ByVal value As Object) As SqlParameter
+        Return New SqlParameter(name, If(value, DBNull.Value))
+    End Function
+
+    Private Shared Function Col(ByVal row As DataRow, ByVal column As String) As String
+        If row Is Nothing OrElse Not row.Table.Columns.Contains(column) OrElse row.IsNull(column) Then Return ""
+        Return Convert.ToString(row(column))
+    End Function
+
+    ''' <summary>Splits "123, 456 789" into a clean list of account numbers.</summary>
+    Private Shared Function AccountList(ByVal text As String) As List(Of String)
+        Dim result As New List(Of String)()
+        For Each part As String In If(text, "").Split(New Char() {","c, ";"c, " "c, Convert.ToChar(13), Convert.ToChar(10), Convert.ToChar(9)}, StringSplitOptions.RemoveEmptyEntries)
+            Dim acct As String = part.Trim().Trim("'"c)
+            If acct <> "" AndAlso Not result.Contains(acct) Then result.Add(acct)
+        Next
+        Return result
+    End Function
+
+    Private Shared Function TryDate(ByVal value As String, ByRef result As DateTime) As Boolean
+        Return DateTime.TryParseExact(If(value, "").Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, result)
+    End Function
+
+    ''' <summary>Formats a date for an HTML date input (yyyy-MM-dd).</summary>
+    Protected Shared Function DateInput(ByVal value As Object) As String
+        If TypeOf value Is DateTime Then Return CType(value, DateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Dim d As DateTime
+        If DateTime.TryParse(Convert.ToString(value), d) Then Return d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        Return ""
+    End Function
+
+    Private Sub ShowSuccess(ByVal message As String)
+        litResult.Text = HttpUtility.HtmlEncode(message)
+        litError.Text = ""
+    End Sub
+
+    Private Sub ShowError(ByVal message As String)
+        litError.Text = HttpUtility.HtmlEncode(message)
+        litResult.Text = ""
     End Sub
 End Class
