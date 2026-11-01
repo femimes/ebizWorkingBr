@@ -1,1290 +1,544 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
-using DevExpress.Web;
-using System.Security.Cryptography;
-using System.IO;
-using System.Text;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using NETClass;
+using System.Globalization;
+using System.IO;
 using System.Net;
+using System.Text;
+using System.Web;
 using System.Web.Script.Serialization;
-using Newtonsoft.Json;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using NETClass;
 
-
+/// <summary>
+/// NDD customer e-mandates: capture, edit (until approved) and delete.
+/// Data: SpNDDeMandateGetAll / SpAddNDDeMandate / SpUpdateNDDeMandate / SpNDDeMandateDelete.
+/// Account names: core banking for this bank, NIBSS name enquiry (Easypay/nameEnquiry) for others.
+/// Plain ASP.NET controls (no DevExpress).
+/// </summary>
 public partial class NDD_NDDeMandate : System.Web.UI.Page
 {
-    public string luser;
-    public string StrLocation;
-    public string struser;
-    public string guser;
-
+    private const string DateFormat = "yyyy-MM-dd";
 
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
         {
-            //luser = User.Identity.Name;// User.Identity.Name;
-            //StrLocation = this.luser.Substring(this.luser.LastIndexOf("?") + 1);
-            //struser = this.luser.Substring(0, this.luser.LastIndexOf("?"));
-            //guser = this.struser;
-            // txtUserid.Text = HttpContext.Current.User.Identity.Name;
-            ASPxGridView1.DataBind();
+            LoadBillers();
+            txtStartDate.Text = DateTime.Today.ToString(DateFormat, CultureInfo.InvariantCulture);
+            UpdateEndDate();
         }
     }
 
-    protected void ASPxGridView1_CustomErrorText(object sender, ASPxGridViewCustomErrorTextEventArgs e)
+    /// <summary>Approved billers, shown as "name — product (RC number)".</summary>
+    private void LoadBillers()
     {
-        e.ErrorText = string.Empty;
-        if (e.Exception is NullReferenceException)
-            e.ErrorText = " Fill all the setup fields";
-        else if (e.Exception is InvalidOperationException)
-            e.ErrorText = "InvalidOperationException Text";
-        //else if (e.Exception is )
-        //cus_val.Text = "InvalidOperationException Text";
+        ddlBiller.Items.Clear();
+        ddlBiller.Items.Add(new ListItem("Choose a customer", ""));
+        DataView view = sqlBillers.Select(DataSourceSelectArguments.Empty) as DataView;
+        if (view == null) return;
+        foreach (DataRowView r in view)
+        {
+            string id = Convert.ToString(r["billerId"]);
+            if (id == "" || ddlBiller.Items.FindByValue(id) != null) continue;
+            string text = Col(r.Row, "name");
+            string product = Col(r.Row, "productName");
+            string rc = Col(r.Row, "rcNumber");
+            if (product != "") text += " — " + product;
+            if (rc != "") text += " (" + rc + ")";
+            ddlBiller.Items.Add(new ListItem(text, id));
+        }
     }
 
-    protected void ASPxGridView1_RowInserting(object sender, DevExpress.Web.Data.ASPxDataInsertingEventArgs e)
+    // =====================================================================
+    // Live lookups while the officer fills the form
+    // =====================================================================
+    protected void txtCustomerAccount_TextChanged(object sender, EventArgs e)
     {
-        //luser = User.Identity.Name;
-        luser = User.Identity.Name;// User.Identity.Name;
-        string l_getHeadCode = "";
+        try
+        {
+            string name = LocalAccountName(txtCustomerAccount.Text);
+            litCustomerAccountName.Text = HttpUtility.HtmlEncode(name);
+            if (name == "" && txtCustomerAccount.Text.Trim() != "") ShowError("Customer account " + txtCustomerAccount.Text.Trim() + " was not found in core banking.");
+            else ShowSuccess("");
+        }
+        catch (Exception ex)
+        {
+            ShowError("The customer account could not be checked: " + ex.Message);
+        }
+    }
 
-        luser = Request.Cookies["LogonUserID"].Value;// HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name; //HttpContext.Current.User.Identity.Name;// HttpContext.Current.User.Identity.Name;
-        StrLocation = luser.Substring(this.luser.LastIndexOf("?") + 1);
-        struser = luser.Substring(0, this.luser.LastIndexOf("?"));
-        guser = struser;
+    protected void PayerAccount_Changed(object sender, EventArgs e)
+    {
+        litPayerAccountName.Text = "";
+        if (ddlBank.SelectedValue == "" || txtPayerAccount.Text.Trim() == "") return;
+        string name = AccountName(txtPayerAccount.Text, ddlBank.SelectedValue);
+        litPayerAccountName.Text = HttpUtility.HtmlEncode(name);
+        if (name == "") ShowError("The payer account name could not be confirmed. Check the bank and account number.");
+        else ShowSuccess("");
+    }
 
+    protected void Period_Changed(object sender, EventArgs e)
+    {
+        UpdateEndDate();
+    }
 
-        //string l_SeqNo = e.NewValues[0].ToString();
+    private void UpdateEndDate()
+    {
+        DateTime start; int months;
+        txtEndDate.Text = TryDate(txtStartDate.Text, out start) && TryMonths(txtFrequency.Text, out months)
+            ? EndDate(start, months).ToString(DateFormat, CultureInfo.InvariantCulture)
+            : "";
+    }
 
+    private static DateTime EndDate(DateTime start, int months)
+    {
+        return start.AddMonths(months).AddDays(-1);
+    }
 
-        string name = e.NewValues["payerName"].ToString();
-        //
-       
-        string phone = e.NewValues["payerPhoneNumber"].ToString();
-        string email = e.NewValues["payerEmail"].ToString();
-        string narration = e.NewValues["narration"].ToString();
+    // =====================================================================
+    // Save (new or edit)
+    // =====================================================================
+    protected void btnSave_Click(object sender, EventArgs e)
+    {
+        if (!IsValid) return;
+        string user = CurrentUser();
+        bool editing = hidSeqNo.Value != "";
 
-        
-        string address = e.NewValues["payerAddress"].ToString();
-        //string account_number = e.NewValues["account_number"].ToString();
-        //ASPxTextBox account_number = (ASPxTextBox)e.NewValues["accountNumber"];
-        //ASPxLabel account_name = (ASPxLabel)e.NewValues["accountName"];
+        string billerId = ddlBiller.SelectedValue;
+        string customerAccount = txtCustomerAccount.Text.Trim();
+        string payerName = txtPayerName.Text.Trim();
+        string phone = txtPhone.Text.Trim();
+        string email = txtEmail.Text.Trim();
+        string address = txtAddress.Text.Trim();
+        string bankCode = ddlBank.SelectedValue;
+        string payerAccount = txtPayerAccount.Text.Trim();
+        string narration = txtNarration.Text.Trim();
+        int mandateType = chkFixed.Checked ? 1 : 2;   // 1 = fixed, 2 = variable
 
+        decimal amount; int months; DateTime start;
+        if (!decimal.TryParse(txtAmount.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out amount) || amount <= 0) { ShowError("Enter an amount greater than zero."); return; }
+        if (!TryMonths(txtFrequency.Text, out months)) { ShowError("Frequency must be a whole number of months from 1 to 120."); return; }
+        if (!TryDate(txtStartDate.Text, out start)) { ShowError("Enter a valid start date."); return; }
+        DateTime end = EndDate(start, months);
 
-        //ASPxDateEdit startDate = (ASPxDateEdit)e.NewValues["startDate"];
-        //ASPxDateEdit endDate = (ASPxDateEdit)e.NewValues["endDate"];
-        //string startDate = e.NewValues["startDate"].ToString();
-        //string endDate = e.NewValues["endDate"].ToString();
-        string fixedMandate = ""; int mandateType = 0;
-        if ( e.NewValues["mandateTypeCon"] == null)
+        try
+        {
+            // Edits are only allowed while the mandate is still pending
+            DataRow existing = null;
+            if (editing)
             {
-
-            mandateType = 2;
+                existing = FindRow(hidSeqNo.Value);
+                if (existing == null) { ShowError("That mandate no longer exists."); ResetForm(); grid.DataBind(); return; }
+                if (IsLocked(Col(existing, "statusDesc"))) { ShowError("Approved or disapproved mandates cannot be edited."); return; }
             }
 
-         
+            // Product of the chosen biller
+            string productId = "", productName = "";
+            foreach (DataRow p in Query(MainDb, "EXEC SpNDDBillerGetOnly @billerId", P("@billerId", billerId)).Rows)
+            {
+                productId = Col(p, "productId");
+                productName = Col(p, "productName");
+            }
+            if (productName == "") { ShowError("The chosen customer has no NDD product yet. Create one under NDD billers > Products first."); return; }
 
-        string CorpStatus = "0";/* e.NewValues["CorpStatus"].ToString();*/
-        //ASPxCheckBox chkaplyRate = (ASPxCheckBox)e.NewValues["Status"];
-        string ApplyRate = "";
+            // Re-validate both account names on the server
+            string customerAccountName = LocalAccountName(customerAccount);
+            if (customerAccountName == "") { ShowError("Customer account " + customerAccount + " was not found in core banking."); return; }
+            litCustomerAccountName.Text = HttpUtility.HtmlEncode(customerAccountName);
 
-        object RowInsert;
-        if (string.IsNullOrEmpty(name) == true)
-        {
+            string payerAccountName = AccountName(payerAccount, bankCode);
+            if (payerAccountName == "") { ShowError("The payer account name could not be confirmed. Check the bank and account number."); return; }
+            litPayerAccountName.Text = HttpUtility.HtmlEncode(payerAccountName);
 
-            cus_val.Text = "payer name cannot be null or empty";
-            return;
+            string subscriberCode = editing ? Col(existing, "subscriberCode") : DateTime.Now.ToString("yyyyMMdd'T'HHmmssffff", CultureInfo.InvariantCulture);
 
+            List<SqlParameter> ps = new List<SqlParameter>();
+            if (editing) ps.Add(P("@SeqNo", hidSeqNo.Value));
+            ps.Add(P("@billerId", billerId));
+            ps.Add(P("@accountNumber", customerAccount));
+            ps.Add(P("@accountName", customerAccountName));
+            ps.Add(P("@productId", productId));
+            ps.Add(P("@payerName", payerName));
+            ps.Add(P("@payerPhoneNumber", phone));
+            ps.Add(P("@narration", narration));
+            ps.Add(P("@frequency", months.ToString(CultureInfo.InvariantCulture)));
+            ps.Add(P("@amount", amount.ToString("0.00", CultureInfo.InvariantCulture)));
+            ps.Add(P("@payerEmail", email));
+            ps.Add(P("@payerAddress", address));
+            ps.Add(P("@payerBankCode", bankCode));
+            ps.Add(P("@payerAccountName", payerAccountName));
+            ps.Add(P("@payerAccountNumber", payerAccount));
+            ps.Add(P("@subscriberCode", subscriberCode));
+            ps.Add(P("@mandateType", mandateType));
+            ps.Add(P("@startDate", start.ToString(DateFormat, CultureInfo.InvariantCulture)));
+            ps.Add(P("@endDate", end.ToString(DateFormat, CultureInfo.InvariantCulture)));
+            ps.Add(P("@addedby", user));
+            Exec(editing ? "SpUpdateNDDeMandate" : "SpAddNDDeMandate", ps.ToArray());
+
+            Audit("044", string.Format("{0} on BillerName- {1}; productName: {2}; rcNumber {3}:email:{4};accountno:{5};accountname:{6};bankcode:{7};Phone:{8}",
+                editing ? "New NDDCode eMandate Profile  Modification" : "New NDDCode Biller Profile  Modification",
+                payerName, productName, "", email, payerAccount, payerAccountName, editing ? ddlBank.SelectedItem.Text : Cfg("EazyBankHostCode"), phone), user);
+
+            ResetForm();
+            ShowSuccess(editing
+                ? string.Format("The mandate for {0} was updated.", payerName)
+                : string.Format("The mandate for {0} was saved. It now goes for approval.", payerName));
+            grid.DataBind();
         }
-        if (string.IsNullOrEmpty(fixedMandate) == true)
+        catch (Exception ex)
         {
-            mandateType = 2;
+            ShowError("The mandate was not saved: " + ex.Message);
         }
-        else if(fixedMandate == "1")
+    }
+
+    protected void btnCancel_Click(object sender, EventArgs e)
+    {
+        ResetForm();
+        ShowSuccess("");
+    }
+
+    private void ResetForm()
+    {
+        hidSeqNo.Value = hidSubscriberCode.Value = "";
+        litFormTitle.Text = "New e-mandate";
+        btnSave.Text = "Save mandate";
+        btnCancel.Text = "Clear";
+        ddlBiller.ClearSelection();
+        ddlBank.ClearSelection();
+        txtCustomerAccount.Text = txtPayerName.Text = txtPhone.Text = txtEmail.Text = txtAddress.Text = "";
+        txtPayerAccount.Text = txtNarration.Text = txtAmount.Text = "";
+        txtFrequency.Text = "1";
+        txtStartDate.Text = DateTime.Today.ToString(DateFormat, CultureInfo.InvariantCulture);
+        chkFixed.Checked = false;
+        litCustomerAccountName.Text = litPayerAccountName.Text = "";
+        UpdateEndDate();
+    }
+
+    // =====================================================================
+    // Grid: edit and delete
+    // =====================================================================
+    protected void grid_RowCommand(object sender, GridViewCommandEventArgs e)
+    {
+        if (e.CommandName != "EditRow" && e.CommandName != "DeleteRow") return;
+        string seqNo = Convert.ToString(e.CommandArgument);
+        DataRow row = FindRow(seqNo);
+        if (row == null) { ShowError("That mandate no longer exists. The list has been refreshed."); grid.DataBind(); return; }
+
+        if (e.CommandName == "EditRow") { LoadForEdit(row); return; }
+
+        if (Col(row, "statusDesc") == "Approved") { ShowError("Approved mandates cannot be deleted."); return; }
+        string user = CurrentUser();
+        try
         {
-            mandateType = 1;
+            Exec("SpNDDeMandateDelete", P("@SeqNo", seqNo));
+            Audit("004", string.Format("Application eMandate Deleteting on - {0};Payer name:{1}; Addres:{2};billerId:{3};narration:{4} ",
+                seqNo, Col(row, "payerName"), Col(row, "payerAddress"), Col(row, "billerId"), Col(row, "narration")), user);
+            if (hidSeqNo.Value == seqNo) ResetForm();
+            ShowSuccess("The mandate for " + Col(row, "payerName") + " was deleted.");
+            grid.DataBind();
         }
+        catch (Exception ex)
+        {
+            ShowError("The mandate was not deleted: " + ex.Message);
+        }
+    }
+
+    private void LoadForEdit(DataRow row)
+    {
+        if (IsLocked(Col(row, "statusDesc"))) { ShowError("Approved or disapproved mandates cannot be edited."); return; }
+
+        hidSeqNo.Value = Col(row, "SeqNo");
+        hidSubscriberCode.Value = Col(row, "subscriberCode");
+        litFormTitle.Text = "Edit e-mandate for " + HttpUtility.HtmlEncode(Col(row, "payerName"));
+        btnSave.Text = "Save changes";
+        btnCancel.Text = "Cancel edit";
+
+        Select(ddlBiller, Col(row, "billerId"));
+        txtCustomerAccount.Text = Col(row, "accountNumber");
+        litCustomerAccountName.Text = HttpUtility.HtmlEncode(Col(row, "accountName"));
+        txtPayerName.Text = Col(row, "payerName");
+        txtPhone.Text = Col(row, "payerPhoneNumber");
+        txtEmail.Text = Col(row, "payerEmail");
+        txtAddress.Text = Col(row, "payerAddress");
+        txtNarration.Text = Col(row, "narration");
+
+        ddlBank.ClearSelection();
+        string bankCode = Col(row, "payerBankCode");
+        if (bankCode != "" && ddlBank.Items.FindByValue(bankCode) != null) ddlBank.SelectedValue = bankCode;
         else
         {
-            mandateType = 2;
+            ListItem byName = ddlBank.Items.FindByText(Col(row, "bank_name"));
+            if (byName != null) byName.Selected = true;
         }
-
-
-
-
-
-        GridViewDataColumn AccountNameHead = (GridViewDataColumn)ASPxGridView1.Columns["Account Name"];
-        GridViewDataColumn AccountNoHead = (GridViewDataColumn)ASPxGridView1.Columns["AccountNo"];
-
-        GridViewDataTextColumn FrequencyHead = (GridViewDataTextColumn)ASPxGridView1.Columns["Frequency"];
-        GridViewDataTextColumn AmountHead = (GridViewDataTextColumn)ASPxGridView1.Columns["Amount"];
-
-        ASPxLabel lblAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHead, "lblAcctName");
-        ASPxTextBox txtAccountNo = (ASPxTextBox)ASPxGridView1.FindEditRowCellTemplateControl(AccountNoHead, "txtAccountNo");
-        
-
-
-        ASPxSpinEdit frequency = (ASPxSpinEdit)ASPxGridView1.FindEditRowCellTemplateControl(FrequencyHead, "txtFrequency");
-        ASPxSpinEdit amount = (ASPxSpinEdit)ASPxGridView1.FindEditRowCellTemplateControl(AmountHead, "txtamount");
-
-        GridViewDataComboBoxColumn BankCodeHead = (GridViewDataComboBoxColumn)ASPxGridView1.Columns["Bank"];
-        ASPxComboBox drpBanks = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BankCodeHead, "drpBanks");
-
-
-        GridViewDataDateColumn startdateHead = (GridViewDataDateColumn)ASPxGridView1.Columns["Start Date"];
-        GridViewDataDateColumn enddateHead = (GridViewDataDateColumn)ASPxGridView1.Columns["End Date"];
-        ASPxDateEdit startDate = (ASPxDateEdit)ASPxGridView1.FindEditRowCellTemplateControl(startdateHead, "startDate");
-        ASPxDateEdit endDate = (ASPxDateEdit)ASPxGridView1.FindEditRowCellTemplateControl(enddateHead, "enddate");
-
-        GridViewDataComboBoxColumn BillerHead = (GridViewDataComboBoxColumn)ASPxGridView1.Columns["Customer"];
-        ASPxComboBox drpbillerId = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BillerHead, "drpbillerId");
-
-        //string billerId = drpbillerId.SelectedItem.GetFieldValue("billerId").ToString();
-        string billerId =  drpbillerId.SelectedItem.Value.ToString();
-        if (string.IsNullOrEmpty(frequency.Text) == true)
-        {
-
-            cus_val.Text = "Frequency cannot be empty or null";
-
-            return;
-
-        }
-        if (string.IsNullOrEmpty(amount.Text) == true || amount.Text == "0")
-        {
-
-            cus_val.Text = "amount cannot be empty or null";
-
-            return;
-         
-        }
-        string productId = ""; string RequestTimeStamp = DateTime.Now.ToString("yyyyMMddTHHmmssffff");
-        string productName ="";
-        string strGetProduct = string.Format("SpNDDBillerGetOnly {0}", billerId);
-          foreach (DataRow item in NETClass.Classes.GetDataset(strGetProduct).Tables[0].Rows)
-            {
-            productId = item["productId"].ToString();
-            productName  = item["productName"].ToString();
-            }
-
-        
-        //ASPxComboBox drpBanks = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BankCodeHead, "drpBanks");
-        if (string.IsNullOrEmpty(productName) == true)
-        {
-
-            cus_val.Text = "product Name cannot be empty or null";
-            return;
-
-        }
-        DataRow row; DataSet ds = new DataSet();
-
-        #region Revallidate name
-
-
-
-
-
-
-
-
-        string drpbankcode = drpBanks.SelectedItem.Value.ToString();
-        string EazyBankHostCode = System.Configuration.ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ConnectionString;
-        string strAcctMaster = string.Format("SpAcctMasterSelectOne '{0}'", txtAccountNo.Text);
-        //SqlConnection Conns = new SqlConnection(strCon);
-
-        //SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conns);
-
-
-        if (drpbankcode == EazyBankHostCode)
-        {
-            string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-            string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-            SqlConnection Conns = new SqlConnection(strCon);
-            SqlCommand cmds = new SqlCommand();
-            SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conns);
-
-            cmdAdapter.Fill(ds);
-            foreach (DataRow item in ds.Tables[0].Rows)
-            {
-                lblAcctName.Text = item["AccountDesc"].ToString();
-            }
-
-
-        }
-        else
-        {// interbankcode name enquiry
-
-            #region section fetch account name from other banks
-
-            string str3 = ""; string requestUrl = "";
-            string NDDCodeHostUrl = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeHostUrl"].ConnectionString;
-            requestUrl = string.Format("{0}/{1}", NDDCodeHostUrl, "Easypay/nameEnquiry");
-            string AccountNo = txtAccountNo.Text;
-            string BankSchemeCode = drpbankcode;
-
-
-
-
-            #region Add Auth Info
-
-            string HeaderUsername = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKeyID"].ConnectionString;
-            string Headerpwds = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKey"].ConnectionString;
-
-            string strDeptHeadUserName = NETClass.Classes.DecryptString(HeaderUsername);
-            string strDeptHeadpwds = NETClass.Classes.DecryptString(Headerpwds);
-
-            string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
-
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-            httpWebRequest.ContentType = "application/json";
-
-            httpWebRequest.Method = "POST";
-            httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-
-
-            #endregion
-
-
-           
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                string ljson = new JavaScriptSerializer().Serialize(new
-                {
-
-
-                    AccountNo,
-                    BankSchemeCode
-
-                });
-                // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
-                streamWriter.Write(ljson);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
-
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            var result = "";
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                result = streamReader.ReadToEnd();
-            }
-            httpResponse.Close();
-
-            var serializerSettings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
-            };
-            try
-            {
-                JavaScriptSerializer jssp = new JavaScriptSerializer();
-                //dynamic jsonp = jssp.DeserializeObject(result);
-
-
-                var jsonSmsInfo = JsonConvert.DeserializeObject(result, serializerSettings);
-                dynamic jsonp = jssp.DeserializeObject(result);
-
-                string respcode = ""; string data = ""; string respdesc = "";
-                respcode = jsonp["responseCode"];
-                respdesc = jsonp["responseText"];
-
-                #endregion
-                if (respcode == "00")
-                {
-                    lblAcctName.Text = jsonp["data"]["accountName"];
-                }
-            }
-            catch (Exception)
-            {
-
-                //throw;
-            }
-
-        }
-
-
-
-
-        #endregion
-
-
-
-        GridViewDataColumn AccountNameHeads = (GridViewDataColumn)ASPxGridView1.Columns["Customer AccountNames"];
-        GridViewDataColumn AccountNoHeads = (GridViewDataColumn)ASPxGridView1.Columns["Customer AccountNo"];
-        ASPxLabel lblcusAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHeads, "lblAcctName");
-        ASPxTextBox txtcusAccountNo = (ASPxTextBox)ASPxGridView1.FindEditRowCellTemplateControl(AccountNoHeads, "txtcusAccountNo");
-
-        #region Revallidate name
-
-        DataRow rows; DataSet dsp = new DataSet();
-
-        string strAcctMasters = string.Format("SpAcctMasterSelectOne '{0}'", txtcusAccountNo.Text);
-
-
-
-        string strcusCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-        string strcusBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-        SqlConnection cusConns = new SqlConnection(strcusCon);
-
-        SqlDataAdapter cmdcusAdapter = new SqlDataAdapter(strAcctMasters, cusConns);
-
-        cmdcusAdapter.Fill(dsp); string straccountname = "";
-        foreach (DataRow item in dsp.Tables[0].Rows)
-        {
-            straccountname = item["AccountDesc"].ToString();
-        }
-
-        #endregion
-
-        if (string.IsNullOrEmpty(straccountname) == true)
-        {
-
-            cus_val.Text = "account name cannot be empty or null";
-
-            return;
-
-        }
-
-
-
-
-        if (string.IsNullOrEmpty(lblAcctName.Text) == true)
-        {
-
-            cus_val.Text = "account name cannot be empty or null";
-
-            return;
-
-        }
-        //DateTime dbStartDate = DateTime.Parse(startDate);
-        //DateTime dbEndDate = DateTime.Parse(endDate);
-        string strCons = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-        string bank_no = System.Configuration.ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ConnectionString;
-        SqlConnection Conn = new SqlConnection(strCons);
-    
-
-        SqlCommand cmd = new SqlCommand();
-        Conn.Open();
-        //SqlParameter result;
-        cmd.CommandText = "SpAddNDDeMandate";
-        cmd.Connection = Conn;
-        cmd.CommandType = CommandType.StoredProcedure;
-        cmd.Parameters.Add(new SqlParameter("@billerId", billerId));
-
-        cmd.Parameters.Add(new SqlParameter("@accountNumber", txtcusAccountNo.Text));
-        cmd.Parameters.Add(new SqlParameter("@accountName", straccountname));
- 
-
-        cmd.Parameters.Add(new SqlParameter("@productId", productId));
-        cmd.Parameters.Add(new SqlParameter("@payerName", name));
- 
-        cmd.Parameters.Add(new SqlParameter("@payerPhoneNumber", phone));
-        cmd.Parameters.Add(new SqlParameter("@narration", narration));
-        cmd.Parameters.Add(new SqlParameter("@frequency", frequency.Text));
-        cmd.Parameters.Add(new SqlParameter("@amount", amount.Text));
-        cmd.Parameters.Add(new SqlParameter("@payerEmail", email));
-        cmd.Parameters.Add(new SqlParameter("@payerAddress", address));
-        cmd.Parameters.Add(new SqlParameter("@payerBankCode", drpBanks.SelectedItem.Value));
-        cmd.Parameters.Add(new SqlParameter("@payerAccountName", lblAcctName.Text));
-        cmd.Parameters.Add(new SqlParameter("@payerAccountNumber", txtAccountNo.Text));
-        //cmd.Parameters.Add(new SqlParameter("@subscriberCode", txtAccountNo.Text));
-        cmd.Parameters.Add(new SqlParameter("@subscriberCode", RequestTimeStamp));
-
-        cmd.Parameters.Add(new SqlParameter("@mandateType", mandateType));
-        cmd.Parameters.Add(new SqlParameter("@startDate", startDate.Date.ToString("yyyy-MM-dd")));
-        cmd.Parameters.Add(new SqlParameter("@endDate", endDate.Date.ToString("yyyy-MM-dd")));
-        cmd.Parameters.Add(new SqlParameter("@addedby", guser));
-       
-
-        cmd.ExecuteNonQuery();
-        Conn.Close();
-
-
-        string msg = string.Format("New NDDCode Biller Profile  Modification on BillerName- {0}; productName: {1}; rcNumber {2}:email:{3};accountno:{4};accountname:{5};bankcode:{6};Phone:{7}", name, productName, "", email, txtAccountNo.Text, lblAcctName.Text, bank_no, phone);
-        Classes.RecordOp(String.Format("Sproc_AddAuditLog '044','{0}','{1}',''", msg, guser));
-
-
-
-        int index = -1;
-
-        ASPxGridView1.SettingsEditing.Mode = (GridViewEditingMode)index;
-        ASPxGridView1.DataBind();
-
-
-
-    }
-    protected void ASPxGridView1_RowUpdating(object sender, DevExpress.Web.Data.ASPxDataUpdatingEventArgs e)
-    {
-        luser = User.Identity.Name;// User.Identity.Name;
-        string l_getHeadCode = "";
-
-        luser = Request.Cookies["LogonUserID"].Value;// HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name; //HttpContext.Current.User.Identity.Name;// HttpContext.Current.User.Identity.Name;
-        StrLocation = luser.Substring(this.luser.LastIndexOf("?") + 1);
-        struser = luser.Substring(0, this.luser.LastIndexOf("?"));
-        guser = struser;
-
-
-        string l_SeqNo = e.NewValues[0].ToString();
-
-
-        string name = e.NewValues["payerName"].ToString();
-        //
-
-        string phone = e.NewValues["payerPhoneNumber"].ToString();
-        string email = e.NewValues["payerEmail"].ToString();
-        string narration = e.NewValues["narration"].ToString();
-         
-        string address = e.NewValues["payerAddress"].ToString();
-
-
-        //string account_number = e.NewValues["account_number"].ToString();
-        //ASPxTextBox account_number = (ASPxTextBox)e.NewValues["accountNumber"];
-        //ASPxLabel account_name = (ASPxLabel)e.NewValues["accountName"];
-
-
-        //ASPxDateEdit startDate = (ASPxDateEdit)e.NewValues["startDate"];
-        //ASPxDateEdit endDate = (ASPxDateEdit)e.NewValues["endDate"];
-        //string startDate = e.NewValues["startDate"].ToString();
-        //string endDate = e.NewValues["endDate"].ToString();
-        string statusDesc = ASPxGridView1.GetRowValuesByKeyValue(e.Keys["SeqNo"], "statusDesc").ToString(); //e.NewValues["statusDesc"].ToString();
-
-        string fixedMandate = ""; int mandateType = 0;
-        if (e.NewValues["mandateTypeCon"] == null)
-        {
-
-            mandateType = 2;
-        }
-
-
-        string CorpStatus = "0";/* e.NewValues["CorpStatus"].ToString();*/
-        //ASPxCheckBox chkaplyRate = (ASPxCheckBox)e.NewValues["Status"];
-        string ApplyRate = "";
-
-        object RowInsert;
-
-        if (statusDesc == "Approved")
-        {
-            cus_val.Text = "Record cannot be editted";
-            return;
-        }
-
-        if (statusDesc == "DisApproved")
-        {
-            cus_val.Text = "Record cannot be editted";
-            return;
-        }
-        if (string.IsNullOrEmpty(name) == true)
-        {
-
-            cus_val.Text = "payer name cannot be null or empty";
-            return;
-
-        }
-
-        if (string.IsNullOrEmpty(fixedMandate) == true)
-        {
-            mandateType = 2;
-        }
-        else if (fixedMandate == "1")
-        {
-            mandateType = 1;
-        }
-        else
-        {
-            mandateType = 2;
-        }
-
-
-
-
-
-        GridViewDataColumn AccountNameHead = (GridViewDataColumn)ASPxGridView1.Columns["Account Name"];
-        GridViewDataColumn AccountNoHead = (GridViewDataColumn)ASPxGridView1.Columns["AccountNo"];
-
-       
-        GridViewDataTextColumn AmountHead = (GridViewDataTextColumn)ASPxGridView1.Columns["Amount"];
-
-        ASPxLabel lblAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHead, "lblAcctName");
-        ASPxTextBox txtAccountNo = (ASPxTextBox)ASPxGridView1.FindEditRowCellTemplateControl(AccountNoHead, "txtAccountNo");
-        GridViewDataComboBoxColumn BankCodeHead = (GridViewDataComboBoxColumn)ASPxGridView1.Columns["Bank"];
-
-        GridViewDataTextColumn FrequencyHead = (GridViewDataTextColumn)ASPxGridView1.Columns["Frequency"];
-
-        ASPxSpinEdit frequency = (ASPxSpinEdit)ASPxGridView1.FindEditRowCellTemplateControl(FrequencyHead, "txtFrequency");
-        ASPxSpinEdit amount = (ASPxSpinEdit)ASPxGridView1.FindEditRowCellTemplateControl(AmountHead, "txtamount");
-
-        ASPxComboBox drpBanks = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BankCodeHead, "drpBanks");
-        GridViewDataDateColumn startdateHead = (GridViewDataDateColumn)ASPxGridView1.Columns["Start Date"];
-        GridViewDataDateColumn enddateHead = (GridViewDataDateColumn)ASPxGridView1.Columns["End Date"];
-        ASPxDateEdit startDate = (ASPxDateEdit)ASPxGridView1.FindEditRowCellTemplateControl(startdateHead, "startDate");
-        ASPxDateEdit endDate = (ASPxDateEdit)ASPxGridView1.FindEditRowCellTemplateControl(enddateHead, "enddate");
-        GridViewDataComboBoxColumn BillerHead = (GridViewDataComboBoxColumn)ASPxGridView1.Columns["Customer"];
-        ASPxComboBox drpbillerId = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BillerHead, "drpbillerId");
-
-
-        string billerId = drpbillerId.SelectedItem.Value.ToString();
-
-        if (string.IsNullOrEmpty(frequency.Text) == true)
-        {
-
-            cus_val.Text = "Frequency cannot be empty or null";
-
-            return;
-
-        }
-        if (string.IsNullOrEmpty(amount.Text) == true || amount.Text == "0")
-        {
-
-            cus_val.Text = "amount cannot be empty or null";
-
-            return;
-
-        }
-        string productId = "";
-        string productName = "";
-        string strGetProduct = string.Format("SpNDDBillerGetOnly {0}", billerId);
-        foreach (DataRow item in NETClass.Classes.GetDataset(strGetProduct).Tables[0].Rows)
-        {
-            productId = item["productId"].ToString();
-            productName = item["productName"].ToString();
-        }
-
-
-        //ASPxComboBox drpBanks = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BankCodeHead, "drpBanks");
-        if (string.IsNullOrEmpty(productName) == true)
-        {
-
-            cus_val.Text = "product Name cannot be empty or null";
-            return;
-
-        }
-        DataRow row; DataSet ds = new DataSet();
-
-        #region Revallidate name
-
-
-
-
-
-
-
-
-        string drpbankcode = drpBanks.SelectedItem.Value.ToString();
-        string EazyBankHostCode = System.Configuration.ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ConnectionString;
-        string strAcctMaster = string.Format("SpAcctMasterSelectOne '{0}'", txtAccountNo.Text.Trim());
-        //SqlConnection Conns = new SqlConnection(strCon);
-
-        //SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conns);
-
-
-        if (drpbankcode == EazyBankHostCode)
-        {
-            string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-            string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-            SqlConnection Conns = new SqlConnection(strCon);
-            SqlCommand cmds = new SqlCommand();
-            SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conns);
-
-            cmdAdapter.Fill(ds);
-            foreach (DataRow item in ds.Tables[0].Rows)
-            {
-                lblAcctName.Text = item["AccountDesc"].ToString();
-            }
-
-
-        }
-        else
-        {// interbankcode name enquiry
-
-            #region section fetch account name from other banks
-
-            string str3 = ""; string requestUrl = "";
-            string NDDCodeHostUrl = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeHostUrl"].ConnectionString;
-            requestUrl = string.Format("{0}/{1}", NDDCodeHostUrl, "Easypay/nameEnquiry");
-            string AccountNo = txtAccountNo.Text;
-            string BankSchemeCode = drpbankcode;
-
-
-
-
-            #region Add Auth Info
-
-            string HeaderUsername = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKeyID"].ConnectionString;
-            string Headerpwds = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKey"].ConnectionString;
-
-            string strDeptHeadUserName = NETClass.Classes.DecryptString(HeaderUsername);
-            string strDeptHeadpwds = NETClass.Classes.DecryptString(Headerpwds);
-
-            string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
-
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-            httpWebRequest.ContentType = "application/json";
-
-            httpWebRequest.Method = "POST";
-            httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-
-
-            #endregion
-
-
-            string RequestTimeStamp = DateTime.Now.ToString("yyyy'-'MM'-'dd'T'HH':'mm:ss+0000");
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                string ljson = new JavaScriptSerializer().Serialize(new
-                {
-
-
-                    AccountNo,
-                    BankSchemeCode
-
-                });
-                // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
-                streamWriter.Write(ljson);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
-
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            var result = "";
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                result = streamReader.ReadToEnd();
-            }
-            httpResponse.Close();
-
-            var serializerSettings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
-            };
-            try
-            {
-                JavaScriptSerializer jssp = new JavaScriptSerializer();
-                //dynamic jsonp = jssp.DeserializeObject(result);
-
-
-                var jsonSmsInfo = JsonConvert.DeserializeObject(result, serializerSettings);
-                dynamic jsonp = jssp.DeserializeObject(result);
-
-                string respcode = ""; string data = ""; string respdesc = "";
-                respcode = jsonp["responseCode"];
-                respdesc = jsonp["responseText"];
-
-                #endregion
-                if (respcode == "00")
-                {
-                    lblAcctName.Text = jsonp["data"]["accountName"];
-                }
-            }
-            catch (Exception)
-            {
-
-                //throw;
-            }
-
-        }
-
-
-
-
-        #endregion
-
-        GridViewDataColumn AccountNameHeads = (GridViewDataColumn)ASPxGridView1.Columns["Customer AccountNames"];
-        GridViewDataColumn AccountNoHeads = (GridViewDataColumn)ASPxGridView1.Columns["Customer AccountNo"];
-        ASPxLabel lblcusAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHeads, "lblAcctName");
-        ASPxTextBox txtcusAccountNo = (ASPxTextBox)ASPxGridView1.FindEditRowCellTemplateControl(AccountNoHeads, "txtcusAccountNo");
-
-        #region Revallidate name
-
-        DataRow rows; DataSet dsp = new DataSet();
-
-        string strAcctMasters = string.Format("SpAcctMasterSelectOne '{0}'", txtcusAccountNo.Text);
-
-
-
-        string strcusCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-        string strcusBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-        SqlConnection cusConns = new SqlConnection(strcusCon);
-
-        SqlDataAdapter cmdcusAdapter = new SqlDataAdapter(strAcctMasters, cusConns);
-
-        cmdcusAdapter.Fill(dsp); string straccountname = "";
-        foreach (DataRow item in dsp.Tables[0].Rows)
-        {
-            straccountname = item["AccountDesc"].ToString();
-        }
-
-        #endregion
-
-        if (string.IsNullOrEmpty(straccountname) == true)
-        {
-
-            cus_val.Text = "account name cannot be empty or null";
-
-            return;
-
-        }
-
-        if (string.IsNullOrEmpty(straccountname) == true)
-        {
-
-            cus_val.Text = "account name cannot be empty or null";
-
-            return;
-
-        }
-        if (string.IsNullOrEmpty(lblAcctName.Text) == true)
-        {
-
-            cus_val.Text = "account name cannot be empty or null";
-
-            return;
-
-        }
-        //DateTime dbStartDate = DateTime.Parse(startDate);
-        //DateTime dbEndDate = DateTime.Parse(endDate);
-
-        string subscriberCode = ASPxGridView1.GetRowValuesByKeyValue(e.Keys["SeqNo"], "subscriberCode").ToString();
-        //string subscriberCode = ASPxGridView1.FindEditFormLayoutItemTemplateControl("subscriberCode").ToString();  
-        string strCons = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-        string bank_no = System.Configuration.ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ConnectionString;
-        SqlConnection Conn = new SqlConnection(strCons);
-
-
-        SqlCommand cmd = new SqlCommand();
-        Conn.Open();
-        //SqlParameter result;
-        cmd.CommandText = "SpUpdateNDDeMandate";
-        cmd.Connection = Conn;
-        cmd.CommandType = CommandType.StoredProcedure;
-        cmd.Parameters.Add(new SqlParameter("@SeqNo", e.Keys["SeqNo"]));
-        cmd.Parameters.Add(new SqlParameter("@billerId", billerId));
-        cmd.Parameters.Add(new SqlParameter("@accountNumber", txtcusAccountNo.Text));
-        cmd.Parameters.Add(new SqlParameter("@accountName", straccountname));
-
-        cmd.Parameters.Add(new SqlParameter("@productId", productId));
-        cmd.Parameters.Add(new SqlParameter("@payerName", name));
-
-        cmd.Parameters.Add(new SqlParameter("@payerPhoneNumber", phone));
-        cmd.Parameters.Add(new SqlParameter("@narration", narration.Trim()));
-        cmd.Parameters.Add(new SqlParameter("@frequency", frequency.Text));
-        cmd.Parameters.Add(new SqlParameter("@amount", amount.Text));
-        cmd.Parameters.Add(new SqlParameter("@payerEmail", email));
-        cmd.Parameters.Add(new SqlParameter("@payerAddress", address));
-        cmd.Parameters.Add(new SqlParameter("@payerBankCode", drpBanks.SelectedItem.Value));
-        cmd.Parameters.Add(new SqlParameter("@payerAccountName", lblAcctName.Text));
-        cmd.Parameters.Add(new SqlParameter("@payerAccountNumber", txtAccountNo.Text));
-        cmd.Parameters.Add(new SqlParameter("@subscriberCode", subscriberCode));
-        cmd.Parameters.Add(new SqlParameter("@mandateType", mandateType));
-        cmd.Parameters.Add(new SqlParameter("@startDate", startDate.Date.ToString("yyyy-MM-dd")));
-        cmd.Parameters.Add(new SqlParameter("@endDate", endDate.Date.ToString("yyyy-MM-dd")));
-        cmd.Parameters.Add(new SqlParameter("@addedby", guser));
-
-
-        cmd.ExecuteNonQuery();
-        Conn.Close();
-
-
-        string msg = string.Format("New NDDCode eMandate Profile  Modification on BillerName- {0}; productName: {1}; rcNumber {2}:email:{3};accountno:{4};accountname:{5};bankcode:{6};Phone:{7}", name, productName, "", email, txtAccountNo.Text, lblAcctName.Text, drpBanks.SelectedItem.Text, phone);
-        Classes.RecordOp(String.Format("Sproc_AddAuditLog '044','{0}','{1}',''", msg, guser));
-
-
-        ASPxGridView1.SettingsEditing.Mode = (GridViewEditingMode.EditFormAndDisplayRow);// i
-        ASPxGridView1.DataBind();
-
-
-
-
-    }
-    protected void ASPxGridView1_CellEditorInitialize(object sender, ASPxGridViewEditorEventArgs e)
-    {
-        //if ((e.Column.FieldName == "statusDesc") && (e.Editor.Value.ToString() == "Approved"))
-        //{
-        //    //e.Editor.Visible = false;
-        //    //e.Column.Caption = "";
-        //    e.Editor.ReadOnly = true;
-        //    // e.Column.ReadOnly = false;
-
-
-        //}
-
-        //ASPxGridView grid = sender as ASPxGridView;
-        //if (e.Column.FieldName == "CategoryID")
-        //    e.Editor.ReadOnly = !grid.IsNewRowEditing;
-    }
-    protected void ASPxGridView1_RowDeleting(object sender, DevExpress.Web.Data.ASPxDataDeletingEventArgs e)
-    {
-        //luser = User.Identity.Name;
-        luser = User.Identity.Name;// User.Identity.Name;
-        string l_getHeadCode = "";
-
-        luser = Request.Cookies["LogonUserID"].Value;// HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name; //HttpContext.Current.User.Identity.Name;// HttpContext.Current.User.Identity.Name;
-        StrLocation = luser.Substring(this.luser.LastIndexOf("?") + 1);
-        struser = luser.Substring(0, this.luser.LastIndexOf("?"));
-        guser = struser;
-
-        //string l_getHeadCode = "";
-        string phone = e.Values["payerPhoneNumber"].ToString();
-        string email = e.Values["payerEmail"].ToString();
-        string narration = e.Values["narration"].ToString();
-
-        string billerId = e.Values["billerId"].ToString();
-        string address = e.Values["payerAddress"].ToString();
-        //string account_number = e.Values["account_number"].ToString();
-        //ASPxTextBox account_number = (ASPxTextBox)e.Values["accountNumber"];
-        //ASPxLabel account_name = (ASPxLabel)e.Values["accountName"];
-
-
-        //ASPxDateEdit startDate = (ASPxDateEdit)e.Values["startDate"];
-        //ASPxDateEdit endDate = (ASPxDateEdit)e.Values["endDate"];
-        string startDate = e.Values["startDate"].ToString();
-        string endDate = e.Values["endDate"].ToString();
-        string fixedMandate = e.Values["mandateTypeCon"].ToString();
-        guser = User.Identity.Name; ;
-        string l_SeqNo = e.Keys[0].ToString();
-
-        string name = e.Values["payerName"].ToString();
-
-        string statusDesc = e.Values["statusDesc"].ToString();
-    
-        if (statusDesc == "Approved")
-        {
-
-            cus_val.Text = "record already Approved";
-            return;
-
-        }
-
-
-
-        string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-        SqlConnection Conn = new SqlConnection(strCon);
-        DataSet ds = new DataSet();
-
-        SqlCommand cmd = new SqlCommand();
-        Conn.Open();
-        SqlParameter result;
-        cmd.CommandText = "SpNDDeMandateDelete";
-        cmd.Connection = Conn;
-        cmd.CommandType = CommandType.StoredProcedure;
-
-        cmd.Parameters.Add(new SqlParameter("@SeqNo", l_SeqNo));
-
-
-
-        cmd.ExecuteNonQuery();
-        Conn.Close();
-
-
-        string msg = string.Format("Application eMandate Deleteting on - {0};Payer name:{1}; Addres:{2};billerId:{3};narration:{4} ", l_SeqNo, name, address, billerId, narration);
-        Classes.RecordOp(String.Format("Sproc_AddAuditLog '004','{0}','{1}',''", msg, guser));
-
-        int index = -1;
-
-        ASPxGridView1.SettingsEditing.Mode = (GridViewEditingMode.EditFormAndDisplayRow);// index;
-        ASPxGridView1.DataBind();
-        DataBind();
-
-        //Response.Redirect("TerminalRegForm.aspx");
-
-
-
+        txtPayerAccount.Text = Col(row, "payerAccountNumber");
+        litPayerAccountName.Text = HttpUtility.HtmlEncode(Col(row, "payerAccountName"));
+
+        decimal amount;
+        txtAmount.Text = decimal.TryParse(Col(row, "amount"), out amount) ? amount.ToString("0.00", CultureInfo.InvariantCulture) : "";
+        decimal freq;
+        txtFrequency.Text = decimal.TryParse(Col(row, "frequency"), out freq) ? ((int)freq).ToString(CultureInfo.InvariantCulture) : "1";
+        DateTime start;
+        txtStartDate.Text = row.Table.Columns.Contains("startDate") && row["startDate"] is DateTime
+            ? ((DateTime)row["startDate"]).ToString(DateFormat, CultureInfo.InvariantCulture)
+            : (DateTime.TryParse(Col(row, "startDate"), out start) ? start.ToString(DateFormat, CultureInfo.InvariantCulture) : "");
+        chkFixed.Checked = IsFixed(row.Table.Columns.Contains("mandateTypeCon") ? row["mandateTypeCon"] : null);
+        UpdateEndDate();
+
+        ShowSuccess("Editing the mandate for " + Col(row, "payerName") + ". Change the details and click Save changes.");
     }
 
-
-    protected void txtAccountNo_TextChanged(object sender, EventArgs e)
+    protected void grid_RowDataBound(object sender, GridViewRowEventArgs e)
     {
-        ASPxTextBox account_number = (ASPxTextBox)sender;
-        GridViewDataColumn AccountNameHead = (GridViewDataColumn)ASPxGridView1.Columns["Account Name"];
-        GridViewDataComboBoxColumn BankCodeHead = (GridViewDataComboBoxColumn)ASPxGridView1.Columns["Bank"];
-        ASPxLabel lblAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHead, "lblAcctName");
-        ASPxComboBox drpBanks = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BankCodeHead, "drpBanks");
-        DataRow row; DataSet ds = new DataSet();
-        
-
-        string drpbankcode = "";
-        if (drpBanks.SelectedIndex != -1)
-        {
-            drpbankcode = drpBanks.SelectedItem.Value.ToString();
-        }
-        string EazyBankHostCode = System.Configuration.ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ConnectionString;
-
-        string strAcctMaster = string.Format("SpAcctMasterSelectOne '{0}'", account_number.Text);
-
-        if (drpbankcode == EazyBankHostCode)
-        {
-            string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-            string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-            SqlConnection Conn = new SqlConnection(strCon);
-            SqlCommand cmd = new SqlCommand();
-            SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conn);
-
-            cmdAdapter.Fill(ds);
-            foreach (DataRow item in ds.Tables[0].Rows)
-            {
-                lblAcctName.Text = item["AccountDesc"].ToString();
-            }
-
-
-        }
-        else
-        {// interbankcode name enquiry
-            lblAcctName.Text = "";
-            #region section fetch account name from other banks
-
-            string str3 = ""; string requestUrl = "";
-            string NDDCodeHostUrl = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeHostUrl"].ConnectionString;
-            requestUrl = string.Format("{0}/{1}", NDDCodeHostUrl, "Easypay/nameEnquiry");
-            string AccountNo = account_number.Text;
-            string BankSchemeCode = drpbankcode;
-
-
-
-
-            #region Add Auth Info
-
-            string HeaderUsername = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKeyID"].ConnectionString;
-            string Headerpwds = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKey"].ConnectionString;
-
-            string strDeptHeadUserName = NETClass.Classes.DecryptString(HeaderUsername);
-            string strDeptHeadpwds = NETClass.Classes.DecryptString(Headerpwds);
-
-            string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
-
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-            httpWebRequest.ContentType = "application/json";
-
-            httpWebRequest.Method = "POST";
-            httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-
-
-            #endregion
-
-
-            string RequestTimeStamp = DateTime.Now.ToString("yyyy'-'MM'-'dd'T'HH':'mm:ss+0000");
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                string ljson = new JavaScriptSerializer().Serialize(new
-                {
-
-
-                    AccountNo,
-                    BankSchemeCode
-
-                });
-                // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
-                streamWriter.Write(ljson);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
-
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            var result = "";
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                result = streamReader.ReadToEnd();
-            }
-            httpResponse.Close();
-
-            var serializerSettings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
-            };
-            try
-            {
-                JavaScriptSerializer jssp = new JavaScriptSerializer();
-                //dynamic jsonp = jssp.DeserializeObject(result);
-
-
-                var jsonSmsInfo = JsonConvert.DeserializeObject(result, serializerSettings);
-                dynamic jsonp = jssp.DeserializeObject(result);
-
-                string respcode = ""; string data = ""; string respdesc = "";
-                respcode = jsonp["responseCode"];
-                respdesc = jsonp["responseText"];
-
-                #endregion
-                if (respcode == "00")
-                {
-                    lblAcctName.Text = jsonp["data"]["accountName"];
-                }
-            }
-            catch (Exception)
-            {
-
-                //throw;
-            }
-
-
-        }
-
-
-
-
-    }
-    protected void txtcusAccountNo_TextChanged(object sender, EventArgs e)
-    {
-        ASPxTextBox account_number = (ASPxTextBox)sender;
-        GridViewDataColumn AccountNameHead = (GridViewDataColumn)ASPxGridView1.Columns["Customer AccountNames"];
-        ASPxLabel lblAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHead, "lblAcctName");
-        DataRow row; DataSet ds = new DataSet();
-
-        string strAcctMaster = string.Format("SpAcctMasterSelectOne '{0}'", account_number.Text);
-
-
-
-        string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-        string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-        SqlConnection Conn = new SqlConnection(strCon);
-        SqlCommand cmd = new SqlCommand();
-        SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conn);
-
-        cmdAdapter.Fill(ds);
-        foreach (DataRow item in ds.Tables[0].Rows)
-        {
-            lblAcctName.Text = item["AccountDesc"].ToString();
-        }
-
-
+        if (e.Row.RowType != DataControlRowType.DataRow) return;
+        DataRowView data = e.Row.DataItem as DataRowView;
+        if (data == null) return;
+        string status = Col(data.Row, "statusDesc");
+        Control edit = e.Row.FindControl("lnkEdit"), del = e.Row.FindControl("lnkDelete");
+        if (edit != null) edit.Visible = !IsLocked(status);
+        if (del != null) del.Visible = status != "Approved";
+        if (Col(data.Row, "SeqNo") == hidSeqNo.Value && hidSeqNo.Value != "") e.Row.CssClass = "grid-edit";
     }
 
-
-    protected void ASPxGridView1_CustomButtonCallback(object sender, ASPxGridViewCustomButtonCallbackEventArgs e)
+    protected void sqlMandates_Selected(object sender, SqlDataSourceStatusEventArgs e)
     {
-        ASPxGridView gridView = sender as ASPxGridView;
-        if (e.ButtonID == "btDelete")
+        litTotal.Text = e.Exception == null ? string.Format("{0:N0} total", e.AffectedRows) : "";
+    }
+
+    // =====================================================================
+    // Small helpers
+    // =====================================================================
+    private DataRow FindRow(string seqNo)
+    {
+        DataView view = sqlMandates.Select(DataSourceSelectArguments.Empty) as DataView;
+        if (view == null) return null;
+        foreach (DataRowView r in view)
         {
-
-            //Server-side actions performed before showing popup here
-
-            gridView.JSProperties["cpRowIndex"] = e.VisibleIndex;
-            gridView.JSProperties["cpShowDeleteConfirmBox"] = true;
+            if (Convert.ToString(r["SeqNo"]) == seqNo) return r.Row;
         }
+        return null;
+    }
 
+    private static bool IsLocked(string status)
+    {
+        return status == "Approved" || status == "DisApproved";
+    }
 
-        if (e.ButtonID == "btRemove")
+    protected static bool IsFixed(object value)
+    {
+        if (value == null || value == DBNull.Value) return false;
+        if (value is bool) return (bool)value;
+        string s = Convert.ToString(value).Trim();
+        return s == "1" || s.Equals("true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void Select(DropDownList list, string value)
+    {
+        list.ClearSelection();
+        ListItem item = list.Items.FindByValue(value);
+        if (item != null) item.Selected = true;
+    }
+
+    private static bool TryDate(string value, out DateTime date)
+    {
+        return DateTime.TryParseExact((value ?? "").Trim(), DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+    }
+
+    private static bool TryMonths(string value, out int months)
+    {
+        return int.TryParse((value ?? "").Trim(), out months) && months >= 1 && months <= 120;
+    }
+
+    // =====================================================================
+    // Shared NDD helpers (same code in every NDD page)
+    // =====================================================================
+    private const string MainDb = "EazyConnect";
+    private const string CoreDb = "EazyConnectSource";
+
+    /// <summary>Signed-in officer: the LogonUserID cookie is "user?branch".</summary>
+    private string CurrentUser()
+    {
+        HttpCookie cookie = Request.Cookies["LogonUserID"];
+        string luser = cookie != null && !string.IsNullOrEmpty(cookie.Value) ? cookie.Value : (User.Identity.Name ?? "");
+        int split = luser.LastIndexOf('?');
+        string user = split >= 0 ? luser.Substring(0, split) : luser;
+        return user == "" ? "NDDService" : user;
+    }
+
+    private static string Cfg(string name)
+    {
+        ConnectionStringSettings s = ConfigurationManager.ConnectionStrings[name];
+        return s == null ? "" : s.ConnectionString;
+    }
+
+    private static string Sql(string value)
+    {
+        return (value ?? "").Replace("'", "''");
+    }
+
+    private static void Audit(string code, string message, string actor)
+    {
+        Classes.RecordOp(string.Format("Sproc_AddAuditLog '{0}','{1}','{2}',''", code, Sql(message), Sql(actor)));
+    }
+
+    /// <summary>Runs a stored procedure on the NDD database.</summary>
+    private static void Exec(string procedure, params SqlParameter[] parameters)
+    {
+        using (SqlConnection conn = new SqlConnection(Cfg(MainDb)))
+        using (SqlCommand cmd = new SqlCommand(procedure, conn))
         {
-            //string keyValue = ASPxGridView1.GetRowValues(e.VisibleIndex, "SeqNo");
-            string keyValue =  ASPxGridView1.GetRowValues(e.VisibleIndex, "SeqNo").ToString();
-            //remove(keyValue);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddRange(parameters);
+            conn.Open();
+            cmd.ExecuteNonQuery();
         }
     }
 
-    protected void ASPxGridView1_Init(object sender, EventArgs e)
+    /// <summary>Runs a query (parameters, never string concatenation) and returns the first table.</summary>
+    private static DataTable Query(string connectionName, string sql, params SqlParameter[] parameters)
     {
-        ASPxGridView gridView = sender as ASPxGridView;
-        gridView.JSProperties["cpShowDeleteConfirmBox"] = false;
-    }
-
-
-    protected void drpBanks_TextChanged(object sender, EventArgs e)
-    {
-        ASPxComboBox drpBanks = (ASPxComboBox)sender;
-        GridViewDataColumn AccountNameHead = (GridViewDataColumn)ASPxGridView1.Columns["Account Name"];
-        GridViewDataColumn AccountNoHead = (GridViewDataColumn)ASPxGridView1.Columns["AccountNo"];
-        ASPxLabel lblAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHead, "lblAcctName");
-        ASPxTextBox account_number = (ASPxTextBox)ASPxGridView1.FindEditRowCellTemplateControl(AccountNoHead, "txtAccountNo");
-        //ASPxComboBox drpBanks = (ASPxComboBox)ASPxGridView1.FindEditRowCellTemplateControl(BankCodeHead, "drpBanks");
-        DataRow row; DataSet ds = new DataSet();
-
-        string drpbankcode = "";
-        if (drpBanks.SelectedIndex != -1)
+        DataTable table = new DataTable();
+        using (SqlConnection conn = new SqlConnection(Cfg(connectionName)))
+        using (SqlCommand cmd = new SqlCommand(sql, conn))
+        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
         {
-            drpbankcode = drpBanks.SelectedItem.Value.ToString();
+            cmd.Parameters.AddRange(parameters);
+            adapter.Fill(table);
         }
-        string EazyBankHostCode = System.Configuration.ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ConnectionString;
+        return table;
+    }
 
-        string strAcctMaster = string.Format("SpAcctMasterSelectOne '{0}'", account_number.Text);
+    private static SqlParameter P(string name, object value)
+    {
+        return new SqlParameter(name, value ?? DBNull.Value);
+    }
 
-        if (drpbankcode == EazyBankHostCode)
+    private static string Col(DataRow row, string column)
+    {
+        return row != null && row.Table.Columns.Contains(column) ? Convert.ToString(row[column]) : "";
+    }
+
+    /// <summary>Account name from the bank's own core banking system.</summary>
+    private static string LocalAccountName(string accountNo)
+    {
+        accountNo = (accountNo ?? "").Trim();
+        if (accountNo == "") return "";
+        DataTable t = Query(CoreDb, "EXEC SpAcctMasterSelectOne @accountNo", P("@accountNo", accountNo));
+        return t.Rows.Count == 0 ? "" : Col(t.Rows[t.Rows.Count - 1], "AccountDesc");
+    }
+
+    /// <summary>Account name for any bank: core banking for this bank, NIBSS name enquiry for others.</summary>
+    private static string AccountName(string accountNo, string bankCode)
+    {
+        accountNo = (accountNo ?? "").Trim();
+        if (accountNo == "" || string.IsNullOrEmpty(bankCode)) return "";
+        if (bankCode == Cfg("EazyBankHostCode")) return LocalAccountName(accountNo);
+        try
         {
-            string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-            string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-            SqlConnection Conn = new SqlConnection(strCon);
-            SqlCommand cmd = new SqlCommand();
-            SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conn);
-
-            cmdAdapter.Fill(ds);
-            foreach (DataRow item in ds.Tables[0].Rows)
-            {
-                lblAcctName.Text = item["AccountDesc"].ToString();
-            }
-
-
+            NddResult r = PostNdd("Easypay/nameEnquiry", new { AccountNo = accountNo, BankSchemeCode = bankCode });
+            return r.Code == "00" ? Convert.ToString(Dig(r.Json, "data", "accountName")) : "";
         }
-        else
-        {// interbankcode name enquiry
-            lblAcctName.Text = "";
-            #region section fetch account name from other banks
-
-            string str3 = ""; string requestUrl = "";
-            string NDDCodeHostUrl = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeHostUrl"].ConnectionString;
-            requestUrl = string.Format("{0}/{1}", NDDCodeHostUrl, "Easypay/nameEnquiry");
-            string AccountNo = account_number.Text;
-            string BankSchemeCode = drpbankcode;
-
-
-
-
-            #region Add Auth Info
-
-            string HeaderUsername = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKeyID"].ConnectionString;
-            string Headerpwds = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKey"].ConnectionString;
-
-            string strDeptHeadUserName = NETClass.Classes.DecryptString(HeaderUsername);
-            string strDeptHeadpwds = NETClass.Classes.DecryptString(Headerpwds);
-
-            string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
-
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-            httpWebRequest.ContentType = "application/json";
-
-            httpWebRequest.Method = "POST";
-            httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-
-
-            #endregion
-
-
-            string RequestTimeStamp = DateTime.Now.ToString("yyyy'-'MM'-'dd'T'HH':'mm:ss+0000");
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                string ljson = new JavaScriptSerializer().Serialize(new
-                {
-
-
-                    AccountNo,
-                    BankSchemeCode
-
-                });
-                // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
-                streamWriter.Write(ljson);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
-
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            var result = "";
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                result = streamReader.ReadToEnd();
-            }
-            httpResponse.Close();
-
-            var serializerSettings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
-            };
-            try
-            {
-                JavaScriptSerializer jssp = new JavaScriptSerializer();
-                //dynamic jsonp = jssp.DeserializeObject(result);
-
-
-                var jsonSmsInfo = JsonConvert.DeserializeObject(result, serializerSettings);
-                dynamic jsonp = jssp.DeserializeObject(result);
-
-                string respcode = ""; string data = ""; string respdesc = "";
-                respcode = jsonp["responseCode"];
-                respdesc = jsonp["responseText"];
-
-                #endregion
-                if (respcode == "00")
-                {
-                    lblAcctName.Text = jsonp["data"]["accountName"];
-                }
-            }
-            catch (Exception)
-            {
-
-                //throw;
-            }
-            
-        }
-
-
-
-
-    }
-
-    protected void txtFrequency_NumberChanged(object sender, EventArgs e)
-    {
-        ASPxSpinEdit frequency = (ASPxSpinEdit)sender;
-        GridViewDataDateColumn startdateHead = (GridViewDataDateColumn)ASPxGridView1.Columns["Start Date"];
-     
-        ASPxDateEdit startdate = (ASPxDateEdit)ASPxGridView1.FindEditRowCellTemplateControl(startdateHead, "startDate");
-
-        GridViewDataDateColumn enddateHead = (GridViewDataDateColumn)ASPxGridView1.Columns["End Date"];
-        ASPxDateEdit enddate = (ASPxDateEdit)ASPxGridView1.FindEditRowCellTemplateControl(enddateHead, "enddate");
-     
-        int ifrequency = Int32.Parse(frequency.Text);
-        enddate.Date = startdate.Date.AddMonths(ifrequency).AddDays(-1);
-
-    }
-
-    protected void dateIssue_DateChanged(object sender, EventArgs e)
-    {
-        ASPxDateEdit startdate = (ASPxDateEdit)sender;
-
-        GridViewDataTextColumn FrequencyHead = (GridViewDataTextColumn)ASPxGridView1.Columns["Frequency"];
-
-        ASPxSpinEdit frequency = (ASPxSpinEdit)ASPxGridView1.FindEditRowCellTemplateControl(FrequencyHead, "txtFrequency");
-        GridViewDataDateColumn enddateHead = (GridViewDataDateColumn)ASPxGridView1.Columns["End Date"];
-        ASPxDateEdit enddate = (ASPxDateEdit)ASPxGridView1.FindEditRowCellTemplateControl(enddateHead, "enddate");
-
-        int ifrequency = Int32.Parse(frequency.Text);
-        enddate.Date = startdate.Date.AddMonths(ifrequency).AddDays(-1);
-
-
-    }
-
-
-
-    protected void txtAccountNo_TextChanged1(object sender, EventArgs e)
-    {
-        ASPxTextBox account_number = (ASPxTextBox)sender;
-        GridViewDataColumn AccountNameHead = (GridViewDataColumn)ASPxGridView1.Columns["Customer AccountNames"];
-        ASPxLabel lblAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHead, "lblAcctName");
-        DataRow row; DataSet ds = new DataSet();
-
-        string strAcctMaster = string.Format("SpAcctMasterSelectOne '{0}'", account_number.Text);
-
-
-
-        string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-        string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-        SqlConnection Conn = new SqlConnection(strCon);
-        SqlCommand cmd = new SqlCommand();
-        SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conn);
-
-        cmdAdapter.Fill(ds);
-        foreach (DataRow item in ds.Tables[0].Rows)
+        catch (Exception ex)
         {
-            lblAcctName.Text = item["AccountDesc"].ToString();
+            NDDMandateRecovery.AddtoLogFile(ex.Message, "name enquiry failed for " + accountNo);
+            return "";
         }
+    }
 
+    private sealed class NddResult
+    {
+        public string Code = "";
+        public string Text = "";
+        public string Raw = "";
+        public Dictionary<string, object> Json;
+    }
+
+    /// <summary>POST to the NIBSS NDD gateway (NDDCodeHostUrl) with the configured credentials.</summary>
+    private static NddResult PostNdd(string action, object body)
+    {
+        string url = Cfg("NDDCodeHostUrl").TrimEnd('/') + "/" + action;
+        string token = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}",
+            Classes.DecryptString(Cfg("NDDCodeKeyID")), Classes.DecryptString(Cfg("NDDCodeKey")))));
+
+        JavaScriptSerializer js = new JavaScriptSerializer();
+        js.MaxJsonLength = int.MaxValue;
+        string payload = js.Serialize(body);
+        NDDMandateRecovery.AddtoLogFile(payload, string.Format("Url=>{0} payload request", url));
+
+        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+        req.Method = "POST";
+        req.ContentType = "application/json";
+        req.Timeout = 60000;
+        req.Headers.Add("AuthToken", token);
+        req.Headers.Add("TransToken", token);
+        byte[] bytes = Encoding.UTF8.GetBytes(payload);
+        req.ContentLength = bytes.Length;
+        using (Stream s = req.GetRequestStream()) { s.Write(bytes, 0, bytes.Length); }
+
+        NddResult r = new NddResult();
+        try
+        {
+            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+            {
+                r.Raw = reader.ReadToEnd();
+            }
+        }
+        catch (WebException ex)
+        {
+            // NIBSS explains failures in the error body
+            if (ex.Response == null) throw;
+            using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
+            {
+                r.Raw = reader.ReadToEnd();
+            }
+            if (string.IsNullOrEmpty(r.Raw)) throw;
+        }
+        NDDMandateRecovery.AddtoLogFile(r.Raw, action + " response");
+
+        r.Json = js.DeserializeObject(r.Raw) as Dictionary<string, object>;
+        r.Code = Convert.ToString(Dig(r.Json, "responseCode"));
+        r.Text = Convert.ToString(Dig(r.Json, "responseText"));
+        return r;
+    }
+
+    /// <summary>Walks nested JSON objects: Dig(json, "data", "data", "id").</summary>
+    private static object Dig(object node, params string[] path)
+    {
+        foreach (string key in path)
+        {
+            Dictionary<string, object> dict = node as Dictionary<string, object>;
+            if (dict == null) return null;
+            object next = null;
+            foreach (KeyValuePair<string, object> kv in dict)
+            {
+                if (string.Equals(kv.Key, key, StringComparison.OrdinalIgnoreCase)) { next = kv.Value; break; }
+            }
+            node = next;
+        }
+        return node;
+    }
+
+    private void ShowSuccess(string message)
+    {
+        litResult.Text = HttpUtility.HtmlEncode(message);
+        litError.Text = "";
+    }
+
+    private void ShowError(string message)
+    {
+        litError.Text = HttpUtility.HtmlEncode(message);
+        litResult.Text = "";
+    }
+
+    protected static string StatusCss(object status)
+    {
+        string s = Convert.ToString(status);
+        if (s.IndexOf("Disapprov", StringComparison.OrdinalIgnoreCase) >= 0 || s.IndexOf("Reject", StringComparison.OrdinalIgnoreCase) >= 0) return "pill bad";
+        if (s.IndexOf("Approved", StringComparison.OrdinalIgnoreCase) >= 0) return "pill on";
+        return "pill off";
     }
 }

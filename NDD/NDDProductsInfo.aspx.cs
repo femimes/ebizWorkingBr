@@ -1,349 +1,306 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
-using DevExpress.Web;
-using System.Security.Cryptography;
-using System.IO;
-using System.Text;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using NETClass;
+using System.IO;
 using System.Net;
+using System.Text;
+using System.Web;
 using System.Web.Script.Serialization;
-using Newtonsoft.Json;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using NETClass;
 
-
-public partial class NDD_NDDProductsInfo :  System.Web.UI.Page
+/// <summary>
+/// Products of one approved NDD biller. Opened from NDDBiller.aspx?p=billerId&amp;q=status&amp;r=name.
+/// Adding a product calls NIBSS CreateProduct, then saves it with SpNDDProductHistadd.
+/// Plain ASP.NET controls (no DevExpress).
+/// </summary>
+public partial class NDD_NDDProductsInfo : System.Web.UI.Page
 {
-
-    public string luser;
-    public string StrLocation;
-    public string struser;
-    public string guser;
-
-
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (!IsPostBack && !IsCallback)
+        if (!IsPostBack)
         {
-            //luser = User.Identity.Name;// User.Identity.Name;
-            //StrLocation = this.luser.Substring(this.luser.LastIndexOf("?") + 1);
-            //struser = this.luser.Substring(0, this.luser.LastIndexOf("?"));
-            //guser = this.struser;
-            // txtUserid.Text = HttpContext.Current.User.Identity.Name;
-            if (Request.QueryString["q"].ToString() != "3")
+            // Only approved billers (status 3) can have products
+            if (Request.QueryString["q"] != "3" || string.IsNullOrEmpty(Request.QueryString["p"]))
             {
-                Response.Redirect("NDDBiller.aspx");
+                Response.Redirect("NDDBiller.aspx", false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
             }
-            txtmch_no.Text = Request.QueryString["p"].ToString();
-            txtsub_no.Text = Request.QueryString["r"].ToString();
-          
-            ASPxGridView1.DataBind();
+            hidBillerId.Value = Request.QueryString["p"];
+            hidBillerName.Value = Request.QueryString["r"] ?? "";
         }
+        litBillerId.Text = HttpUtility.HtmlEncode(hidBillerId.Value);
+        litBillerName.Text = HttpUtility.HtmlEncode(hidBillerName.Value == "" ? "biller" : hidBillerName.Value);
     }
 
-    protected void ASPxGridView1_CustomErrorText(object sender, ASPxGridViewCustomErrorTextEventArgs e)
+    // =====================================================================
+    // Add: create on NIBSS, then save locally
+    // =====================================================================
+    protected void btnAdd_Click(object sender, EventArgs e)
     {
-        e.ErrorText = string.Empty;
-        if (e.Exception is NullReferenceException)
-            e.ErrorText = " Fill all the setup fields/ expired session";
-        else if (e.Exception is InvalidOperationException)
-            e.ErrorText = "InvalidOperationException Text";
-        //else if (e.Exception is )
-    }
-    protected void ASPxGridView1_RowInserting(object sender, DevExpress.Web.Data.ASPxDataInsertingEventArgs e)
-    {
-        //luser = User.Identity.Name;
-        luser = User.Identity.Name;// User.Identity.Name;
-        string l_getHeadCode = "";
+        if (!IsValid) return;
+        string user = CurrentUser();
+        string billerId = hidBillerId.Value;
+        string name = hidBillerName.Value;
+        string productName = txtProductName.Text.Trim();
 
-        luser = Request.Cookies["LogonUserID"].Value;// HttpContext.Current.User.Identity.Name;//HttpContext.Current.User.Identity.Name; //HttpContext.Current.User.Identity.Name;// HttpContext.Current.User.Identity.Name;
-        StrLocation = luser.Substring(this.luser.LastIndexOf("?") + 1);
-        struser = luser.Substring(0, this.luser.LastIndexOf("?"));
-        guser = struser;
-
-
-        string l_SeqNo = e.NewValues[0].ToString();
-
-
-        
-        string productName = e.NewValues["productName"].ToString();
-        string billerId = txtmch_no.Text.ToString();
-        string name = txtsub_no.Text.ToString();
- 
-        string CorpStatus = "0";/* e.NewValues["CorpStatus"].ToString();*/
-        
-        string ApplyRate = "";
-
-        object RowInsert;
-        if (string.IsNullOrEmpty(productName) == true)
+        NddResult r;
+        try
         {
-
-            cus_val.Text = "product Title cannot be null or empty";
+            r = PostNdd("CreateProduct", new { billerId = billerId, productName = productName });
+        }
+        catch (Exception ex)
+        {
+            ShowError("NIBSS could not be reached: " + ex.Message);
             return;
-
         }
 
+        string info = string.Format("Biller/BillerId/Product Name:- {0}/{1}/{2}", name, billerId, productName);
+        Audit("044", string.Format("New NDDBiller Product Profile  Modification on NDDBiller Name- {0};  Message:{1}; AddedBy:{2}", info, r.Raw, user), user);
 
-
- 
-        #region Revallidate name
-
-        DataRow row; DataSet dsp = new DataSet();
-
-        
-        #endregion
- 
-
-
-
-        #region Create Qrcode Merchant on nibss
-        string str3 = ""; string requestUrl = "";
-        string NDDCodeHostUrl = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeHostUrl"].ConnectionString;
-        requestUrl = string.Format("{0}/{1}", NDDCodeHostUrl, "CreateProduct");
-
-
-
-
-
-
-        #region Add Auth Info
-
-        string HeaderUsername = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKeyID"].ConnectionString;
-        string Headerpwds = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKey"].ConnectionString;
-
-        string strDeptHeadUserName = NETClass.Classes.DecryptString(HeaderUsername);
-        string strDeptHeadpwds = NETClass.Classes.DecryptString(Headerpwds);
-
-        string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
-
-        var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-        httpWebRequest.ContentType = "application/json";
-
-        httpWebRequest.Method = "POST";
-        httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-        httpWebRequest.Headers.Add("TransToken", strAuthToken);
-
-        #endregion
-
-        string RequestTimeStamp = DateTime.Now.ToString("yyyy'-'MM'-'dd'T'HH':'mm:ss+0000");
-
-        using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+        if (r.Code != "00")
         {
-            string ljson = new JavaScriptSerializer().Serialize(new
-            {
-
-
-                billerId,
-
-                productName 
-
-
-            });
-            // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
-            streamWriter.Write(ljson);
-            streamWriter.Flush();
-            streamWriter.Close();
+            ShowError(string.Format("NIBSS did not create the product: {0} ({1}).", r.Text == "" ? "no reason given" : r.Text, r.Code == "" ? "no code" : r.Code));
+            return;
         }
 
-        var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-        var result = "";
-        using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+        string productId = Convert.ToString(Dig(r.Json, "data", "data", "id"));
+        try
         {
-            result = streamReader.ReadToEnd();
+            Exec("SpNDDProductHistadd",
+                P("@user_id", user),
+                P("@billerId", billerId),
+                P("@name", name),
+                P("@productId", productId),
+                P("@productName", productName),
+                P("@status", "3"));
+            txtProductName.Text = "";
+            ShowSuccess(string.Format("{0} was created on NIBSS (product ID {1}).", productName, productId));
+            grid.DataBind();
         }
-
-        
-        var serializerSettings = new JsonSerializerSettings
+        catch (Exception ex)
         {
-            NullValueHandling = NullValueHandling.Ignore,
-            DefaultValueHandling = DefaultValueHandling.Ignore
-        };
+            ShowError(string.Format("NIBSS created the product (ID {0}) but it was not saved here: {1}", productId, ex.Message));
+        }
+    }
 
-        JavaScriptSerializer jssp = new JavaScriptSerializer();
-        //dynamic jsonp = jssp.DeserializeObject(result);
-
-
-        var jsonSmsInfo = JsonConvert.DeserializeObject(result, serializerSettings);
-        dynamic jsonp = jssp.DeserializeObject(result);
-
-        string respcode = ""; string data = ""; string respdesc = "";
-        respcode = jsonp["responseCode"];
-        respdesc = jsonp["responseText"];
-
-        #endregion
-
-
-
-
-
-        string strCons = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-        string OrderSn = "";
-        //string bank_no = System.Configuration.ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ConnectionString;
-        if (respcode == "00")
+    // =====================================================================
+    // Grid: delete
+    // =====================================================================
+    protected void grid_RowCommand(object sender, GridViewCommandEventArgs e)
+    {
+        if (e.CommandName != "DeleteRow") return;
+        string user = CurrentUser();
+        string seqNo = Convert.ToString(e.CommandArgument);
+        try
         {
-            
-            string productId = jsonp["data"]["data"]["id"];
- 
-            SqlConnection Conn = new SqlConnection(strCons);
-            DataSet ds = new DataSet();
+            Exec("SpNDDProductDelete", P("@SeqNo", seqNo));
+            Audit("004", string.Format("Application NDD Product Deleting Deleteting on - {0}; ", seqNo), user);
+            ShowSuccess("The product was deleted.");
+            grid.DataBind();
+        }
+        catch (Exception ex)
+        {
+            ShowError("The product was not deleted: " + ex.Message);
+        }
+    }
 
-            SqlCommand cmd = new SqlCommand();
-            Conn.Open();
-            //SqlParameter result;
-            cmd.CommandText = "SpNDDProductHistadd";
-            cmd.Connection = Conn;
+    protected void sqlProducts_Selected(object sender, SqlDataSourceStatusEventArgs e)
+    {
+        litTotal.Text = e.Exception == null ? string.Format("{0:N0} total", e.AffectedRows) : "";
+    }
+
+    // =====================================================================
+    // Shared NDD helpers (same code in every NDD page)
+    // =====================================================================
+    private const string MainDb = "EazyConnect";
+    private const string CoreDb = "EazyConnectSource";
+
+    /// <summary>Signed-in officer: the LogonUserID cookie is "user?branch".</summary>
+    private string CurrentUser()
+    {
+        HttpCookie cookie = Request.Cookies["LogonUserID"];
+        string luser = cookie != null && !string.IsNullOrEmpty(cookie.Value) ? cookie.Value : (User.Identity.Name ?? "");
+        int split = luser.LastIndexOf('?');
+        string user = split >= 0 ? luser.Substring(0, split) : luser;
+        return user == "" ? "NDDService" : user;
+    }
+
+    private static string Cfg(string name)
+    {
+        ConnectionStringSettings s = ConfigurationManager.ConnectionStrings[name];
+        return s == null ? "" : s.ConnectionString;
+    }
+
+    private static string Sql(string value)
+    {
+        return (value ?? "").Replace("'", "''");
+    }
+
+    private static void Audit(string code, string message, string actor)
+    {
+        Classes.RecordOp(string.Format("Sproc_AddAuditLog '{0}','{1}','{2}',''", code, Sql(message), Sql(actor)));
+    }
+
+    /// <summary>Runs a stored procedure on the NDD database.</summary>
+    private static void Exec(string procedure, params SqlParameter[] parameters)
+    {
+        using (SqlConnection conn = new SqlConnection(Cfg(MainDb)))
+        using (SqlCommand cmd = new SqlCommand(procedure, conn))
+        {
             cmd.CommandType = CommandType.StoredProcedure;
-
-            cmd.Parameters.Add(new SqlParameter("@user_id", guser));
-            cmd.Parameters.Add(new SqlParameter("@billerId", billerId));
-            cmd.Parameters.Add(new SqlParameter("@name", name));
-
-            cmd.Parameters.Add(new SqlParameter("@productId", productId));
-
-            cmd.Parameters.Add(new SqlParameter("@productName", productName));
-            cmd.Parameters.Add(new SqlParameter("@status", "3"));
-
-            
-
+            cmd.Parameters.AddRange(parameters);
+            conn.Open();
             cmd.ExecuteNonQuery();
-            Conn.Close();
-
-
         }
-
-        string strinfo = string.Format("Biller/BillerId/Product Name:- {0}/{1}", name,billerId, productName);
-
-
-        string msg = string.Format("New NDDBiller Product Profile  Modification on NDDBiller Name- {0};  Message:{1}; AddedBy:{2}", strinfo, result, guser);
-        Classes.RecordOp(String.Format("Sproc_AddAuditLog '044','{0}','{1}',''", msg, guser));
-
-
-
-        int index = -1;
-
-        ASPxGridView1.SettingsEditing.Mode = (GridViewEditingMode)index;
-        ASPxGridView1.DataBind();
-
-
-
-    }
-    protected void ASPxGridView1_RowUpdating(object sender, DevExpress.Web.Data.ASPxDataUpdatingEventArgs e)
-    {
-         
- 
-
-    }
-    protected void ASPxGridView1_CellEditorInitialize(object sender, ASPxGridViewEditorEventArgs e)
-    {
-        
-    }
-    protected void ASPxGridView1_RowDeleting(object sender, DevExpress.Web.Data.ASPxDataDeletingEventArgs e)
-    {
-        luser = User.Identity.Name;
-        luser = User.Identity.Name;// User.Identity.Name;
-        string l_getHeadCode = "";
-        //StrLocation = luser.Substring(this.luser.LastIndexOf("?") + 1);
-        //struser = luser.Substring(0, this.luser.LastIndexOf("?"));
-        guser = User.Identity.Name; ;
-        string l_SeqNo = e.Keys[0].ToString();
-
-        
-        object RowInsert;
-
- 
-        //ASPxTextBox account_number = (ASPxTextBox)e.Values["accountNumber"];
-        string statusDesc = e.Values["statusDesc"].ToString();
-
-        string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-        SqlConnection Conn = new SqlConnection(strCon);
-        DataSet ds = new DataSet();
-
-        SqlCommand cmd = new SqlCommand();
-        Conn.Open();
-        SqlParameter result;
-        cmd.CommandText = "SpNDDProductDelete";
-        cmd.Connection = Conn;
-        cmd.CommandType = CommandType.StoredProcedure;
-
-        cmd.Parameters.Add(new SqlParameter("@SeqNo", l_SeqNo));
-
-
-
-        cmd.ExecuteNonQuery();
-        Conn.Close();
-
-
-        string msg = string.Format("Application NDD Product Deleting Deleteting on - {0}; ", l_SeqNo);
-        Classes.RecordOp(String.Format("Sproc_AddAuditLog '004','{0}','{1}',''", msg, guser));
-
-        int index = -1;
-
-        ASPxGridView1.SettingsEditing.Mode = (GridViewEditingMode.EditFormAndDisplayRow);// index;
-        ASPxGridView1.DataBind();
-        DataBind();
-
-        //Response.Redirect("TerminalRegForm.aspx");
-
-
-
     }
 
-
-    protected void txtAccountNo_TextChanged(object sender, EventArgs e)
+    /// <summary>Runs a query (parameters, never string concatenation) and returns the first table.</summary>
+    private static DataTable Query(string connectionName, string sql, params SqlParameter[] parameters)
     {
-        ASPxTextBox account_number = (ASPxTextBox)sender;
-        GridViewDataColumn AccountNameHead = (GridViewDataColumn)ASPxGridView1.Columns["Account Name"];
-        ASPxLabel lblAcctName = (ASPxLabel)ASPxGridView1.FindEditRowCellTemplateControl(AccountNameHead, "lblAcctName");
-        DataRow row; DataSet ds = new DataSet();
-
-        string strAcctMaster = string.Format("SpAcctMasterSelectOne '{0}'", account_number.Text);
-
-
-
-        string strCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnectSource"].ConnectionString;
-        string strBenCon = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-        SqlConnection Conn = new SqlConnection(strCon);
-        SqlCommand cmd = new SqlCommand();
-        SqlDataAdapter cmdAdapter = new SqlDataAdapter(strAcctMaster, Conn);
-
-        cmdAdapter.Fill(ds);
-        foreach (DataRow item in ds.Tables[0].Rows)
+        DataTable table = new DataTable();
+        using (SqlConnection conn = new SqlConnection(Cfg(connectionName)))
+        using (SqlCommand cmd = new SqlCommand(sql, conn))
+        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
         {
-            lblAcctName.Text = item["AccountDesc"].ToString();
+            cmd.Parameters.AddRange(parameters);
+            adapter.Fill(table);
         }
-
-
+        return table;
     }
 
-
-    protected void drpMchno_SelectedIndexChanged(object sender, EventArgs e)
+    private static SqlParameter P(string name, object value)
     {
-        ASPxGridView1.DataBind();
+        return new SqlParameter(name, value ?? DBNull.Value);
     }
 
-
-    protected void ASPxGridView1_CustomButtonCallback(object sender, ASPxGridViewCustomButtonCallbackEventArgs e)
+    private static string Col(DataRow row, string column)
     {
-        ASPxGridView gridView = sender as ASPxGridView;
-        if (e.ButtonID == "btDelete")
+        return row != null && row.Table.Columns.Contains(column) ? Convert.ToString(row[column]) : "";
+    }
+
+    /// <summary>Account name from the bank's own core banking system.</summary>
+    private static string LocalAccountName(string accountNo)
+    {
+        accountNo = (accountNo ?? "").Trim();
+        if (accountNo == "") return "";
+        DataTable t = Query(CoreDb, "EXEC SpAcctMasterSelectOne @accountNo", P("@accountNo", accountNo));
+        return t.Rows.Count == 0 ? "" : Col(t.Rows[t.Rows.Count - 1], "AccountDesc");
+    }
+
+    /// <summary>Account name for any bank: core banking for this bank, NIBSS name enquiry for others.</summary>
+    private static string AccountName(string accountNo, string bankCode)
+    {
+        accountNo = (accountNo ?? "").Trim();
+        if (accountNo == "" || string.IsNullOrEmpty(bankCode)) return "";
+        if (bankCode == Cfg("EazyBankHostCode")) return LocalAccountName(accountNo);
+        try
         {
-
-            //Server-side actions performed before showing popup here
-
-            gridView.JSProperties["cpRowIndex"] = e.VisibleIndex;
-            gridView.JSProperties["cpShowDeleteConfirmBox"] = true;
+            NddResult r = PostNdd("Easypay/nameEnquiry", new { AccountNo = accountNo, BankSchemeCode = bankCode });
+            return r.Code == "00" ? Convert.ToString(Dig(r.Json, "data", "accountName")) : "";
+        }
+        catch (Exception ex)
+        {
+            NDDMandateRecovery.AddtoLogFile(ex.Message, "name enquiry failed for " + accountNo);
+            return "";
         }
     }
 
-    protected void ASPxGridView1_Init(object sender, EventArgs e)
+    private sealed class NddResult
     {
-        ASPxGridView gridView = sender as ASPxGridView;
-        gridView.JSProperties["cpShowDeleteConfirmBox"] = false;
+        public string Code = "";
+        public string Text = "";
+        public string Raw = "";
+        public Dictionary<string, object> Json;
+    }
+
+    /// <summary>POST to the NIBSS NDD gateway (NDDCodeHostUrl) with the configured credentials.</summary>
+    private static NddResult PostNdd(string action, object body)
+    {
+        string url = Cfg("NDDCodeHostUrl").TrimEnd('/') + "/" + action;
+        string token = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}",
+            Classes.DecryptString(Cfg("NDDCodeKeyID")), Classes.DecryptString(Cfg("NDDCodeKey")))));
+
+        JavaScriptSerializer js = new JavaScriptSerializer();
+        js.MaxJsonLength = int.MaxValue;
+        string payload = js.Serialize(body);
+        NDDMandateRecovery.AddtoLogFile(payload, string.Format("Url=>{0} payload request", url));
+
+        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+        req.Method = "POST";
+        req.ContentType = "application/json";
+        req.Timeout = 60000;
+        req.Headers.Add("AuthToken", token);
+        req.Headers.Add("TransToken", token);
+        byte[] bytes = Encoding.UTF8.GetBytes(payload);
+        req.ContentLength = bytes.Length;
+        using (Stream s = req.GetRequestStream()) { s.Write(bytes, 0, bytes.Length); }
+
+        NddResult r = new NddResult();
+        try
+        {
+            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+            {
+                r.Raw = reader.ReadToEnd();
+            }
+        }
+        catch (WebException ex)
+        {
+            // NIBSS explains failures in the error body
+            if (ex.Response == null) throw;
+            using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
+            {
+                r.Raw = reader.ReadToEnd();
+            }
+            if (string.IsNullOrEmpty(r.Raw)) throw;
+        }
+        NDDMandateRecovery.AddtoLogFile(r.Raw, action + " response");
+
+        r.Json = js.DeserializeObject(r.Raw) as Dictionary<string, object>;
+        r.Code = Convert.ToString(Dig(r.Json, "responseCode"));
+        r.Text = Convert.ToString(Dig(r.Json, "responseText"));
+        return r;
+    }
+
+    /// <summary>Walks nested JSON objects: Dig(json, "data", "data", "id").</summary>
+    private static object Dig(object node, params string[] path)
+    {
+        foreach (string key in path)
+        {
+            Dictionary<string, object> dict = node as Dictionary<string, object>;
+            if (dict == null) return null;
+            object next = null;
+            foreach (KeyValuePair<string, object> kv in dict)
+            {
+                if (string.Equals(kv.Key, key, StringComparison.OrdinalIgnoreCase)) { next = kv.Value; break; }
+            }
+            node = next;
+        }
+        return node;
+    }
+
+    private void ShowSuccess(string message)
+    {
+        litResult.Text = HttpUtility.HtmlEncode(message);
+        litError.Text = "";
+    }
+
+    private void ShowError(string message)
+    {
+        litError.Text = HttpUtility.HtmlEncode(message);
+        litResult.Text = "";
+    }
+
+    protected static string StatusCss(object status)
+    {
+        string s = Convert.ToString(status);
+        if (s.IndexOf("Disapprov", StringComparison.OrdinalIgnoreCase) >= 0 || s.IndexOf("Reject", StringComparison.OrdinalIgnoreCase) >= 0) return "pill bad";
+        if (s.IndexOf("Approved", StringComparison.OrdinalIgnoreCase) >= 0) return "pill on";
+        return "pill off";
     }
 }

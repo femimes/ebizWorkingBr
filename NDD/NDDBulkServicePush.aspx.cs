@@ -1,380 +1,270 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
-using DevExpress.Web;
-using System.Security.Cryptography;
-using System.IO;
-using System.Text;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using NETClass;
+using System.IO;
 using System.Net;
+using System.Text;
+using System.Web;
 using System.Web.Script.Serialization;
-using Newtonsoft.Json;
-using System.Configuration;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using NETClass;
 
-
-public partial class NDD_NDDBulkServicePush :  System.Web.UI.Page
+/// <summary>
+/// Pushes the whole bulk NDD queue: every waiting e-mandate (SpNDDeMandateGetInfo status 3)
+/// gets a NIBSS status check (eMandateStatusTSQ); "Bank Approved" mandates are sent for recovery
+/// (eMandateApproval) and updated with SpGetNDDeMandateUpd / spNDDMandateRptstatus.
+/// The work is done by App_Code/NDDMandateRecovery.vb, the same code the NDD mandate status page
+/// and the automatic run use, so a page push and the scheduler never process a mandate twice at once.
+/// </summary>
+public partial class NDD_NDDBulkServicePush : System.Web.UI.Page
 {
-    public string luser;
-    public string StrLocation;
-    public string struser;
-    public string guser;
+    private NDDMandateRecovery.RunSummary _thisRun;
 
-    protected void Page_Load(object sender, EventArgs e)
+    protected void btnPush_Click(object sender, EventArgs e)
     {
-
-        if (!IsPostBack && !IsCallback)
+        string user = CurrentUser();
+        Server.ScriptTimeout = 3600;
+        try
         {
-            //luser = User.Identity.Name;// User.Identity.Name;
-            //StrLocation =  luser.Substring(this.luser.LastIndexOf("?") + 1);
-            //struser =  luser.Substring(0, this.luser.LastIndexOf("?"));
-            //guser = struser;
-            // txtUserid.Text = HttpContext.Current.User.Identity.Name;
+            _thisRun = NDDMandateRecovery.RunAll(user, 0);   // 0 = no limit: the whole queue, as before
+        }
+        catch (Exception ex)
+        {
+            ShowError("The queue was not pushed: " + ex.Message);
+            return;
+        }
 
+        if (_thisRun.Skipped) { ShowError("Not run: " + _thisRun.SkipReason + "."); return; }
+
+        string text = string.Format("Done. {0} checked, {1} sent for recovery.", _thisRun.Checked, _thisRun.Recovered);
+        if (_thisRun.NotRecovered.Count > 0)
+            text += string.Format(" {0} not recovered: {1}.", _thisRun.NotRecovered.Count, string.Join("; ", _thisRun.NotRecovered.ToArray()));
+        litResult.Text = HttpUtility.HtmlEncode(text);
+        litError.Text = _thisRun.Failed.Count == 0 ? "" :
+            HttpUtility.HtmlEncode(_thisRun.Failed.Count + " could not be checked: " + string.Join("; ", _thisRun.Failed.ToArray()));
+    }
+
+    protected void Page_PreRender(object sender, EventArgs e)
+    {
+        bool running = NDDMandateRecovery.IsRunning;
+        litState.Text = running ? "Running" : "Idle";
+        spanState.Attributes["class"] = running ? "pill on" : "pill off";
+        btnPush.Enabled = !running;
+
+        try
+        {
+            txtWaiting.Text = Query(MainDb, "EXEC SpNDDeMandateGetInfo @status", P("@status", 3)).Rows.Count.ToString("N0");
+        }
+        catch (Exception ex)
+        {
+            txtWaiting.Text = "?";
+            ShowError("The waiting mandates could not be counted: " + ex.Message);
+        }
+
+        NDDMandateRecovery.RunSummary last = _thisRun ?? NDDMandateRecovery.LastJobRun;
+        if (last == null || last.Skipped)
+        {
+            txtChecked.Text = txtRecovered.Text = txtFailed.Text = "–";
+            litLast.Text = running ? "A run is in progress now." : "No run recorded since the site last started.";
+            return;
+        }
+        txtChecked.Text = last.Checked.ToString("N0");
+        txtRecovered.Text = last.Recovered.ToString("N0");
+        txtFailed.Text = last.Failed.Count.ToString("N0");
+        litLast.Text = HttpUtility.HtmlEncode(string.Format("Last run {0:dd MMM yyyy HH:mm} by {1}, took {2:N0}s.",
+            last.Started, last.Trigger, (last.Finished - last.Started).TotalSeconds));
+    }
+
+    // =====================================================================
+    // Shared NDD helpers (same code in every NDD page)
+    // =====================================================================
+    private const string MainDb = "EazyConnect";
+    private const string CoreDb = "EazyConnectSource";
+
+    /// <summary>Signed-in officer: the LogonUserID cookie is "user?branch".</summary>
+    private string CurrentUser()
+    {
+        HttpCookie cookie = Request.Cookies["LogonUserID"];
+        string luser = cookie != null && !string.IsNullOrEmpty(cookie.Value) ? cookie.Value : (User.Identity.Name ?? "");
+        int split = luser.LastIndexOf('?');
+        string user = split >= 0 ? luser.Substring(0, split) : luser;
+        return user == "" ? "NDDService" : user;
+    }
+
+    private static string Cfg(string name)
+    {
+        ConnectionStringSettings s = ConfigurationManager.ConnectionStrings[name];
+        return s == null ? "" : s.ConnectionString;
+    }
+
+    private static string Sql(string value)
+    {
+        return (value ?? "").Replace("'", "''");
+    }
+
+    private static void Audit(string code, string message, string actor)
+    {
+        Classes.RecordOp(string.Format("Sproc_AddAuditLog '{0}','{1}','{2}',''", code, Sql(message), Sql(actor)));
+    }
+
+    /// <summary>Runs a stored procedure on the NDD database.</summary>
+    private static void Exec(string procedure, params SqlParameter[] parameters)
+    {
+        using (SqlConnection conn = new SqlConnection(Cfg(MainDb)))
+        using (SqlCommand cmd = new SqlCommand(procedure, conn))
+        {
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddRange(parameters);
+            conn.Open();
+            cmd.ExecuteNonQuery();
         }
     }
 
-    protected void Button1_Click(object sender, EventArgs e)
+    /// <summary>Runs a query (parameters, never string concatenation) and returns the first table.</summary>
+    private static DataTable Query(string connectionName, string sql, params SqlParameter[] parameters)
     {
-        string strConsource = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-
-        DataTable dtRequest = new DataTable(); DataSet ds = new DataSet();
-        SqlConnection ConnNDDSource = new SqlConnection(strConsource);
-        string strselInfo = string.Format("SpNDDeMandateGetInfo '3'");
-        SqlDataAdapter cmdAdapCallReq = new SqlDataAdapter(strselInfo, ConnNDDSource);
-        cmdAdapCallReq.Fill(dtRequest);
-
-
-        foreach (DataRow drRs in dtRequest.Rows)
+        DataTable table = new DataTable();
+        using (SqlConnection conn = new SqlConnection(Cfg(connectionName)))
+        using (SqlCommand cmd = new SqlCommand(sql, conn))
+        using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
         {
-            string strNDDnarration = ""; string strNDDmandatecode= ""; string strNDDstatus = "";
-            //ASPxLabel label = (ASPxLabel)this.grid.FindRowCellTemplateControl(i, column, "ASPxLabel1");
-            //ASPxLabel label2 = (ASPxLabel)this.grid.FindRowCellTemplateControl(i, column3, "lblmsg_to");
-            //ASPxLabel label3 = (ASPxLabel)this.grid.FindRowCellTemplateControl(i, column2, "lblmsg_text");
-            strNDDnarration = drRs["narration"].ToString();
-            strNDDmandatecode = drRs["mandateCode"].ToString();
-            strNDDstatus = drRs["status"].ToString();
-            if (strNDDstatus == "3")
-            {
-                //if (ConfigurationManager.ConnectionStrings["SmsScheduler"].ConnectionString == "1")
-                //{
-                //    SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["PushConnect"].ConnectionString);
-                //    SqlCommand command = new SqlCommand();
-                //    connection.Open();
-                //    command.CommandText = "Sproc_SMSScheduler";
-                //    command.Connection = connection;
-                //    command.CommandType = CommandType.StoredProcedure;
-                //    command.ExecuteNonQuery();
-                //    connection.Close();
-                //}
-                //string connectionString = ConfigurationManager.ConnectionStrings["SmsUserName"].ConnectionString;
-                //string pwds = ConfigurationManager.ConnectionStrings["SmsPwds"].ConnectionString;
-                //string displayname = ConfigurationManager.ConnectionStrings["CompanyBrand"].ConnectionString;
-
-                string str3 = ""; string requestUrl = ""; string MandateCode = strNDDmandatecode;
-                //connection2.Close();
-                string strSel = string.Format("SpNDDeMandateGetInfo {0}", strNDDstatus);
-                SqlConnection connPending = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
-                SqlDataAdapter commAdapter = new SqlDataAdapter(strSel, connPending);
-                commAdapter.Fill(ds);
-                string strsel = string.Format("MandateCode ='{0}'", strNDDmandatecode);
-                DataRow[] dsfindRows = ds.Tables[0].Select(strsel);
-                foreach (DataRow dr in dsfindRows)
-                {
-                    MandateCode = dr["MandateCode"].ToString();
-                }
-
-
-                #region emandate NDD TSQ on nibss
-
-
-
-
-
-                string NDDCodeHostUrl = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeHostUrl"].ConnectionString;
-                requestUrl = string.Format("{0}/{1}", NDDCodeHostUrl, "eMandateStatusTSQ");
-
-
-
-
-
-
-                #region Add Auth Info -- Get emandate status
-
-                string HeaderUsername = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKeyID"].ConnectionString;
-                string Headerpwds = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeKey"].ConnectionString;
-
-                string strDeptHeadUserName = NETClass.Classes.DecryptString(HeaderUsername);
-                string strDeptHeadpwds = NETClass.Classes.DecryptString(Headerpwds);
-
-                string strAuthToken = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}", strDeptHeadUserName, strDeptHeadpwds)));
-
-                var httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUrl);
-
-                httpWebRequest.ContentType = "application/json";
-
-                httpWebRequest.Method = "POST";
-                httpWebRequest.Headers.Add("AuthToken", strAuthToken);
-                httpWebRequest.Headers.Add("TransToken", strAuthToken);
-
-                #endregion
-
-                string RequestTimeStamp = DateTime.Now.ToString("yyyy'-'MM'-'dd'T'HH':'mm:ss+0000");
-
-                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-                {
-                    string ljson = new JavaScriptSerializer().Serialize(new
-                    {
-
-                        MandateCode
-
-                    });
-                    // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
-                    streamWriter.Write(ljson);
-                    streamWriter.Flush();
-                    streamWriter.Close();
-                }
-
-                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-                var result = "";
-                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    result = streamReader.ReadToEnd();
-                }
-                httpResponse.Close();
-
-                var serializerSettings = new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore,
-                    DefaultValueHandling = DefaultValueHandling.Ignore
-                };
-
-                JavaScriptSerializer jssp = new JavaScriptSerializer();
-                //dynamic jsonp = jssp.DeserializeObject(result);
-
-
-                var jsonSmsInfo = JsonConvert.DeserializeObject(result, serializerSettings); string workflowStatus = "";
-                dynamic jsonp = jssp.DeserializeObject(result);
-                AddtoLogFile(result, "emandate status Check");
-                string respcode = ""; string data = ""; string respdesc = ""; string mandatestatus = ""; string sessionID = ""; string transactionId = ""; string paymentReference = "";
-                respcode = jsonp["responseCode"];
-                respdesc = jsonp["responseText"];
-                workflowStatus = jsonp["data"]["data"]["workflowStatus"];
-                MandateCode = jsonp["data"]["data"]["mandateCode"];
-
-                if (respcode == "00" && workflowStatus == "Bank Approved")
-                {
-
-                    AddtoLogFile(result, "emandatecode Checked for Recovery");
-                    #region emandate NDD TSQ on nibss
-
-
-
-
-                    string str30 = ""; string EasypayrequestUrl = "";
-                    string NDDEasypayHostUrl = System.Configuration.ConfigurationManager.ConnectionStrings["NDDCodeHostUrl"].ConnectionString;
-                    EasypayrequestUrl = string.Format("{0}/{1}", NDDEasypayHostUrl, "eMandateApproval");
-
-
-
-
-                    AddtoLogFile(EasypayrequestUrl, "Easypay Url");
-
-                    #region Initiate NDD Recovery Info -- FT  emandate Easypy recovery status
-
-
-
-                    var httpRecWebRequest = (HttpWebRequest)WebRequest.Create(EasypayrequestUrl);
-
-                    httpRecWebRequest.ContentType = "application/json";
-
-                    httpRecWebRequest.Method = "POST";
-                    httpRecWebRequest.Headers.Add("AuthToken", strAuthToken);
-                    httpRecWebRequest.Headers.Add("TransToken", strAuthToken);
-
-                    #endregion
-
-                    using (var streamRecWriter = new StreamWriter(httpRecWebRequest.GetRequestStream()))
-                    {
-                        string ljson = new JavaScriptSerializer().Serialize(new
-                        {
-
-                            MandateCode
-
-                        });
-                        // json = Convert.ToBase64String(Encoding.Default.GetBytes(json));
-                        streamRecWriter.Write(ljson);
-                        streamRecWriter.Flush();
-                        streamRecWriter.Close();
-                    }
-
-                    var httpRecResponse = (HttpWebResponse)httpRecWebRequest.GetResponse();
-                    var Recresult = "";
-                    using (var streamRecReader = new StreamReader(httpRecResponse.GetResponseStream()))
-                    {
-                        Recresult = streamRecReader.ReadToEnd();
-                    }
-                    httpRecResponse.Close();
-                    JavaScriptSerializer jsspRec = new JavaScriptSerializer();
-                    var jsonSmsRecInfo = JsonConvert.DeserializeObject(Recresult, serializerSettings);
-                    dynamic jsonpRec = jsspRec.DeserializeObject(Recresult);
-                    AddtoLogFile(Recresult, "emandate Recovery on Easypay");
-
-
-                    //string data = ""; string respdesc = ""; string mandatestatus = "";
-                    respcode = jsonpRec["responseCode"];
-                    respdesc = jsonpRec["responseText"];
-                    //workflowStatus = jsonp["data"]["data"]["workflowStatus"];
-
-                    if (respcode == "00")
-                    {
-
-                        sessionID = jsonpRec["data"]["sessionID"];
-
-                        transactionId = jsonpRec["data"]["transactionId"];
-                        paymentReference = jsonpRec["data"]["paymentReference"];
-
-                        #region Execute Mandate Update 
-
-                        //
-                        string strCons = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-                        SqlConnection Conn = new SqlConnection(strCons);
-
-
-                        SqlCommand cmd = new SqlCommand();
-                        Conn.Open();
-                        //SqlParameter result;
-                        cmd.CommandText = "SpGetNDDeMandateUpd";
-                        cmd.Connection = Conn;
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@mandateCode", MandateCode));
-
-                        cmd.Parameters.Add(new SqlParameter("@sessionID", sessionID));
-                        cmd.Parameters.Add(new SqlParameter("@status", 5));
-
-
-
-                        cmd.ExecuteNonQuery();
-                        Conn.Close();
-
-
-                        SqlConnection ConnReset = new SqlConnection(strCons);
-                        SqlCommand cmdReset = new SqlCommand();
-                        ConnReset.Open();
-                        //SqlParameter result;
-                        cmdReset.CommandText = "spNDDMandateRptstatus";
-                        cmdReset.Connection = ConnReset;
-                        cmdReset.CommandType = CommandType.StoredProcedure;
-                        cmdReset.Parameters.Add(new SqlParameter("@mandateCode", MandateCode));
-
-                        cmdReset.Parameters.Add(new SqlParameter("@responseCode", respcode));
-                        cmdReset.Parameters.Add(new SqlParameter("@responseDesc", respdesc));
-
-
-
-                        cmdReset.ExecuteNonQuery();
-                        ConnReset.Close();
-
-                        string msg = string.Format("NDDMandate FT Recovery on Mandate- {0}; SessionID: {1}; TransactionID {2}:paymentReference :{3};Recovery:{4}", MandateCode, sessionID, transactionId, paymentReference, "True");
-                        Classes.RecordOp(String.Format("Sproc_AddAuditLog '044','{0}','{1}',''", msg, "NDDService"));
-
-                        #endregion
-
-                    }
-                    else
-                    {
-                        string strCons = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-                        SqlConnection ConnReset = new SqlConnection(strCons);
-
-
-                        SqlCommand cmdReset = new SqlCommand();
-                        ConnReset.Open();
-                        //SqlParameter result;
-                        cmdReset.CommandText = "spNDDMandateRptstatus";
-                        cmdReset.Connection = ConnReset;
-                        cmdReset.CommandType = CommandType.StoredProcedure;
-                        cmdReset.Parameters.Add(new SqlParameter("@mandateCode", MandateCode));
-
-                        cmdReset.Parameters.Add(new SqlParameter("@responseCode", respcode));
-                        cmdReset.Parameters.Add(new SqlParameter("@responseDesc", respdesc));
-
-
-
-                        cmdReset.ExecuteNonQuery();
-                        ConnReset.Close();
-
-
-                        AddtoLogFile(Recresult, string.Format("emandate Recovery on Easypay Response-{0}", MandateCode));
-                    }
-
-                    #endregion
-
-                }
-                else
-                {
-                    string strCons = System.Configuration.ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
-
-                    SqlConnection ConnReset = new SqlConnection(strCons);
-
-
-                    SqlCommand cmdReset = new SqlCommand();
-                    ConnReset.Open();
-                    //SqlParameter result;
-                    cmdReset.CommandText = "spNDDMandateRptstatus";
-                    cmdReset.Connection = ConnReset;
-                    cmdReset.CommandType = CommandType.StoredProcedure;
-                    cmdReset.Parameters.Add(new SqlParameter("@mandateCode", MandateCode));
-
-                    cmdReset.Parameters.Add(new SqlParameter("@responseCode", respcode));
-                    cmdReset.Parameters.Add(new SqlParameter("@responseDesc", respdesc));
-
-
-
-                    cmdReset.ExecuteNonQuery();
-                    ConnReset.Close();
-                    AddtoLogFile(mandatestatus, string.Format("Mandate Status-{0}", MandateCode));
-                }
-
-                #endregion
-            }
+            cmd.Parameters.AddRange(parameters);
+            adapter.Fill(table);
         }
-
-        Response.Write("<script>alert('Request Done !!!') </script>");
+        return table;
     }
 
-
-
-
-    public static void AddtoLogFile(string Message, string WebPage)
+    private static SqlParameter P(string name, object value)
     {
-        string LogPath = System.Web.HttpContext.Current.Server.MapPath("~/log/");// ConfigurationManager.AppSettings["LogPath"].ToString();
-        string filename = "NDDAppBulkLog_" + DateTime.Now.ToString("dd-MM-yyyy") + ".txt";
-        string filepath = LogPath + filename;
-        if (File.Exists(filepath))
+        return new SqlParameter(name, value ?? DBNull.Value);
+    }
+
+    private static string Col(DataRow row, string column)
+    {
+        return row != null && row.Table.Columns.Contains(column) ? Convert.ToString(row[column]) : "";
+    }
+
+    /// <summary>Account name from the bank's own core banking system.</summary>
+    private static string LocalAccountName(string accountNo)
+    {
+        accountNo = (accountNo ?? "").Trim();
+        if (accountNo == "") return "";
+        DataTable t = Query(CoreDb, "EXEC SpAcctMasterSelectOne @accountNo", P("@accountNo", accountNo));
+        return t.Rows.Count == 0 ? "" : Col(t.Rows[t.Rows.Count - 1], "AccountDesc");
+    }
+
+    /// <summary>Account name for any bank: core banking for this bank, NIBSS name enquiry for others.</summary>
+    private static string AccountName(string accountNo, string bankCode)
+    {
+        accountNo = (accountNo ?? "").Trim();
+        if (accountNo == "" || string.IsNullOrEmpty(bankCode)) return "";
+        if (bankCode == Cfg("EazyBankHostCode")) return LocalAccountName(accountNo);
+        try
         {
-            using (StreamWriter writer = new StreamWriter(filepath, true))
+            NddResult r = PostNdd("Easypay/nameEnquiry", new { AccountNo = accountNo, BankSchemeCode = bankCode });
+            return r.Code == "00" ? Convert.ToString(Dig(r.Json, "data", "accountName")) : "";
+        }
+        catch (Exception ex)
+        {
+            NDDMandateRecovery.AddtoLogFile(ex.Message, "name enquiry failed for " + accountNo);
+            return "";
+        }
+    }
+
+    private sealed class NddResult
+    {
+        public string Code = "";
+        public string Text = "";
+        public string Raw = "";
+        public Dictionary<string, object> Json;
+    }
+
+    /// <summary>POST to the NIBSS NDD gateway (NDDCodeHostUrl) with the configured credentials.</summary>
+    private static NddResult PostNdd(string action, object body)
+    {
+        string url = Cfg("NDDCodeHostUrl").TrimEnd('/') + "/" + action;
+        string token = Convert.ToBase64String(Encoding.Default.GetBytes(string.Format("{0}:{1}",
+            Classes.DecryptString(Cfg("NDDCodeKeyID")), Classes.DecryptString(Cfg("NDDCodeKey")))));
+
+        JavaScriptSerializer js = new JavaScriptSerializer();
+        js.MaxJsonLength = int.MaxValue;
+        string payload = js.Serialize(body);
+        NDDMandateRecovery.AddtoLogFile(payload, string.Format("Url=>{0} payload request", url));
+
+        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+        req.Method = "POST";
+        req.ContentType = "application/json";
+        req.Timeout = 60000;
+        req.Headers.Add("AuthToken", token);
+        req.Headers.Add("TransToken", token);
+        byte[] bytes = Encoding.UTF8.GetBytes(payload);
+        req.ContentLength = bytes.Length;
+        using (Stream s = req.GetRequestStream()) { s.Write(bytes, 0, bytes.Length); }
+
+        NddResult r = new NddResult();
+        try
+        {
+            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
             {
-                writer.WriteLine("——————-START————-" + DateTime.Now);
-                writer.WriteLine("## :" + WebPage);
-                writer.WriteLine(Message);
-                writer.WriteLine("——————-END————-" + DateTime.Now);
+                r.Raw = reader.ReadToEnd();
             }
         }
-        else
+        catch (WebException ex)
         {
-            StreamWriter writer = File.CreateText(filepath);
-            writer.WriteLine("——————-START————-" + DateTime.Now);
-            writer.WriteLine("## :" + WebPage);
-            writer.WriteLine(Message);
-            writer.WriteLine("——————-END————-" + DateTime.Now);
-            writer.Close();
+            // NIBSS explains failures in the error body
+            if (ex.Response == null) throw;
+            using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
+            {
+                r.Raw = reader.ReadToEnd();
+            }
+            if (string.IsNullOrEmpty(r.Raw)) throw;
         }
+        NDDMandateRecovery.AddtoLogFile(r.Raw, action + " response");
+
+        r.Json = js.DeserializeObject(r.Raw) as Dictionary<string, object>;
+        r.Code = Convert.ToString(Dig(r.Json, "responseCode"));
+        r.Text = Convert.ToString(Dig(r.Json, "responseText"));
+        return r;
+    }
+
+    /// <summary>Walks nested JSON objects: Dig(json, "data", "data", "id").</summary>
+    private static object Dig(object node, params string[] path)
+    {
+        foreach (string key in path)
+        {
+            Dictionary<string, object> dict = node as Dictionary<string, object>;
+            if (dict == null) return null;
+            object next = null;
+            foreach (KeyValuePair<string, object> kv in dict)
+            {
+                if (string.Equals(kv.Key, key, StringComparison.OrdinalIgnoreCase)) { next = kv.Value; break; }
+            }
+            node = next;
+        }
+        return node;
+    }
+
+    private void ShowSuccess(string message)
+    {
+        litResult.Text = HttpUtility.HtmlEncode(message);
+        litError.Text = "";
+    }
+
+    private void ShowError(string message)
+    {
+        litError.Text = HttpUtility.HtmlEncode(message);
+        litResult.Text = "";
+    }
+
+    protected static string StatusCss(object status)
+    {
+        string s = Convert.ToString(status);
+        if (s.IndexOf("Disapprov", StringComparison.OrdinalIgnoreCase) >= 0 || s.IndexOf("Reject", StringComparison.OrdinalIgnoreCase) >= 0) return "pill bad";
+        if (s.IndexOf("Approved", StringComparison.OrdinalIgnoreCase) >= 0) return "pill on";
+        return "pill off";
     }
 }
