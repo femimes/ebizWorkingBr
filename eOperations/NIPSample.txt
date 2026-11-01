@@ -1,0 +1,217 @@
+﻿string host;
+        int port = int.Parse(ConfigurationManager.ConnectionStrings["EazyServerHostPost"].ToString());// 8088;
+
+        //if (Length == 0)
+        //    // If no server name is passed as argument to this program, 
+
+        //    // use the current host name as the default.
+
+        //    host = Dns.GetHostName();
+        //else
+        //    host = args[0];
+        host = ConfigurationManager.ConnectionStrings["EazyServerHost"].ToString();
+
+
+        // string result = SocketSendReceive(host, port);// txtUserName.Text, txtPassword.Text);
+        #region Section for request
+
+        SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString);
+        string respcode = "00"; string str3 = "Approved or completed sucessfully"; string Currency = "NGN";
+        string strSenderBankCode = ConfigurationManager.ConnectionStrings["EazyBankHostCode"].ToString(); string strDestinationBankCode = "999032";
+        NumberStyles style;
+        DateTimeStyles Datestyles;
+        CultureInfo provider;
+        // Gets a NumberFormatInfo associated with the en-US culture.
+        NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
+
+        style = NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands;
+        provider = new CultureInfo("en-GB");
+
+        DateTimeFormatInfo myDTFI = new CultureInfo("en-US", false).DateTimeFormat;
+        DataSet dsp = new DataSet();
+
+        //string GenSessionID = string.Format("{0}{1}{2}{3}", strSenderBankCode, strDestinationBankCode, DateTime.Today.GetDateTimeFormats(myDTFI), 0);
+        //string strSessionID = string.Format("SELECT '{0}' + '{1}' + replace(convert(varchar(8),getdate(),2),'.','') + replace(convert(varchar(8),getdate(),8),':','') + right(replace(convert(varchar(8),getdate(),8),':','') * 100000000009,12) as SessionID", strSenderBankCode, 214, 2, "0418563022");
+        //DataTable dtsessionID = new DataTable();
+
+
+        //SqlDataAdapter cmdsessionID = new SqlDataAdapter(strSessionID, connection);
+        //cmdsessionID.Fill(dtsessionID);
+        //string SessionID = dtsessionID.Rows[0]["SessionID"].ToString().Substring(0, 30);
+
+
+        string GenSessionID = string.Format("{0}{1}{2}{3}", strSenderBankCode, strDestinationBankCode, DateTime.Today.GetDateTimeFormats(myDTFI), 0);
+        string strSessionID = string.Format("SELECT '{0}'  + replace(convert(varchar(8),getdate(),2),'.','') + replace(convert(varchar(8),getdate(),8),':','') + right(replace(convert(varchar(8),getdate(),8),':','') * 100000000009,12) as SessionID", strSenderBankCode, 999032, 2, "0042540376");
+        DataTable dtsessionID = new DataTable();
+
+
+        SqlDataAdapter cmdsessionID = new SqlDataAdapter(strSessionID, connection);
+        cmdsessionID.Fill(dtsessionID);
+        string SessionID = dtsessionID.Rows[0]["SessionID"].ToString().Substring(0, 30);
+
+        //do name Enquiry 
+
+
+
+        // end name enquiry
+
+        string strNameEnquiryRef = "999028160204111813300001006317";
+
+
+
+
+        string strRequest = string.Format("SELECT '{0}' + '{1}' + replace(convert(varchar(8),getdate(),2),'.','') + replace(convert(varchar(8),getdate(),8),':','') + right(replace(convert(varchar(8),getdate(),8),':','') * 10000000000000,12) as SessionID,'{1}' as DestinationInstitutionCode,'{2}' as ChannelCode,'{3}' as AccountNumber", strSenderBankCode, 999032, 1, "0042540376");
+
+        string strNewRequestOld = string.Format("SELECT '{0}' as SessionID,'{1}' as DestinationInstitutionCode,'{2}' as ChannelCode,'{3}' as AccountIdentificationName,'{4}' as AccountNumber,'{5}' as OriginatorName,'{6}' as Narration,'{7}' as PaymentReference,{8} as Amount ", SessionID, 214, 1, "Egot Etoma", "0418563022", "JubileeLife", "Credit Funds Transfer", "Pay0001", 2000);
+        string strNewRequest3 = string.Format("SELECT '{0}' as SessionID,'{1}' as NameEnquiryRef, '{2}' as DestinationInstitutionCode,'{3}' as ChannelCode,'{4}' as BeneficiaryAccountName,'{5}' as AccountNumber,'{5}' as OriginatorName,'{6}' as Narration,'{7}' as PaymentReference,{8} as Amount ", SessionID, strNameEnquiryRef, 999011, 1, "Egot Etoma", "0418563022", "JubileeLife", "Credit Funds Transfer", "Pay0001", 2000);
+
+
+
+        string strNewRequest = string.Format("SELECT  '{0}' AS SessionID,'{1}' AS NameEnquiryRef, '{2}' as DestinationInstitutionCode ,'{3}' AS ChannelCode,'{4}' As BeneficiaryAccountName,'{5}' AS BeneficiaryAccountNumber,'{6}' AS BeneficiaryKYCLevel,'{7}' as BeneficiaryBankVerificationNumber, " +
+                                 "'{8}' As OriginatorName,'{9}' As OriginatorAccountNumber, '{10}' As OriginatorBankVerificationNumber, '{11}' As OriginatorKYCLevel, '{12}' as TransactionLocation, '{13}' as Narration, '{14}' as PaymentReference, " +
+                                 " {15} as Amount", SessionID, strNameEnquiryRef, 999011, 1, "BANKOLE FOLAKE MODUPE", "2004009256", 3, "1033000442", "Oladipo Oloruntobi", "1120200305", "1033000441", 3, "6.4300747,3.4110715", "Being funds transfer", "TRNpaymt0001", 2000);
+
+        DataTable dt = new DataTable("FTSingleCreditRequest");
+
+
+        SqlDataAdapter cmd = new SqlDataAdapter(strNewRequest, connection);
+        cmd.Fill(dt);
+        //cmd.Fill(dsp,"NESingleRequest");
+        #endregion
+
+        //
+        StringWriter sw = new StringWriter();
+        XmlWriterSettings settings = new XmlWriterSettings();
+        settings.Encoding = UTF8Encoding.UTF8;
+        using (XmlWriter writer = XmlWriter.Create(sw, settings))
+        {
+
+            writer.WriteStartDocument();
+
+
+            //writer.WriteStartElement("SessionID", "200");
+            //writer.WriteEndElement();
+            // writer.WriteEndDocument();
+            writer.Close();
+        }
+        dt.WriteXml(sw);
+        //  dsp.WriteXml(sw);
+
+
+
+
+        #region Section get Name Referencecode
+
+        string strreqSessionID = string.Format("SELECT '{0}'   + replace(convert(varchar(8),getdate(),2),'.','') + replace(convert(varchar(8),getdate(),8),':','') + right(replace(convert(varchar(8),getdate(),8),':','') * 100000000111,12) as SessionID", strSenderBankCode, 214, 2, "0042540376");
+        DataTable dtreqsessionID = new DataTable();
+
+
+        SqlDataAdapter cmdreqsessionID = new SqlDataAdapter(strreqSessionID, connection);
+        cmdreqsessionID.Fill(dtreqsessionID);
+        string SessionIDReq = dtreqsessionID.Rows[0]["SessionID"].ToString().Substring(0, 30);
+
+
+
+        //string strSessionID = string.Format("SELECT '{0}' + '{1}' + replace(convert(varchar(8),getdate(),2),'.','') + replace(convert(varchar(8),getdate(),8),':','') + right(replace(convert(varchar(8),getdate(),8),':','') * 100000000009,12) as SessionID", strSenderBankCode, 214, 2, "0418563022");
+        //DataTable dtsessionID = new DataTable();
+
+
+        //SqlDataAdapter cmdsessionID = new SqlDataAdapter(strSessionID, connection);
+        //cmdsessionID.Fill(dtsessionID);
+        //string SessionID = dtsessionID.Rows[0]["SessionID"].ToString().Substring(0, 30);
+
+
+
+
+
+
+        string strNameenqcheck = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><NESingleRequest><SessionID>{0}</SessionID><DestinationInstitutionCode>{1}</DestinationInstitutionCode><ChannelCode>1</ChannelCode><AccountNumber>{2}</AccountNumber></NESingleRequest>", SessionIDReq, txtBankCode.Text, string.Format("{0}", txtAcctNo.Text));
+        //string strcheck = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><NESingleRequest><SessionID>{0}</SessionID><DestinationBankCode>214</DestinationBankCode><ChannelCode>1</ChannelCode><AccountNumber>0418563022</AccountNumber></NESingleRequest>", SessionID);
+
+        //string strENResult = EnCrpSocketSendReceive(host, port, results);
+        string strENResultName = EnCrpSocketSendReceive(host, port, strNameenqcheck);
+        //WebReference.NIPMPOInterfaceService ks = new NIPMPOInterfaceService();
+        WebReference.NIPInterface ksname = new NIPInterface();
+        // Section decrpt response
+        string strforrespNameRef = strENResultName.Substring(3);
+        string strgetnamerefdet = ksname.nameenquirysingleitem(strforrespNameRef);
+        //Response.Write(sendandresponse);
+        string strDECResultNameref = DeCrpSocketSendReceive(host, port, strgetnamerefdet);
+        string strDecryMsgNameref = strDECResultNameref.Substring(3);
+        //XmlTextReader xmlReadr = new XmlTextReader(strDecryMsg);
+        StringReader Nsr = new StringReader(strDecryMsgNameref);
+        DataSet NLoadDs = new DataSet();
+        //LoadDs.ReadXml(strDecryMsg);
+        string strNameRefInfo = "";
+        string strNameRefInfoName = "";
+        string strBenKYC = "";
+        string strBenBVN = "";
+
+        NLoadDs.ReadXml(Nsr);
+
+
+        foreach (DataRow DrtRow in NLoadDs.Tables[0].Rows)
+        {
+            Response.Write(DrtRow["SessionID"]);
+            strNameRefInfo = DrtRow["SessionID"].ToString();
+            strNameRefInfoName = DrtRow["AccountName"].ToString();
+            strBenBVN = DrtRow["BankVerificationNumber"].ToString();
+            strBenKYC = DrtRow["KYCLevel"].ToString();
+        }
+
+
+
+
+
+
+        #endregion
+
+
+
+
+
+
+
+        string results = sw.ToString().Replace("</DocumentElement>", "").Replace("<DocumentElement>", "").Replace("utf-16", "UTF-8").Replace("\r\n", "").Replace("\t", "").Replace("\n", "").Replace(">  ", ">");//.Replace(">  <","");
+        //string results = sw.ToString().Replace("</DocumentElement>", "").Replace("<DocumentElement>", "<?xml version='1.0' encoding='UTF-8' ?>");
+
+        string strcheckAll = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><NESingleRequest><SessionID>{0}</SessionID><DestinationInstitutionCode>214</DestinationInstitutionCode><ChannelCode>1</ChannelCode><AccountNumber>0418563022</AccountNumber></NESingleRequest>", SessionID);
+
+        string strcheck = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><FTSingleCreditRequest><SessionID>{0}</SessionID><NameEnquiryRef>999028160204111813300001006317</NameEnquiryRef><DestinationInstitutionCode>999011</DestinationInstitutionCode><ChannelCode>1</ChannelCode><BeneficiaryAccountName>BANKOLE FOLAKE MODUPE</BeneficiaryAccountName><BeneficiaryAccountNumber>2004009256</BeneficiaryAccountNumber><BeneficiaryBankVerificationNumber>1033000442</BeneficiaryBankVerificationNumber><BeneficiaryKYCLevel>3</BeneficiaryKYCLevel><OriginatorAccountName>Oladipo Oloruntobi</OriginatorAccountName><OriginatorAccountNumber>1120200305</OriginatorAccountNumber><OriginatorBankVerificationNumber>1033000441</OriginatorBankVerificationNumber><OriginatorKYCLevel>3</OriginatorKYCLevel><TransactionLocation>6.4300747,3.4110715</TransactionLocation><Narration>Being funds transfer</Narration><PaymentReference>TRNpaymt000001</PaymentReference><Amount>2000.00</Amount></FTSingleCreditRequest>", SessionID);
+
+        string strchecker = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><FTSingleCreditRequest><SessionID>{0}</SessionID><NameEnquiryRef>{1}</NameEnquiryRef><DestinationInstitutionCode>{3}</DestinationInstitutionCode><ChannelCode>1</ChannelCode><BeneficiaryAccountName>{2}</BeneficiaryAccountName><BeneficiaryAccountNumber>{4}</BeneficiaryAccountNumber><BeneficiaryBankVerificationNumber>{5}</BeneficiaryBankVerificationNumber><BeneficiaryKYCLevel>{6}</BeneficiaryKYCLevel><OriginatorAccountName>OLAYANJU ABIMBOLA GEORGINA</OriginatorAccountName><OriginatorAccountNumber>0000021107</OriginatorAccountNumber><OriginatorBankVerificationNumber>1033000441</OriginatorBankVerificationNumber><OriginatorKYCLevel>1</OriginatorKYCLevel><TransactionLocation>6.4300747,3.4110715</TransactionLocation><Narration>Being funds transfer</Narration><PaymentReference>TRNpaymt000001</PaymentReference><Amount>1000.00</Amount></FTSingleCreditRequest>", SessionID, strNameRefInfo, strNameRefInfoName, txtBankCode.Text, string.Format("{0}", txtAcctNo.Text), strBenBVN, strBenKYC);
+        //string strchecker = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><FTSingleCreditRequest><SessionID>{0}</SessionID><NameEnquiryRef>{1}</NameEnquiryRef><DestinationInstitutionCode>999011</DestinationInstitutionCode><ChannelCode>1</ChannelCode><BeneficiaryAccountName>{2}</BeneficiaryAccountName><BeneficiaryAccountNumber>2004009256</BeneficiaryAccountNumber><BeneficiaryBankVerificationNumber>1033000442</BeneficiaryBankVerificationNumber><BeneficiaryKYCLevel>1</BeneficiaryKYCLevel><OriginatorAccountName>Adewale Hassan</OriginatorAccountName><OriginatorAccountNumber>3333002345</OriginatorAccountNumber><OriginatorBankVerificationNumber>1033000441</OriginatorBankVerificationNumber><OriginatorKYCLevel>1</OriginatorKYCLevel><TransactionLocation>6.4300747,3.4110715</TransactionLocation><Narration>1000000001</Narration><PaymentReference>yyyyyyyyyyyyyy</PaymentReference><Amount>1000.00</Amount></FTSingleCreditRequest>", SessionID, strNameRefInfo, strNameRefInfoName);
+
+
+        //string strcheck = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><NESingleRequest><SessionID>{0}</SessionID><DestinationBankCode>214</DestinationBankCode><ChannelCode>1</ChannelCode><AccountNumber>0418563022</AccountNumber></NESingleRequest>", SessionID);
+
+        //string strENResult = EnCrpSocketSendReceive(host, port, results);
+        //string strENResult = EnCrpSocketSendReceive(host, port, strcheck);
+        string strENResult = EnCrpSocketSendReceive(host, port, strchecker);
+        WebReference.NIPInterface ks = new NIPInterface();
+        //string spagent = ks.UserAgent;
+        //ks.UseDefaultCredentials = true;
+        string strforresp = strENResult.Substring(3);
+        // string sendandresponse = ks.nameenquirysingleitem(strforresp);
+        string sendandresponse = ks.fundtransfersingleitem_dc(strforresp);
+
+
+        // Response.Write(ks.nameenquirysingleitem(strENResult));
+
+
+        // Section decrpt response
+        string strDECResult = DeCrpSocketSendReceive(host, port, sendandresponse);
+        string strDecryMsg = strDECResult.Substring(3);
+        //XmlTextReader xmlReadr = new XmlTextReader(strDecryMsg);
+        StringReader sr = new StringReader(strDecryMsg);
+        DataSet LoadDs = new DataSet();
+        //LoadDs.ReadXml(strDecryMsg);
+        LoadDs.ReadXml(sr);
+        foreach (DataRow DrRow in LoadDs.Tables[0].Rows)
+        {
+            Response.Write(DrRow["SessionID"]);
+            Response.Write("</br>");
+        }
+
+
+        //

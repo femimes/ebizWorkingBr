@@ -1,0 +1,3383 @@
+@media screen and (min-width: 768px) {
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+    .genbtn {
+        margin-left: 3%
+    }
+    .stat {
+        margin-left: 0%
+    }
+    .mainbody {
+        margin-top: 10px;
+        height: 400px;
+        min-height: 400px;
+    }
+    .content-header,
+    .content-top,
+    .breadcrumb-top {
+        margin: -20px -20px 20px;
+    }
+    .header-section, .breadcrumb-top, .block, .block.full, .modal-body, #page-content + footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .block, .widget {
+        margin-bottom: 20px;
+    }
+    .dashads {
+        display:none;
+    }
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 80px;
+    }
+    .sideads {
+        display: none;
+    }
+    .formstyle {
+        padding-left: 0px
+    }
+    /*.formwidthAmt {
+        width:305px
+    }*/
+    .formwidth {
+        width: 305px
+    }
+    .padamt {
+        margin-left: 36%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 180px;
+        margin-top: 10px;
+    }
+}
+@media screen and (max-device-width: 667px) {
+    .padarea {
+        display: none;
+    }
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: -160px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    .marksection {
+        margin-top: 20%;
+    }
+
+    .markbody {
+        margin-left: 70px
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 30%;
+    }
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 100px;
+    }
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+    .genbtn {
+        margin-top: 2%;
+        margin-left: 3%
+    }
+    .stat {
+        margin-left: 0%
+    }
+    .mainbody {
+        margin-top: -40px;
+        height: 400px;
+        min-height: 400px;
+    }
+    .content-header-media {
+        position: relative;
+        height: 185px;
+        overflow: hidden;
+        /* border-top-color: #222222; */
+        margin-bottom: 20px;
+    }
+    .small-card {
+        display: none
+    }
+    .widget-simple {
+        padding: 7px;
+        border-left: 5px solid #c60d00;
+    height: 120px;
+    }
+    .account-size {
+        margin-top: 20px;
+        height: 120px;
+        margin-bottom: 20px
+    }
+    .acctno {
+        font-size: 1.4rem;
+        margin-top: 10px;
+    }
+    .txt {
+        margin-bottom: 0px!Important;
+        font-size: 13px;
+    }
+    .txtamount {
+        font-size: 1.7rem;
+        font-weight: 600;
+    }
+    .counter-size {
+        margin-top: 0px;
+    }
+    .dashads {
+        display: none;
+    }
+
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 40px;
+    }
+    .sideads {
+        display: none;
+    }
+    .formstyle: {
+        margin-left: -12px;
+        padding-left: 0px
+    }
+    .formwidth {
+        width: 305px
+    }
+    .submenucard {
+        margin-left: 33% !important;
+    }
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+    .padgap {
+        margin-top: 60px;
+    }
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 12px;
+        margin-top: 10px;
+    }
+    .btngo {
+        margin-top: -55px;
+        float: right;
+        margin-left: 70%
+    }
+}
+
+@media screen and (max-device-width: 320px) and (max-device-height: 568px) {
+    .padarea {
+        display: none;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: -160px !important;
+    }
+    iframe {
+        min-height: 1500px !important;
+        max-height: 2000px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .bill-mobile {
+        margin-left: -17px;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 500px !important;
+        max-height: 1300px !important
+    }
+    .page-content {
+        height: 1400px !important;
+        max-height: 2000px !important;
+
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+    .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .marksection {
+        margin-top: 20%;
+    }
+
+    .markbody {
+        margin-left: 70px
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 30%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 100px;
+    }
+
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+
+    .genbtn {
+        margin-top: 2%;
+        margin-left: 3%
+    }
+
+    .stat {
+        margin-left: 0%
+    }
+
+    .mainbody {
+        margin-top: -40px;
+        height: 400px;
+        min-height: 400px;
+    }
+
+    .content-header-media {
+        position: relative;
+        height: 185px;
+        overflow: hidden;
+        /* border-top-color: #222222; */
+        margin-bottom: 20px;
+    }
+
+    .small-card {
+        display: none
+    }
+
+    .widget-simple {
+        padding: 7px;
+        border-left: 5px solid #c60d00;
+        height: 120px;
+    }
+
+    .account-size {
+        margin-top: 20px;
+        height: 120px;
+        margin-bottom: 20px
+    }
+
+    .acctno {
+        font-size: 1.4rem;
+        margin-top: 10px;
+    }
+
+    .txt {
+        margin-bottom: 0px !Important;
+        font-size: 13px;
+    }
+
+    .txtamount {
+        font-size: 1.7rem;
+        font-weight: 600;
+    }
+
+    .counter-size {
+        margin-top: 0px;
+    }
+
+    .dashads {
+        display: none !important;
+    }
+    .dash {
+        display: none !important
+    }
+
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 40px;
+    }
+
+    .sideads {
+        display: none;
+    }
+
+    .formstyle {
+        padding-left: 0px
+    }
+
+    .formwidth {
+        width: 300px
+    }
+
+    .submenucard {
+        margin-left: 33% !important;
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+
+    .padgap {
+        margin-top: 60px;
+    }
+
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 12px;
+        margin-top: 10px;
+    }
+
+    .btngo {
+        margin-top: -55px;
+        float: right;
+        margin-left: 70%
+    }
+}
+
+@media screen and (max-device-width: 375px) and (min-device-height: 667px) {
+    .padarea {
+        display: none;
+    }
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: -160px !important;
+    }
+    iframe {
+        height: auto !important;
+        min-height: 1200px !important;
+        max-height: 2000px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .bill-mobile {
+        margin-left: 2px;
+    }
+    .airtime-form {
+        margin-top: -50px;
+        margin-left: -24px
+    }
+    .gsmads {
+        display: none;
+    }
+    .form-page {
+        margin-top: 70px;
+        margin-left: -12px;
+    }
+    .mobilex {
+        margin-left: -10px !important
+    }
+    .form-ben {
+        margin-top: 100px;
+        height: 400px !important;
+        max-height: 500px !important;
+        margin-left: -12px;
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 1500px !important;
+        max-height: 2000px !important
+    }
+    .page-content {
+        /*height: 1100px !important;*/
+        min-height: 1400px !important;
+        max-height: 2000px !important
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+    .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .card-space {
+        margin-top: 20px;
+    }
+
+    .marksection {
+        margin-top: 20%;
+    }
+
+    .markbody {
+        margin-left: 70px
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 30%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 100px;
+    }
+
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+
+    .genbtn {
+        margin-top: 2%;
+        margin-left: 3%
+    }
+
+    .stat {
+        margin-left: 0%
+    }
+
+    .mainbody {
+        margin-top: -40px;
+        height: 400px;
+        min-height: 400px;
+    }
+
+    .content-header-media {
+        position: relative;
+        height: 185px;
+        overflow: hidden;
+        /* border-top-color: #222222; */
+        margin-bottom: 20px;
+    }
+
+    .small-card {
+        display: none
+    }
+
+    .widget-simple {
+        padding: 7px;
+        border-left: 5px solid #c60d00;
+        height: 120px;
+    }
+
+    .account-size {
+        margin-top: 20px;
+        height: 120px;
+        margin-bottom: 20px
+    }
+
+    .acctno {
+        font-size: 1.4rem;
+        margin-top: 10px;
+    }
+
+    .txt {
+        margin-bottom: 0px !Important;
+        font-size: 13px;
+    }
+
+    .txtamount {
+        font-size: 1.7rem;
+        font-weight: 600;
+    }
+
+    .counter-size {
+        margin-top: 0px;
+    }
+
+    .dashads {
+        display: none !important;
+    }
+
+    .dash {
+        display: none !important
+    }
+
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 40px;
+    }
+
+    .sideads {
+        display: none;
+    }
+
+    .formstyle:{
+        margin-left: -25px!important;
+        padding-left: 0px
+    }
+
+    .formwidth {
+        width: 305px
+    }
+
+    .submenucard {
+        margin-left: 33% !important;
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+
+    .padgap {
+        margin-top: 60px;
+    }
+
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 12px;
+        margin-top: 10px;
+    }
+
+    .btngo {
+        margin-top: -55px;
+        float: right;
+        margin-left: 70%
+    }
+    .stat {
+        margin-left: 0px
+    }
+    .formstyle: {
+        margin-left: -12px;
+        padding-left: 0px
+    }
+}
+
+@media screen and (max-device-width: 375px) and (max-device-height: 812px) {
+    .padarea {
+        display: none;
+    }
+    .valid-button {
+        margin-left: -47px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: -160px !important;
+    }
+    iframe {
+        height: auto !important;
+        min-height: 1200px !important;
+        max-height: 2000px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .airtime-form {
+        margin-top: -50px;
+        margin-left: -24px
+    }
+    .gsmobile {
+        margin-top: 70px !important
+    }
+
+    .gsmads {
+        display: none;
+    }
+    .form-page {
+        margin-top: 70px;
+        margin-left: -12px;
+    }
+
+    .mobilex {
+        margin-left: -30px
+    }
+
+    .form-ben {
+        margin-top: 100px;
+        height: 400px !important;
+        max-height: 500px !important;
+        margin-left: -12px;
+    }
+
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 1500px !important;
+        max-height: 2000px !important
+    }
+
+    .page-content {
+        /*height: 1100px !important;*/
+        min-height: 1400px !important;
+        max-height: 2000px !important
+    }
+
+    .acctbody {
+        margin-top: 50px;
+    }
+
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+        .actn:hover {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+        .hyperaction:hover {
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+
+    .card-space {
+        margin-top: 20px;
+    }
+
+    .marksection {
+        margin-top: 20%;
+    }
+
+    .markbody {
+        margin-left: 70px
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 30%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 100px;
+    }
+
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+
+    .genbtn {
+        margin-top: 2%;
+        margin-left: 3%
+    }
+
+    .stat {
+        margin-left: 0%
+    }
+
+    .mainbody {
+        margin-top: -40px;
+        height: 400px;
+        min-height: 400px;
+    }
+
+    .content-header-media {
+        position: relative;
+        height: 185px;
+        overflow: hidden;
+        /* border-top-color: #222222; */
+        margin-bottom: 20px;
+    }
+
+    .small-card {
+        display: none
+    }
+
+    .widget-simple {
+        padding: 7px;
+        border-left: 5px solid #c60d00;
+        height: 120px;
+    }
+
+    .account-size {
+        margin-top: 20px;
+        height: 120px;
+        margin-bottom: 20px
+    }
+
+    .acctno {
+        font-size: 1.4rem;
+        margin-top: 10px;
+    }
+
+    .txt {
+        margin-bottom: 0px !Important;
+        font-size: 13px;
+    }
+
+    .txtamount {
+        font-size: 1.7rem;
+        font-weight: 600;
+    }
+
+    .counter-size {
+        margin-top: 0px;
+    }
+
+    .dashads {
+        display: none !important;
+    }
+
+    .dash {
+        display: none !important
+    }
+
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 40px;
+    }
+
+    .sideads {
+        display: none;
+    }
+
+    .formstyle: {
+        margin-left: -25px !important;
+        padding-left: 0px
+    }
+
+    .formwidth {
+        width: 305px
+    }
+
+    .submenucard {
+        margin-left: 33% !important;
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+
+    .padgap {
+        margin-top: 60px;
+    }
+
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 12px;
+        margin-top: 10px;
+    }
+
+    .btngo {
+        margin-top: -55px;
+        float: right;
+        margin-left: 70%
+    }
+
+    .stat {
+        margin-left: 0px
+    }
+
+    .formstyle: {
+        margin-left: -12px;
+        padding-left: 0px
+    }
+}
+
+@media screen and (max-device-width: 414px) and (max-device-height:736px) {
+    .padarea {
+        display: none;
+    }
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: -160px !important;
+    }
+    iframe {
+        height: auto !important;
+        min-height: 1200px !important;
+        max-height: 2000px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .airtime-form {
+        margin-top: -50px
+    }
+    .gsmobile {
+        margin-top: 70px;
+    }
+    .gsmads {
+        display: none;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    .form-ben {
+        margin-top: 100px;
+        height: 400px !important;
+        max-height: 500px !important
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 1500px !important;
+        max-height: 2000px !important
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .page-content {
+        /*height: 1100px !important;*/
+        min-height: 1400px !important;
+        max-height: 2000px !important
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+    .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .marksection {
+        margin-top: 20%;
+    }
+
+    .markbody {
+        margin-left: 70px
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+
+    .padgap {
+        margin-top: 60px;
+    }
+
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 30px;
+        margin-top: 10px;
+    }
+
+    .btngo {
+        margin-top: -55px;
+        float: right;
+        margin-left: 70%
+    }
+    .dashads {
+        display: none !important;
+    }
+
+    .dash {
+        display: none !important
+    }
+    .stat {
+        margin-left: 0px
+    }
+    .formstyle: {
+        margin-left: -12px;
+        padding-left: 0px
+    }
+}
+
+@media screen and (max-device-width: 540px) and (max-device-height:720px) {
+    .padarea {
+        display: none;
+    }
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: -90px !important;
+    }
+    iframe {
+        height: auto !important;
+        min-height: 1200px !important;
+        max-height: 2000px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 1500px !important;
+        max-height: 2000px !important
+    }
+
+    .page-content {
+        height: 1400px !important;
+        max-height: 2000px !important;
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+        .actn:hover {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+        .hyperaction:hover {
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+
+    .marksection {
+        margin-top: 20%;
+    }
+
+    .markbody {
+        margin-left: 70px
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+
+    .padgap {
+        margin-top: 60px;
+    }
+
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 30px;
+        margin-top: 10px;
+    }
+
+    .btngo {
+        margin-top: -55px;
+        float: right;
+        margin-left: 70%
+    }
+
+    .dashads {
+        display: none !important;
+    }
+
+    .dash {
+        display: none !important
+    }
+    .stat {
+        margin-left: 0px
+    }
+    .formstyle: {
+        margin-left: -12px;
+        padding-left: 0px
+    }
+}
+
+@media screen and (max-device-width: 768px) and (max-device-height: 1024px) {
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        /*margin-left: 160px !important;*/
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 28px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .gsmads {
+        display: none;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    .gsmobile {
+        margin-top: 70px
+    }
+    .form-ben {
+        margin-top: 100px;
+        /*height: 400px !important;
+        max-height: 500px !important;
+        margin-left: -12px;*/
+    }
+    iframe {
+        height: 1220px !important;
+        width: 100%;
+        margin-right: 0px;
+        max-height: 2000px!important
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 900px !important;
+        max-height: 1200px !important;
+        height: 1100px !important;
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .page-content {
+        height: 1400px !important;
+        max-height: 2000px !important
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+    .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .dash {
+        margin-top: 60px !important;
+        border: none;
+        background-color: beige;
+        background-size: contain;
+        background-repeat: no-repeat;
+        height: 150px;
+    }
+    .marksection {
+        margin-top: 70%;
+    }
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+    .genbtn {
+        margin-left: 3%
+    }
+    .stat {
+        margin-left: 25%
+    }
+    .mainbody {
+        margin-top: 10px;
+        height: 700px !important;
+        min-height: 400px;
+        max-height: 750px !important
+    }
+    .dashr1 {
+        /* margin-left: 115px; */
+        margin-right: 200px;
+        margin-top: 110px;
+    }
+    .content-header-media {
+        position: relative;
+        height: 248px;
+        overflow: hidden;
+        border-top-color: #222222;
+    }
+    .widget-simple {
+        padding: 15px;
+        border-left: 5px solid #c60d00;
+        height: 90px;
+    }
+    .account-size {
+        margin-top: 20px;
+        height: 90px;
+        margin-bottom: 20px
+    }
+    .acctno {
+        font-size: 1.6rem;
+        margin-top: 15px;
+    }
+    .txt {
+        margin-bottom: 0px!Important;
+        font-size: 13px;
+    }
+    .txtamount {
+        font-size: 2.7rem;
+        font-weight: 600;
+    }
+    .counter-size {
+        margin-top: -50px;
+    }
+    .small-card {
+        display: none
+    }
+    .dashads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-size: cover;
+        background-position: bottom;
+    }
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 60px;
+    }
+    .sideads {
+        display: none;
+    }
+    .formstyle: {
+        margin-left: -12px;
+        padding-left: 0px
+    }
+    .formwidth {
+        width: 350px;
+        min-width: 350px !important;
+    }
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+    .padamt {
+        margin-left: 36%;
+        padding-top: 10px;
+    }
+    .padmedia {
+        width: 230px;
+        margin-left: 180px;
+        margin-top: 10px;
+    }
+    .btngo {
+        margin-left: 40%;
+        margin-top: -55px;
+    }
+}
+
+@media screen and (max-device-width: 1024px) and (max-device-height: 768px) {
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: 160px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 23px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    iframe {
+        height: 1200px !important;
+        width: 100%;
+        margin-right: 0px;
+        max-height: 2000px !important;
+    }
+
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 900px !important;
+        max-height: 1000px !important;
+        height: 1000px !important;
+    }
+    .page-content {
+        height: 1400px !important;
+        max-height: 2000px!important;
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+    .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .dash {
+        margin-top: 60px;
+        border: none;
+        background-color: beige;
+        background-size: contain;
+        background-repeat: no-repeat;
+        height: 150px;
+    }
+
+    .marksection {
+        margin-top: 70%;
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+
+    .genbtn {
+        margin-left: 3%
+    }
+
+    .stat {
+        margin-left: 0%
+    }
+
+    .mainbody {
+        margin-top: 10px;
+        height: 400px;
+        min-height: 400px;
+    }
+
+    .dashr1 {
+        /* margin-left: 115px; */
+        margin-right: 200px;
+        margin-top: 110px;
+    }
+
+    .content-header-media {
+        position: relative;
+        height: 248px;
+        overflow: hidden;
+        border-top-color: #222222;
+    }
+
+    .widget-simple {
+        padding: 15px;
+        border-left: 5px solid #c60d00;
+        height: 90px;
+    }
+
+    .account-size {
+        margin-top: 20px;
+        height: 90px;
+        margin-bottom: 20px
+    }
+
+    .acctno {
+        font-size: 1.6rem;
+        margin-top: 15px;
+    }
+
+    .txt {
+        margin-bottom: 0px !Important;
+        font-size: 13px;
+    }
+
+    .txtamount {
+        font-size: 2.7rem;
+        font-weight: 600;
+    }
+
+    .counter-size {
+        margin-top: -50px;
+    }
+
+    .small-card {
+        display: none
+    }
+
+    .dashads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-size: contain;
+        background-position: bottom;
+    }
+
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 60px;
+    }
+
+    .sideads {
+        display: none;
+    }
+
+    .formstyle {
+        padding-left: 0px
+    }
+
+    .formwidth {
+        width: 350px;
+        min-width: 350px !important;
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+
+    .padamt {
+        margin-left: 36%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 180px;
+        margin-top: 10px;
+    }
+
+    .btngo {
+        margin-left: 70%;
+        margin-top: -55px;
+    }
+}
+
+@media screen and (max-device-width: 1024px) and (max-device-height: 600px) {
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #fff !important
+    }
+    .menu-profile {
+        margin-top: 10px;
+        margin-left: 10px;
+        height: 40px;
+        width: 40px
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 23px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    iframe {
+        height: 1200px !important;
+        width: 100%;
+        margin-right: 0px;
+        
+    }
+
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 900px !important;
+        max-height: 1000px !important;
+        height: 1000px !important;
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .page-content {
+        height: 1100px !important;
+    }
+
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+        .actn:hover {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+        .hyperaction:hover {
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+
+    .dash {
+        margin-top: 60px;
+        border: none;
+        background-color: beige;
+        background-size: contain;
+        background-repeat: no-repeat;
+        height: 150px;
+    }
+
+    .marksection {
+        margin-top: 70%;
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+
+    .genbtn {
+        margin-left: 3%
+    }
+
+    .stat {
+        margin-left: 20%
+    }
+
+    .mainbody {
+        margin-top: 10px;
+        height: 400px;
+        min-height: 400px;
+    }
+    .uisub {
+        margin-top: 50px !important
+    }
+
+    .dashr1 {
+        /* margin-left: 115px; */
+        margin-right: 200px;
+        margin-top: 110px;
+    }
+
+    .content-header-media {
+        position: relative;
+        height: 248px;
+        overflow: hidden;
+        border-top-color: #222222;
+    }
+
+    .widget-simple {
+        padding: 15px;
+        border-left: 5px solid #c60d00;
+        height: 90px;
+    }
+
+    .account-size {
+        margin-top: 20px;
+        height: 90px;
+        margin-bottom: 20px
+    }
+
+    .acctno {
+        font-size: 1.6rem;
+        margin-top: 15px;
+    }
+
+    .txt {
+        margin-bottom: 0px !Important;
+        font-size: 13px;
+    }
+
+    .txtamount {
+        font-size: 2.7rem;
+        font-weight: 600;
+    }
+
+    .counter-size {
+        margin-top: -50px;
+    }
+
+    .small-card {
+        display: none
+    }
+
+    .dashads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-size: contain;
+        background-position: bottom;
+    }
+
+    .mobileAmt {
+        margin-bottom: 19px;
+        color: #002668;
+        padding-left: 60px;
+    }
+
+    .sideads {
+        display: none;
+    }
+
+    .formstyle {
+        padding-left: 16px
+    }
+
+    .formwidth {
+        width: 350px;
+        min-width: 350px !important;
+
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+
+    .padamt {
+        margin-left: 36%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 180px;
+        margin-top: 10px;
+    }
+
+    .btngo {
+        margin-left: 40%;
+        margin-top: -55px;
+    }
+}
+
+@media screen and (min-device-width: 1024px) and (max-device-height: 1366px) {
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #002668 !important
+    }
+    .menu-profile {
+        margin-top: -1px;
+        height: 40px;
+        width: 40px
+    }
+    iframe {
+        height: auto !important;
+        min-height: 650px !important;
+        max-height: 650px !important;
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 23px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .form-page {
+        margin-top: 70px;
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 1100px !important;
+        max-height: 1300px !important
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+
+    .page-content {
+        height: 1100px !important;
+        /*min-height: 1300px !important;
+        max-height: 2000px !important*/
+    }
+
+    .dash {
+        margin-top: -60px;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-color: beige;
+        background-size: contain;
+    }
+
+    .marksection {
+        margin-top: 70%;
+    }
+
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+
+    .genbtn {
+        margin-left: 3%
+    }
+
+    .stat {
+        margin-left: 20%
+    }
+
+    .uisub {
+        margin-top: -40px
+    }
+
+    .mainbody {
+        margin-top: 10px;
+        height: 700px;
+        min-height: 400px;
+        max-height: 750px !important
+    }
+
+    .uisub {
+        margin-top: -40px !important
+    }
+
+    .btngo {
+        margin-left: 0%;
+        margin-top: 0px;
+    }
+
+    .dash1 {
+        /*max-height: 400px;*/
+        height: 700px;
+        margin-top: 60px;
+    }
+
+    .dashr1 {
+        /*margin-left: 115px;
+        margin-right: -200px;*/
+    }
+
+    .dashr2 {
+        /*margin-left: 115px;*/
+        margin-right: -200px;
+    }
+
+    .content-header-media {
+        position: relative;
+        height: 248px;
+        overflow: hidden;
+        border-top-color: #222222;
+    }
+
+    .widget-simple {
+        padding: 15px;
+        border-left: 5px solid #c60d00;
+        height: 90px;
+    }
+
+    .account-size {
+        margin-top: 20px;
+        height: 90px;
+        margin-bottom: 20px
+    }
+
+    .acctno {
+        font-size: 1.6rem;
+        margin-top: 15px;
+    }
+
+    .txt {
+        margin-bottom: 0px !Important;
+        font-size: 13px;
+    }
+
+    .txtamount {
+        font-size: 2.7rem;
+        font-weight: 600;
+    }
+
+    .counter-size {
+        margin-top: -50px;
+    }
+
+    .dashads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 100px;
+        border: none;
+        background-size: cover;
+        background-position: bottom;
+
+    }
+
+    .sideads {
+        display: none;
+    }
+
+    .formstyle {
+        padding-left: 16px
+    }
+
+    .formwidth {
+        width: 350px;
+        min-width: 350px !important;
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+
+    .padgap {
+        margin-top: 100px;
+    }
+
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 30px;
+        margin-top: 10px;
+    }
+
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+        .actn:hover {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+
+    .hyperaction {
+        cursor: pointer
+    }
+
+        .hyperaction:hover {
+            color: #f3c008 !important;
+            cursor: pointer
+        }
+}
+
+@media screen and (min-device-width: 1025px) and (max-device-width: 1196px) {
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .menu-user {
+        background: #002668 !important
+    }
+    .menu-profile {
+        margin-top: -1px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: 0px
+    }
+    .logosize {
+        padding-top: 10px;
+        margin-left: -25px;
+    }
+    .log-style {
+        margin-top: 23px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .airtime-form {
+        margin-top: -50px
+    }
+    .form-ben {
+        height: 560px !important;
+        margin-top: 20px;
+    }
+    .hrd {
+        height: 540px !important;
+        margin-top: 20px;
+    }
+    .mtt-1 {
+        margin-top: -10px;
+    }
+    .form-page {
+        height: 590px !important;
+        margin-top: 20px;
+    }
+    iframe {
+        height: 650px !important;
+        width: 100%;
+        margin-right: 0px;
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 500px !important;
+        max-height: 590px !important
+    }
+    .page-content {
+        height: 650px !important
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .dash {
+        margin-top: -60px;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-color: beige;
+        background-size: contain;
+    }
+    .marksection {
+        margin-top: 70%;
+    }
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+    .cuscard {
+        height: 280px !important
+    }
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+    .genbtn {
+        margin-left: 3%
+    }
+    .stat {
+        margin-left: 20%
+    }
+    .uisub {
+        margin-top: -40px
+    }
+    .mainbody {
+        margin-top: 10px;
+        height: 400px;
+        min-height: 400px;
+    }
+    .uisub {
+        margin-top: -40px !important
+    }
+    .btngo {
+        margin-left: 0%;
+        margin-top: 0px;
+    }
+    .dash1 {
+        max-height: 400px;
+        height: 400px;
+        margin-top: 60px;
+    }
+    .dashr1 {
+        /*margin-left: 115px;
+        margin-right: -200px;*/
+    }
+    .dashr2 {
+        margin-left: 115px;
+        margin-right: -200px;
+    }
+    .content-header-media {
+        position: relative;
+        height: 248px;
+        overflow: hidden;
+        border-top-color: #222222;
+    }
+    .widget-simple {
+        padding: 15px;
+        border-left: 5px solid #c60d00;
+        height: 90px;
+    }
+    .account-size {
+        margin-top: 20px;
+        height: 90px;
+        margin-bottom: 20px
+    }
+    .acctno {
+        font-size: 1.6rem;
+        margin-top: 15px;
+    }
+    .txt {
+        margin-bottom: 0px!Important;
+        font-size: 13px;
+    }
+    .txtamount {
+        font-size: 2.7rem;
+        font-weight: 600;
+    }
+    .counter-size {
+        margin-top: -50px;
+    }
+    .dashads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-size: contain;
+        background-position: bottom;
+    }
+    .sideads {
+        display: none;
+    }
+    .formstyle {
+        padding-left: 16px
+    }
+    .formwidth {
+        width: 350px;
+        min-width: 350px !important;
+    }
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: top;
+        height: 520px;
+        margin-top: 30px;
+    }
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+    .padgap {
+        margin-top: 100px;
+    }
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 30px;
+        margin-top: 10px;
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .hyperaction {
+        cursor: pointer
+    }
+    .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+}
+
+@media screen and (min-device-width: 1200px) {
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .gov-page {
+        height: 700px !important;
+        max-height: 750px !important;
+        min-height: 700px !important;
+    }
+    .menu-user {
+        background: #002668 !important
+    }
+    .menu-profile {
+        margin-top: -1px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: 0px
+    }
+    .logosize {
+        padding-top: 10px;
+        /*margin-left: -25px;*/
+    }
+    .log-style {
+        margin-top: 23px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .airtime-form {
+        margin-top: -50px
+    }
+    .form-page {
+        height: 590px !important;
+        margin-top: 20px;
+    }
+    .hrd {
+        height: 540px !important;
+        margin-top: 20px;
+    }
+    .mtt-1 {
+        margin-top: -10px;
+    }
+    .form-ben {
+        height: 560px !important;
+        margin-top: 20px;
+    }
+    iframe {
+        height: 650px !important;
+        width: 100%;
+        margin-right: 0px;
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 500px !important;
+        max-height: 590px !important
+    }
+    .page-content {
+        height: 650px !important;
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .dash {
+        margin-top: -60px !important;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-color: beige;
+        background-size: contain;
+       
+    }
+    .marksection {
+        margin-top: 70%;
+    }
+    .cuscard {
+        height: 280px !important
+    }
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+
+    .genbtn {
+        margin-left: 3%
+    }
+
+    .stat {
+        margin-left: 20%
+    }
+
+    .mainbody {
+        margin-top: 10px;
+        height: 400px;
+        min-height: 400px;
+    }
+    .uisub {
+        margin-top: -30px !important
+    }
+    .btngo {
+        margin-left: 0%;
+        margin-top: 0px;
+    }
+
+    .dash1 {
+        max-height: 400px;
+        height: 400px;
+        margin-top: 20px;
+    }
+
+    .dashr1 {
+        /*margin-left: 115px;
+        margin-right: -200px;*/
+    }
+
+    .dashr2 {
+        /*margin-left: 115px;
+        margin-right: -200px;*/
+    }
+
+    .content-header-media {
+        position: relative;
+        height: 248px;
+        overflow: hidden;
+        border-top-color: #222222;
+    }
+
+    .widget-simple {
+        padding: 15px;
+        border-left: 5px solid #c60d00;
+        height: 90px;
+    }
+
+    .account-size {
+        margin-top: 20px;
+        height: 90px;
+        margin-bottom: 20px
+    }
+
+    .acctno {
+        font-size: 1.6rem;
+        margin-top: 15px;
+    }
+
+    .txt {
+        margin-bottom: 0px !Important;
+        font-size: 13px;
+    }
+
+    .txtamount {
+        font-size: 2.7rem;
+        font-weight: 600;
+    }
+
+    .counter-size {
+        margin-top: -50px;
+    }
+
+    .dashads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-size: contain;
+        background-position: bottom;
+        margin-top: 1px !important;
+        /*background-repeat: no-repeat;*/
+    }
+
+    .sideads {
+        display: block;
+    }
+
+    .formstyle {
+        padding-left: 60px
+    }
+
+    .formwidth {
+        width: 350px;
+        min-width: 350px !important;
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top: 10px;
+    }
+
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center left;
+        height: 520px;
+        margin-top: 30px
+    }
+
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+
+    .padgap {
+        margin-top: 100px;
+    }
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 30px;
+        margin-top: 10px;
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .hyperaction {
+        cursor: pointer
+    }
+    .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+}
+
+@media screen and (min-device-width: 1680px) {
+    .valid-button {
+        margin-left: -38px !important;
+    }
+    .gov-page {
+        height: 700px !important;
+        max-height: 750px !important;
+        min-height: 700px !important;
+    }
+    .menu-user {
+        background: #002668 !important
+    }
+    .menu-profile {
+        margin-top: -1px;
+        height: 40px;
+        width: 40px
+    }
+    .keyboardstyle {
+        /*margin-left: 10px;*/
+        background: #fff;
+        border-radius: 4px;
+        padding: 0.5em 0.5em;
+        margin: 0.7em 0.4em;
+        margin-left: 0px
+    }
+    .logosize {
+        padding-top: 10px;
+        /*margin-left: -25px;*/
+    }
+    .log-style {
+        margin-top: 23px;
+        margin-right: 30px;
+        margin-left: -30px;
+    }
+    .airtime-form {
+        margin-top: -50px
+    }
+    .form-ben {
+        height: 560px !important;
+        margin-top: 20px;
+    }
+    .hrd {
+        height: 540px !important;
+        margin-top: 20px;
+    }
+    .mtt-1 {
+        margin-top: -10px;
+    }
+    .form-page {
+        height: 590px !important;
+        margin-top: 20px;
+    }
+    iframe {
+        height: 650px !important;
+        width: 100%;
+        margin-right: 0px;
+    }
+    .h-height {
+        background-color: #fff;
+        padding: 0px 0px !important;
+        min-height: 500px !important;
+        max-height: 590px !important
+    }
+    .page-content {
+        height: 650px !important;
+    }
+    .acctbody {
+        margin-top: 50px;
+    }
+    .dash {
+        margin-top: -60px;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-color: beige;
+        background-size: contain;
+    }
+    .marksection {
+        margin-top: 70%;
+    }
+    .refbtn {
+        padding-top: 3px;
+        text-align: center;
+        margin-left: 33%;
+    }
+    .crmbtn {
+        margin-top: 20px;
+        position: absolute;
+        -webkit-user-select: none;
+        width: 10%;
+        margin-left: 120px;
+    }
+    .cuscard {
+        height: 280px !important
+    }
+    .recDetails {
+        padding: 25px;
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+    }
+    .genbtn {
+        margin-left: 3%
+    }
+    .stat {
+        margin-left: 20%
+    }
+    .mainbody {
+        margin-top: 10px;
+        height:400px;
+        min-height: 400px;
+    }
+    .uisub {
+        margin-top: -30px !important
+    }
+    .btngo {
+        margin-left: 0%;
+        margin-top: 0px;
+    }
+    .dash1 {
+        max-height: 400px;
+        height: 400px;
+        margin-top: 20px;
+    }
+    .dashr1 {
+        margin-left: 115px;
+        margin-right: -200px;
+    }
+    .dashr2 {
+        margin-left: 115px;
+        margin-right: -200px;
+    }
+    .content-header-media {
+        position: relative;
+        height: 248px;
+        overflow: hidden;
+        border-top-color: #222222;
+    }
+    .widget-simple {
+        padding: 15px;
+        border-left: 5px solid #c60d00;
+        height: 90px;
+    }
+    .account-size {
+        margin-top: 20px;
+        height: 90px;
+        margin-bottom: 20px
+    }
+    .acctno {
+        font-size: 1.6rem;
+        margin-top: 15px;
+    }
+    .txt {
+        margin-bottom: 0px!Important;
+        font-size: 13px;
+    }
+    .txtamount {
+        font-size: 2.7rem;
+        font-weight: 600;
+    }
+    .counter-size {
+        margin-top: -50px;
+    }
+    .dashads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-size: contain;
+        background-position: bottom;
+        margin-top: 1px !important;
+        /*background-repeat: no-repeat;*/
+    }
+    .sideads {
+        display: block;
+        width: 100%;
+        height: 200px;
+        margin-top: 0px;
+        border: none;
+        background-size: contain;
+        background-position: bottom;
+    }
+    .formstyle {
+        padding-left: 60px
+    }
+    .formwidth {
+        width: 350px;
+        min-width: 350px !important;
+    }
+
+    .crmaction {
+        font-size: 15px;
+        /*padding-top: 300px;*/
+        color: orange;
+        margin-top:10px;
+    }
+    .cormbackground {
+        /*background-image: url(../../assets/images/abbeysecure1.png);*/
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center left;
+        height: 520px;
+        margin-top: 30px
+    }
+    .padbody {
+        border: solid #e3e7ec9c;
+        border-radius: 1.25rem;
+        height: 280px;
+    }
+    .padgap {
+        margin-top: 100px;
+    }
+    .padamt {
+        margin-left: 26%;
+        padding-top: 10px;
+    }
+
+    .padmedia {
+        width: 230px;
+        margin-left: 30px;
+        margin-top: 10px;
+    }
+    .actn {
+        font-size: 12px;
+        font-weight: 600;
+        color: #002668;
+    }
+
+    .actn:hover {
+        font-size: 12px;
+        font-weight: 600;
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+    .hyperaction {
+        cursor: pointer
+    }
+     .hyperaction:hover {
+        color: #f3c008 !important;
+        cursor: pointer
+    }
+}
+
+
+/* .content-header-media {
+    position: relative;
+    height: 248px;
+    overflow: hidden;
+    border-top-color: #222222;
+} */
+.pin-input {
+    height: 40px;
+}
+.timingstyle {
+    padding-top: 9%;
+    font-size: .8125rem;
+    font-weight: 500;
+}
+.dxgvEmptyDataRow_Youthful {
+    color: #000 !important
+}
+.dxpLite_Youthful {
+    color: #000 !important
+}
+.dxpLite_Youthful .dxp-disabledButton {
+    color: #000 !important
+}
+.submenucard {
+    margin-left: 25%;
+}
+.noborder {
+    border: 0px !important
+}
+.noborder:focus .noborder:hover .input:focus {
+    background: none !important;
+    border: 0px !important;
+}
+.noborder:hover{
+    background: none !important;
+    border: 0px !important;
+}
+.input:focus{
+    background: none !important;
+    border: 0px !important;
+}
+
+.padinput {
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+}
+.submenutxt {
+    font-weight: 410;
+}
+
+.content-header {
+    background-color: #ffffff;
+    border-top: 1px solid #eaedf1;
+    border-bottom: 1px solid #dbe1e8;
+}
+.content-header-media .header-section {
+    z-index: 200;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.header-section {
+    padding: 30px 10px;
+}
+.slideshow-container {
+    max-width: 2560px;
+    min-height: 248px;
+    position: relative;
+    margin: auto;
+    size: cover;
+}
+.pull-right {
+    float: right !important;
+}
+.img-circle {
+    border-radius: 50%;
+}
+.sidebar-brand, .sidebar-title {
+    height: 70px;
+    line-height: 50px;
+    padding: 0 10px;
+    padding-top:10px;
+    margin: 0;
+    font-weight: 300;
+    font-size: 18px;
+    display: block;
+    color: #ffffff;
+    background: #002668;
+}
+.mdi::before{
+    font: normal normal normal 24px/1 "Material Design Icons";
+}
+.sidebar-brand i, .sidebar-title i {
+    font-size: 14px;
+    display: inline-block;
+    width: 18px;
+    text-align: center;
+    margin-right: 10px;
+    opacity: 0.5;
+}
+b, strong {
+    font-weight: 600;
+}
+.sidebar-user {
+    padding-left: 88px;
+    background: rgba(255, 255, 255, 0.1);
+}
+.sidebar-section {
+    padding: 10px;
+}
+.sidebar-user-avatar {
+    width: 68px;
+    height: 68px;
+    float: left;
+    padding: 2px;
+    /* margin-left: -78px; */
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.75);
+}
+.sidebar-user-name {
+    font-size: 17px;
+    font-weight: 300;
+    margin-top: 10px;
+    line-height: 26px;
+}
+.sidebar-user-avatar img {
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+}
+.widget {
+    background-color: #ffffff;
+    margin-bottom: 10px;
+}
+
+
+.card-back:hover {
+    /* -webkit-animation: shake 0s; */
+    animation-name: shake, jump;
+    animation-duration: 1900ms;
+    cursor: pointer;
+}
+.small-card:hover {
+    /* -webkit-animation: shake 0s; */
+    animation-name: pulse;
+    animation-duration: 900ms;
+    cursor: pointer;
+}
+.menulist:hover {
+    /* -webkit-animation: shake 0s; */
+    animation-name: pulse;
+    animation-duration: 900ms;
+    cursor: pointer;
+}
+.counter {
+
+}
+.not-font {
+    font-size: 16px
+}
+.not-header {
+    max-height: 230px;
+}
+.shortcut {
+    font-size: 14px;
+    font-weight: 600;
+    color: #002668;
+}
+.actn {
+    font-size: 12px;
+    font-weight: 600;
+    color: #002668;
+}
+.actn:hover {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f3c008 !important;
+    cursor: pointer
+}
+.progress-style {
+    height:3px;
+}
+.progress-move {
+    max-width: 100%;
+}
+.acct-cut {
+    margin-top: 15px;
+}
+.acct-p {
+    font-size: 0.92rem;
+    color: #fff;
+    margin-left: -12px;
+}
+.acct-icon {
+    color: red;
+    font-size: 20px;
+}
+.menu-close {
+    color: #5b6e88;
+    z-index: 1;
+    margin-top: 5px;
+    transition: padding-left 0.3s ease;
+    padding: 9px;
+    text-align: center;
+    height: 2.5rem;
+    font-size: 1.5rem;
+    line-height: 1;
+    position: relative;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0px 2px 3px rgb(4 4 7 / 10%);
+}
+.msg-danger {
+    color: #c60d00;
+    font-weight: 500;
+}
+.newcard {
+    /*border: 2px solid #c60d00;*/
+    /*border-radius: 15px;*/
+    padding: 20px 5px 10px 5px;
+    margin: 20px;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+    height: 150px;
+    min-height: 150px;
+    max-height: 150px;
+    max-width: 120px;
+    background-color: #fff;
+    background-clip: border-box;
+    border: solid #e3e7ec9c;
+    border-radius: 1.25rem;
+    box-shadow: 0 0 24px 0 rgb(0 0 0 / 6%), 0 1px 0 0 rgb(0 0 0 / 2%);
+}
+    .newcard:hover {
+        border: 2px solid #c60d00;
+        /*border-radius: 15px;*/
+        padding: 20px 5px 10px 5px;
+        margin: 20px;
+        cursor: pointer;
+        text-align: center;
+        width: 100%;
+        height: 150px;
+        min-height: 150px;
+        max-height: 150px;
+        max-width: 120px;
+        background-color: #fff;
+        background-clip: border-box;
+        /*border: solid #e3e7ec9c;*/
+        border-radius: 1.25rem;
+        box-shadow: 0 0 24px 0 rgb(0 0 0 / 6%), 0 1px 0 0 rgb(0 0 0 / 2%);
+    }
+.airtimecard {
+    border: 2px solid #c60d00;
+    border-radius: 15px;
+    padding: 10px 5px 5px 5px;
+    margin: 20px;
+    cursor: pointer;
+}
+.col-form2-label {
+    margin-bottom: 0;
+    font-size: inherit;
+    line-height: 1.5;
+}
+.amttxt {
+    height: 40px;
+    border-radius: 7px;
+    border-color:#e5e8eb 
+}
+.txtstyle {
+    border-radius: 7px;
+    border-color: #e5e8eb;
+}
+.goright {
+    float: right;
+}
+
+.dxbButton {
+    color: #fff !important;
+    background: #0095ff !important;
+    border-color: #0095ff;
+    border: 1px solid transparent;
+    padding: .47rem .75rem;
+    font-size: .8125rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.dxbButton2 {
+    color: #fff !important;
+    background: #dc3545 !important;
+    border-color: #dc3545;
+    border: 1px solid transparent;
+    padding: .47rem .75rem;
+    font-size: .8125rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    vertical-align: middle;
+}
+.dxbButtonHover {
+    color: #fff !important;
+    background: #0095ff;
+    border-color: #0095ff;
+    border: 1px solid transparent;
+    padding: .47rem .75rem;
+    font-size: .8125rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    vertical-align: middle;
+}
+.dxgvControl_Youthful {
+    background-color: #fff !important;
+    color: black;
+    cursor: default;
+    border-width: 0px;
+    font:Tahoma, Geneva, sans-serif;
+    font-size: small
+}
+.hv {
+    height: 40px;
+    margin-left: 10px;
+}
+.dispass {
+    padding: 5px;
+    /*width: 230px;*/
+}
+.grid-container {
+    width: 700px;
+    min-width: 700px;
+}
+.acctAct {
+    color: green;
+    float: right;
+    font-size: 14px;
+    padding-top: 6px;
+}
+
+.padbtn {
+    background: #fff
+}
+.padAct {
+    background: #fff;
+    border: 0px;
+    height: 35px;
+    /* padding-top: 12px; */
+    color: red;
+}
+
+.transfoot {
+    margin-top: 5%
+}
+.abbeybackground {
+    background-image: url(../../assets/images/abbeyBackground.jpg)
+}
+.successArea {
+    margin-top: 50px;
+}
+.successMark {
+    width: 250px;
+    float: right;
+}
+.transferArea {
+    margin-left:-10px
+}
+.boardcard {
+
+}
+.boardcard:hover {
+    border: 2px solid #c60d00
+}
+.cuscardtitle {
+    font-size: 15px
+}
+.mgl-2 {
+    margin-left: -2px
+}
+.unbill {
+    margin-top: -8px;
+    margin-left: -13px;
+}

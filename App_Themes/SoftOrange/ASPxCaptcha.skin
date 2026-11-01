@@ -1,0 +1,10 @@
+<%@ Register TagPrefix="dx" Namespace="DevExpress.Data" Assembly="DevExpress.Data.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %>
+<%@ Register TagPrefix="dx" Namespace="DevExpress.Web" Assembly="DevExpress.Web.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %>
+
+<dx:ASPxCaptcha runat="server" SpriteCssFilePath="{0}/sprite.css" CssPostfix="Office2010Silver" CssFilePath="{0}/styles.css">
+    <ChallengeImage BorderWidth="1" ForegroundColor="#87B8C7" BackgroundColor="Transparent" BorderColor="#87B8C7">
+        <BackgroundImage ImageUrl="Editors/caChallengeImageBack.png"></BackgroundImage>
+    </ChallengeImage>
+    <LoadingPanelImage Url="Editors/Loading.gif"></LoadingPanelImage>
+</dx:ASPxCaptcha>
+

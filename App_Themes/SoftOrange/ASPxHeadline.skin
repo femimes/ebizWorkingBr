@@ -1,0 +1,8 @@
+<%@ Register TagPrefix="dx" Namespace="DevExpress.Data" Assembly="DevExpress.Data.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %>
+<%@ Register TagPrefix="dxhl" Namespace="DevExpress.Web" Assembly="DevExpress.Web.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %>
+
+<dxhl:ASPxHeadline runat="server" CssFilePath="{0}/styles.css" SpriteCssFilePath="{0}/sprite.css" CssPostfix="Office2010Silver">
+	<TailImage>
+		<SpriteProperties CssClass="dxWeb_hlTail_Glass" />
+	</TailImage>
+</dxhl:ASPxHeadline>

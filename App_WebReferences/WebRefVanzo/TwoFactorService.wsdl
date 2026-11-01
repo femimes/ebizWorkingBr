@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<definitions xmlns:wsp="http://www.w3.org/ns/ws-policy" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:tns="http://client.twofactor.vanso.com/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" name="TwoFactorService" targetNamespace="http://client.twofactor.vanso.com/" xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <types>
+    <xsd:schema>
+      <xsd:import schemaLocation="http://10.1.0.202:8080/Vasco2FAServiceInfinityTrust/TwoFactorService?xsd=1" namespace="http://client.twofactor.vanso.com/" />
+    </xsd:schema>
+  </types>
+  <message name="checkUserProfile">
+    <part name="parameters" element="tns:checkUserProfile" />
+  </message>
+  <message name="checkUserProfileResponse">
+    <part name="parameters" element="tns:checkUserProfileResponse" />
+  </message>
+  <message name="doChallengeAuthentication">
+    <part name="parameters" element="tns:doChallengeAuthentication" />
+  </message>
+  <message name="doChallengeAuthenticationResponse">
+    <part name="parameters" element="tns:doChallengeAuthenticationResponse" />
+  </message>
+  <message name="doResponseAuthentication">
+    <part name="parameters" element="tns:doResponseAuthentication" />
+  </message>
+  <message name="doResponseAuthenticationResponse">
+    <part name="parameters" element="tns:doResponseAuthenticationResponse" />
+  </message>
+  <message name="doSignatureAuthentication">
+    <part name="parameters" element="tns:doSignatureAuthentication" />
+  </message>
+  <message name="doSignatureAuthenticationResponse">
+    <part name="parameters" element="tns:doSignatureAuthenticationResponse" />
+  </message>
+  <message name="verifyToken">
+    <part name="parameters" element="tns:verifyToken" />
+  </message>
+  <message name="verifyTokenResponse">
+    <part name="parameters" element="tns:verifyTokenResponse" />
+  </message>
+  <message name="unassignToken">
+    <part name="parameters" element="tns:unassignToken" />
+  </message>
+  <message name="unassignTokenResponse">
+    <part name="parameters" element="tns:unassignTokenResponse" />
+  </message>
+  <message name="assignToken">
+    <part name="parameters" element="tns:assignToken" />
+  </message>
+  <message name="assignTokenResponse">
+    <part name="parameters" element="tns:assignTokenResponse" />
+  </message>
+  <message name="generateOTP">
+    <part name="parameters" element="tns:generateOTP" />
+  </message>
+  <message name="generateOTPResponse">
+    <part name="parameters" element="tns:generateOTPResponse" />
+  </message>
+  <message name="approveAssignment">
+    <part name="parameters" element="tns:approveAssignment" />
+  </message>
+  <message name="approveAssignmentResponse">
+    <part name="parameters" element="tns:approveAssignmentResponse" />
+  </message>
+  <portType name="TwoFactorService">
+    <operation name="checkUserProfile">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/checkUserProfileRequest" message="tns:checkUserProfile" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/checkUserProfileResponse" message="tns:checkUserProfileResponse" />
+    </operation>
+    <operation name="doChallengeAuthentication">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/doChallengeAuthenticationRequest" message="tns:doChallengeAuthentication" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/doChallengeAuthenticationResponse" message="tns:doChallengeAuthenticationResponse" />
+    </operation>
+    <operation name="doResponseAuthentication">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/doResponseAuthenticationRequest" message="tns:doResponseAuthentication" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/doResponseAuthenticationResponse" message="tns:doResponseAuthenticationResponse" />
+    </operation>
+    <operation name="doSignatureAuthentication">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/doSignatureAuthenticationRequest" message="tns:doSignatureAuthentication" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/doSignatureAuthenticationResponse" message="tns:doSignatureAuthenticationResponse" />
+    </operation>
+    <operation name="verifyToken">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/verifyTokenRequest" message="tns:verifyToken" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/verifyTokenResponse" message="tns:verifyTokenResponse" />
+    </operation>
+    <operation name="unassignToken">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/unassignTokenRequest" message="tns:unassignToken" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/unassignTokenResponse" message="tns:unassignTokenResponse" />
+    </operation>
+    <operation name="assignToken">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/assignTokenRequest" message="tns:assignToken" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/assignTokenResponse" message="tns:assignTokenResponse" />
+    </operation>
+    <operation name="generateOTP">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/generateOTPRequest" message="tns:generateOTP" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/generateOTPResponse" message="tns:generateOTPResponse" />
+    </operation>
+    <operation name="approveAssignment">
+      <input wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/approveAssignmentRequest" message="tns:approveAssignment" />
+      <output wsam:Action="http://client.twofactor.vanso.com/TwoFactorService/approveAssignmentResponse" message="tns:approveAssignmentResponse" />
+    </operation>
+  </portType>
+  <binding name="TwoFactorServicePortBinding" type="tns:TwoFactorService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <operation name="checkUserProfile">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="doChallengeAuthentication">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="doResponseAuthentication">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="doSignatureAuthentication">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="verifyToken">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="unassignToken">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="assignToken">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="generateOTP">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="approveAssignment">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+  </binding>
+  <service name="TwoFactorService">
+    <port name="TwoFactorServicePort" binding="tns:TwoFactorServicePortBinding">
+      <soap:address location="http://10.1.0.202:8080/Vasco2FAServiceInfinityTrust/TwoFactorService" />
+    </port>
+  </service>
+</definitions>

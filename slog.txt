@@ -1,0 +1,101 @@
+﻿<%@ Page Title="Log In" Language="C#" MasterPageFile="~/Site.master" AutoEventWireup="true"
+    CodeFile="Login.aspx.cs" Inherits="Account_Login"  EnableEventValidation="true" %>
+
+<%@ Register assembly="DevExpress.Web.v19.1, Version=19.1.4.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" namespace="DevExpress.Web" tagprefix="dx" %>
+
+<asp:Content ID="HeaderContent" runat="server" ContentPlaceHolderID="HeadContent">
+</asp:Content>
+<asp:Content ID="BodyContent" runat="server" ContentPlaceHolderID="MainContent">
+    <h2>
+        Log In
+    </h2>
+    <p>
+        Please enter your username and password.
+        <%--<asp:HyperLink ID="RegisterHyperLink" runat="server" EnableViewState="false">Register</asp:HyperLink> if you don't have an account.--%>
+    </p>
+    
+    <asp:Login ID="LoginUser" runat="server" EnableViewState="false" RenderOuterTable="false"   >
+        <LayoutTemplate>
+            <span class="failureNotification">
+                <asp:Literal ID="FailureText" runat="server"></asp:Literal>
+            </span>
+         
+            <asp:ValidationSummary ID="LoginUserValidationSummary" runat="server" CssClass="failureNotification" 
+                 ValidationGroup="LoginUserValidationGroup"/>
+            <div class="accountInfo">
+                <fieldset class="login">
+                    <legend>Account Information</legend>
+                       <span>
+<img ID="ASPxImage1" runat="server"      src="~/Images/imageswywyw.jpg"
+                      style="height:75px;width:160px"/>
+                    
+                            
+            </span>
+                    <p>
+                     <table>
+                    <tr><td>
+                        <asp:Label ID="UserNameLabel" runat="server" AssociatedControlID="UserName">Username:</asp:Label>
+                        </td></tr>
+                         <tr><td>
+                        <asp:TextBox ID="UserName" runat="server" CssClass="textEntry" AutoPostBack="True" 
+                                 ontextchanged="UserName_TextChanged"></asp:TextBox>
+                         </td></tr>
+                         
+                          
+  
+                                     <tr>
+                                         <td>
+                                             <asp:Label ID="PasswordLabel" runat="server" AssociatedControlID="Password">Password:</asp:Label>
+                                         </td>
+                                     </tr>
+                                     <tr>
+                                         <td>
+                                             <asp:TextBox ID="Password" runat="server" CssClass="passwordEntry" 
+                                                 TextMode="Password"></asp:TextBox>
+                                         </td>
+                                     </tr>
+                                
+                                    
+                                                 <tr>
+                                                     <td>
+                                                         <asp:Label ID="Label1" runat="server" AssociatedControlID="Password">Branch:</asp:Label>
+                                                     </td>
+                                                 </tr>
+                                                 <tr>
+                                                     <td>
+                                                          <dx:ASPxComboBox ID="ASPxComboBox1" runat="server" >
+                                                             
+                                                             <ValidationSettings Display="Dynamic" ErrorDisplayMode="ImageWithTooltip" SetFocusOnError="True" RequiredField-ErrorText="Branch or location required!!">
+                                                               
+                                                             </ValidationSettings>  
+                                                         </dx:ASPxComboBox> 
+                                                         
+                                                     <%--    <asp:DropDownList id="ASPxComboBox1" runat="server" />--%>
+
+                                                       
+                                                     </td>
+                                                 </tr>
+                                                 <tr>
+                                                 <td>
+                                                  <asp:CheckBox ID="RememberMe" runat="server" />
+                                             <asp:Label ID="RememberMeLabel" runat="server" AssociatedControlID="RememberMe" 
+                                                 CssClass="inline">Keep me logged in</asp:Label>
+                                                 </td>
+                                                 </tr>
+                                                 <tr>
+                                                 <td>
+                                                   <p class="submitButton">
+                    <asp:Button ID="LoginButton" runat="server" CommandName="Login" Text="Log In" 
+                        ValidationGroup="LoginUserValidationGroup" onclick="LoginButton_Click"/>
+                </p>
+                                                 </td>
+                                                 </tr>
+                                             </table>
+                                       
+                                        
+                </fieldset>
+              
+            </div>
+        </LayoutTemplate>
+    </asp:Login>
+</asp:Content>

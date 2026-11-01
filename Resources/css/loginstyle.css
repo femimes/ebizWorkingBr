@@ -1,0 +1,41 @@
+/* input {
+    height: 15px !important;
+}
+input:hover {
+    height: 15px !important;
+    border: 0px !important;
+} */
+
+.dxeEditAreaSys {
+    height: 17px !important;
+}
+.dxeEditAreaSys:hover {
+    height: 17px !important;
+}
+.dxh0:hover {
+    border: 0px !important
+}
+.dxeEditArea:hover {
+    border: 0px !important
+}
+.dxeMemoEditArea
+{
+	background-color: white;
+	font-family: Tahoma;
+	font-size: 9pt;
+	outline: none;
+}
+.dxeMemoEditArea:hover
+{
+	background-color: white;
+	font-family: Tahoma;
+	font-size: 9pt;
+    outline: none;
+    border: 0px !Important;
+}
+.dxeEditAreaNotStrechSys {
+    border: 0px !important
+}
+.dxeEditAreaNotStrechSys:hover {
+    border: 0px !important
+}

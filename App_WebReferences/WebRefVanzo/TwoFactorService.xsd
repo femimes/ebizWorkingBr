@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://client.twofactor.vanso.com/" targetNamespace="http://client.twofactor.vanso.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="approveAssignment" type="tns:approveAssignment" />
+  <xs:element name="approveAssignmentResponse" type="tns:approveAssignmentResponse" />
+  <xs:element name="assignToken" type="tns:assignToken" />
+  <xs:element name="assignTokenResponse" type="tns:assignTokenResponse" />
+  <xs:element name="checkUserProfile" type="tns:checkUserProfile" />
+  <xs:element name="checkUserProfileResponse" type="tns:checkUserProfileResponse" />
+  <xs:element name="doChallengeAuthentication" type="tns:doChallengeAuthentication" />
+  <xs:element name="doChallengeAuthenticationResponse" type="tns:doChallengeAuthenticationResponse" />
+  <xs:element name="doResponseAuthentication" type="tns:doResponseAuthentication" />
+  <xs:element name="doResponseAuthenticationResponse" type="tns:doResponseAuthenticationResponse" />
+  <xs:element name="doSignatureAuthentication" type="tns:doSignatureAuthentication" />
+  <xs:element name="doSignatureAuthenticationResponse" type="tns:doSignatureAuthenticationResponse" />
+  <xs:element name="generateOTP" type="tns:generateOTP" />
+  <xs:element name="generateOTPResponse" type="tns:generateOTPResponse" />
+  <xs:element name="unassignToken" type="tns:unassignToken" />
+  <xs:element name="unassignTokenResponse" type="tns:unassignTokenResponse" />
+  <xs:element name="verifyToken" type="tns:verifyToken" />
+  <xs:element name="verifyTokenResponse" type="tns:verifyTokenResponse" />
+  <xs:complexType name="verifyToken">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+      <xs:element minOccurs="0" name="serial" type="xs:string" />
+      <xs:element minOccurs="0" name="otp" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="verifyTokenResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="response">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="description" type="xs:string" />
+      <xs:element name="status" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="checkUserProfile">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="checkUserProfileResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="generateOTP">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+      <xs:element minOccurs="0" name="challenge" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="generateOTPResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:virtualResponse" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="virtualResponse">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:response">
+        <xs:sequence>
+          <xs:element name="otp" type="xs:int" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="approveAssignment">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+      <xs:element minOccurs="0" name="serial" type="xs:string" />
+      <xs:element minOccurs="0" name="otp" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="approveAssignmentResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="unassignToken">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="unassignTokenResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="doChallengeAuthentication">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+      <xs:element minOccurs="0" name="challenge" type="xs:string" />
+      <xs:element minOccurs="0" name="password" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="doChallengeAuthenticationResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="doResponseAuthentication">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+      <xs:element minOccurs="0" name="password" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="doResponseAuthenticationResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="doSignatureAuthentication">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="fields" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="signature" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="doSignatureAuthenticationResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="assignToken">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="userId" type="xs:string" />
+      <xs:element minOccurs="0" name="clientId" type="xs:string" />
+      <xs:element minOccurs="0" name="serial" type="xs:string" />
+      <xs:element minOccurs="0" name="phone" type="xs:string" />
+      <xs:element minOccurs="0" name="email" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="assignTokenResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:response" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

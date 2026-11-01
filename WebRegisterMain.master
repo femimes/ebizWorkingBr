@@ -1,0 +1,131 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="WebRegisterMain.master.cs" Inherits="WebRegisterMain" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head id="Head1" runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Web Registrar</title>
+    <link rel="shortcut icon" href="~/Images/Mreg2.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style type="text/css">
+        :root {
+            --brand: #0F4C81;
+            --brand-dark: #0a355a;
+            --ink: #14212e;
+            --muted: #5d6b7a;
+            --line: #e1e8ef;
+            --page: #f4f7fa;
+            --surface: #ffffff;
+            --ring: rgba(15, 76, 129, .25);
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+
+        body {
+            margin: 0;
+            font-family: "Plus Jakarta Sans", "Segoe UI", Roboto, Arial, sans-serif;
+            color: var(--ink);
+            background: var(--page);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* ---------- Header ---------- */
+        .app-header {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            height: 64px;
+            padding: 0 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .app-header .brand img {
+            display: block;
+            height: 40px;
+            width: auto;
+            max-width: 160px;
+        }
+
+        .loginDisplay {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .loginDisplay .bold { font-weight: 700; color: var(--ink); }
+
+        .loginDisplay a {
+            display: inline-block;
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--brand);
+            text-decoration: none;
+            border: 1.5px solid var(--line);
+            border-radius: 8px;
+            transition: background-color .15s ease, border-color .15s ease;
+        }
+        .loginDisplay a:hover { background: #eaf1f8; border-color: #c4d4e4; }
+        .loginDisplay a:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
+
+        /* ---------- Main area ---------- */
+        .main {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        @media (max-width: 600px) {
+            .app-header { padding: 0 14px; }
+            .loginDisplay .welcome-text { display: none; }
+        }
+    </style>
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <form id="Form1" runat="server">
+
+        <header class="app-header">
+            <div class="brand">
+                <asp:Image ID="Image1" runat="server" ImageUrl="~/Images/imageswywyw.jpg" AlternateText="Company logo" />
+            </div>
+
+            <div class="loginDisplay">
+                <asp:LoginView ID="HeadLoginView" runat="server" EnableViewState="false">
+                    <AnonymousTemplate>
+                        <a href="~/Account/Login.aspx" id="HeadLoginStatus" runat="server" target="_parent">Log in</a>
+                    </AnonymousTemplate>
+                    <LoggedInTemplate>
+                        <span class="welcome-text">Welcome, <span class="bold"><asp:LoginName ID="HeadLoginName" runat="server" /></span></span>
+                        <a href="~/Account/Login.aspx" id="HeadLoginStatus2" runat="server" target="_parent">Log out</a>
+                        <%-- Original sign-out control, kept for reference:
+                        [ <asp:LoginStatus ID="HeadLoginStatus" runat="server" LogoutAction="Redirect" LogoutText="Log Out" LogoutPageUrl="~/Account/Login.aspx"/> ]
+                        --%>
+                    </LoggedInTemplate>
+                </asp:LoginView>
+            </div>
+        </header>
+
+        <div class="main">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </div>
+
+    </form>
+</body>
+</html>

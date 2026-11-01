@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<definitions xmlns:wsp="http://www.w3.org/ns/ws-policy" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:tns="http://services.pitch.nibss.com/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" name="PitchControlCenterWithXML" targetNamespace="http://services.pitch.nibss.com/" xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <types>
+    <xsd:schema>
+      <xsd:import schemaLocation="https://nibsspayplus.nibss-plc.com.ng:4043/PitchControlCenter/PitchControlCenterWithXML?xsd=1" namespace="http://services.pitch.nibss.com/" />
+    </xsd:schema>
+  </types>
+  <message name="uploadPaymentSchedule">
+    <part name="parameters" element="tns:uploadPaymentSchedule" />
+  </message>
+  <message name="uploadPaymentScheduleResponse">
+    <part name="parameters" element="tns:uploadPaymentScheduleResponse" />
+  </message>
+  <message name="uploadSupportingDocument">
+    <part name="parameters" element="tns:uploadSupportingDocument" />
+  </message>
+  <message name="uploadSupportingDocumentResponse">
+    <part name="parameters" element="tns:uploadSupportingDocumentResponse" />
+  </message>
+  <message name="getPaymentScheduleStatus">
+    <part name="parameters" element="tns:getPaymentScheduleStatus" />
+  </message>
+  <message name="getPaymentScheduleStatusResponse">
+    <part name="parameters" element="tns:getPaymentScheduleStatusResponse" />
+  </message>
+  <message name="getVendorUploadStatus">
+    <part name="parameters" element="tns:getVendorUploadStatus" />
+  </message>
+  <message name="getVendorUploadStatusResponse">
+    <part name="parameters" element="tns:getVendorUploadStatusResponse" />
+  </message>
+  <message name="getVendorUpdateStatus">
+    <part name="parameters" element="tns:getVendorUpdateStatus" />
+  </message>
+  <message name="getVendorUpdateStatusResponse">
+    <part name="parameters" element="tns:getVendorUpdateStatusResponse" />
+  </message>
+  <message name="uploadNewVendors">
+    <part name="parameters" element="tns:uploadNewVendors" />
+  </message>
+  <message name="uploadNewVendorsResponse">
+    <part name="parameters" element="tns:uploadNewVendorsResponse" />
+  </message>
+  <message name="updateVendors">
+    <part name="parameters" element="tns:updateVendors" />
+  </message>
+  <message name="updateVendorsResponse">
+    <part name="parameters" element="tns:updateVendorsResponse" />
+  </message>
+  <message name="deleteVendors">
+    <part name="parameters" element="tns:deleteVendors" />
+  </message>
+  <message name="deleteVendorsResponse">
+    <part name="parameters" element="tns:deleteVendorsResponse" />
+  </message>
+  <portType name="PitchControlCenterWithXML">
+    <operation name="uploadPaymentSchedule">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/uploadPaymentScheduleRequest" message="tns:uploadPaymentSchedule" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/uploadPaymentScheduleResponse" message="tns:uploadPaymentScheduleResponse" />
+    </operation>
+    <operation name="uploadSupportingDocument">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/uploadSupportingDocumentRequest" message="tns:uploadSupportingDocument" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/uploadSupportingDocumentResponse" message="tns:uploadSupportingDocumentResponse" />
+    </operation>
+    <operation name="getPaymentScheduleStatus">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/getPaymentScheduleStatusRequest" message="tns:getPaymentScheduleStatus" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/getPaymentScheduleStatusResponse" message="tns:getPaymentScheduleStatusResponse" />
+    </operation>
+    <operation name="getVendorUploadStatus">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/getVendorUploadStatusRequest" message="tns:getVendorUploadStatus" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/getVendorUploadStatusResponse" message="tns:getVendorUploadStatusResponse" />
+    </operation>
+    <operation name="getVendorUpdateStatus">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/getVendorUpdateStatusRequest" message="tns:getVendorUpdateStatus" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/getVendorUpdateStatusResponse" message="tns:getVendorUpdateStatusResponse" />
+    </operation>
+    <operation name="uploadNewVendors">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/uploadNewVendorsRequest" message="tns:uploadNewVendors" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/uploadNewVendorsResponse" message="tns:uploadNewVendorsResponse" />
+    </operation>
+    <operation name="updateVendors">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/updateVendorsRequest" message="tns:updateVendors" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/updateVendorsResponse" message="tns:updateVendorsResponse" />
+    </operation>
+    <operation name="deleteVendors">
+      <input wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/deleteVendorsRequest" message="tns:deleteVendors" />
+      <output wsam:Action="http://services.pitch.nibss.com/PitchControlCenterWithXML/deleteVendorsResponse" message="tns:deleteVendorsResponse" />
+    </operation>
+  </portType>
+  <binding name="PitchControlCenterWithXMLPortBinding" type="tns:PitchControlCenterWithXML">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <operation name="uploadPaymentSchedule">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="uploadSupportingDocument">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="getPaymentScheduleStatus">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="getVendorUploadStatus">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="getVendorUpdateStatus">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="uploadNewVendors">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="updateVendors">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="deleteVendors">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+  </binding>
+  <service name="PitchControlCenterWithXML">
+    <port name="PitchControlCenterWithXMLPort" binding="tns:PitchControlCenterWithXMLPortBinding">
+      <soap:address location="https://nibsspayplus.nibss-plc.com.ng:4043/PitchControlCenter/PitchControlCenterWithXML" />
+    </port>
+  </service>
+</definitions>

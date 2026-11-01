@@ -1,0 +1,12 @@
+<%@ Register TagPrefix="dx" Namespace="DevExpress.Data" Assembly="DevExpress.Data.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %>
+<%@ Register TagPrefix="dxm" Namespace="DevExpress.Web" Assembly="DevExpress.Web.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %>
+
+<dxm:ASPxMenu runat="server"
+    CssFilePath="{0}/styles.css" SpriteCssFilePath="{0}/sprite.css" CssPostfix="Office2010Silver"
+    AutoSeparators="RootOnly">
+    <SubMenuStyle GutterWidth="0px"></SubMenuStyle>
+    <ItemStyle VerticalAlign="Middle" PopOutImageSpacing="7px" DropDownButtonSpacing="12px"></ItemStyle>
+    <RootItemSubMenuOffset FirstItemY="-2" LastItemY="-2" Y="-2" FirstItemX="-1" LastItemX="-1" X="-1" />
+    <LoadingPanelImage Url="Web/Loading.gif"></LoadingPanelImage>
+</dxm:ASPxMenu>
+

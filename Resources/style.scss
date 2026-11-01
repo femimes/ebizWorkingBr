@@ -1,0 +1,46 @@
+.preloader-it {
+	background:$white;
+	position: fixed;
+	z-index: 10001;
+	height: 100%;
+	width: 100%;
+	overflow:hidden;
+}
+
+/* Effect 1: YouTube loading */
+.la-anim-1 {
+	position: absolute;
+	top: 10%;
+	left: 0;
+	z-index: -1;
+	width: 100%;
+	height: 13px;
+	-webkit-transform: translate3d(-100%, 0, 0);
+	transform: translate3d(-100%, 0, 0);
+	pointer-events: none;
+}
+.la-anim-1::after {
+	position: absolute;
+	top: 30%;
+	right: 0;
+	width: 100px;
+	height: 100%;
+	content: '';
+	opacity: 0;
+	background:$black;
+	@include transition(opacity 0.2s, box-shadow 2s 4s);
+	@include transform(rotate(2deg) translateY(-2px));
+}
+.la-anim-1.la-animate {
+	z-index: 10001;
+	background:#000;
+	opacity: 1;
+	@include transition(transform 5s ease-in, opacity 1s 5s);
+	@include transform(translate3d(0%, 0, 0));
+}
+.la-anim-1.la-animate::after {
+	opacity: 1;
+}
+.nicescroll-rails.nicescroll-rails-vr {
+    z-index: 999 !important;
+}

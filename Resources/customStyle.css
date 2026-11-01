@@ -1,0 +1,419 @@
+/* .preloader-it {
+	background:#fff;
+	position: fixed;
+	z-index: 10001;
+	height: 100%;
+	width: 100%;
+	overflow:hidden;
+} */
+.spinner-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fff;
+    z-index: 999999;
+    overflow: hidden;
+}
+
+.la-anim-1 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 3px;
+    background: #ed4e6e;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+    pointer-events: none;
+}
+
+    .la-anim-1::after {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100%;
+        background: #ed4e6e;
+        box-shadow: 0 0 15px #ed4e6e, 0 0 5px #ed4e6e;
+        content: '';
+        opacity: 0;
+        -webkit-transition: opacity 0.2s, box-shadow 2s 4s;
+        transition: opacity 0.2s, box-shadow 2s 4s;
+        -webkit-transform: rotate(2deg) translateY(-2px);
+        transform: rotate(2deg) translateY(-2px);
+    }
+
+    .la-anim-1.la-animate {
+        z-index: 99999;
+        opacity: 0;
+        -webkit-animation: preloader 5s infinite;
+        animation: preloader 5s infinite;
+    }
+
+        .la-anim-1.la-animate::after {
+            box-shadow: 0 0 3px #ed4e6e, 0 0 1px #ed4e6e;
+            opacity: 1;
+        }
+
+@-webkit-keyframes preloader {
+    0% {
+        opacity: 0;
+        -webkit-transform: translate3d(-100%, 0, 0);
+    }
+
+    100% {
+        opacity: 1;
+        -webkit-transform: translate3d(0%, 0, 0);
+    }
+}
+
+@keyframes preloader {
+    0% {
+        opacity: 0;
+        transform: translate3d(-100%, 0, 0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate3d(0%, 0, 0);
+    }
+}
+
+
+
+
+.logo-text {
+    font-size: 18px;
+    /* text-transform: uppercase; */
+    font-weight: 600;
+    color: #fff;
+    font-family: Inter,sans-serif;
+    margin: 0px 0px 10px 10px;
+    padding-top: 20px;
+}
+/* .vertical-menu {
+    background: linear-gradient(to bottom, #5dcc04ad, #5dcc04b8);
+} */
+.displayUserImage {
+    width: 150px;
+    height: 150px;
+    text-align: center;
+    align-items: center;
+    /* padding-left: 40px; */
+    margin-left: 20px;
+    margin-top: 10px;
+    border-radius: 360px;
+    margin-bottom: 10px;
+}
+
+.acct-box {
+    box-shadow: 3px 4px 3px 0px rgba(3, 102, 36, 0.34), 0 1px 1px 0 rgba(30, 118, 59, 0.41), 0 2px 1px -1px rgba(190, 151, 70, 0.66);
+    border-left: 2px solid #046624;
+}
+
+.card-side-border {
+    margin: -20px 0px 0px -19px;
+    /* border-bottom: 1px solid #000; */
+    padding: 0px 19px 0px 10px;
+    border-left: 2px solid #046624;
+    height: 40px;
+}
+
+.summary-side-border {
+    padding: 0px 19px 0px 10px;
+    border-left: 2px solid #046624;
+    height: 40px;
+}
+
+.card-title {
+    font-size: 19px;
+    margin: 0 0 7px 0;
+    font-weight: 500;
+}
+
+.paycard-text {
+    width: 60%;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.purpleBtn {
+    color: #fff;
+    background: #882fda;
+    box-shadow: 1px 1px 8px 0px #3d286fe3;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 10px;
+    min-width: 50%;
+}
+
+    .purpleBtn:hover {
+        color: #000;
+        background: #882fda;
+        box-shadow: 1px 1px 8px 0px #3d286fe3;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 10px;
+        min-width: 50%;
+    }
+
+.greenBtn {
+    color: #fff;
+    background: #2fda8b;
+    box-shadow: 1px 1px 8px 0px #177d4e;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 10px;
+    min-width: 50%;
+}
+
+    .greenBtn:hover {
+        color: #000;
+        background: #2fda8b;
+        box-shadow: 1px 1px 8px 0px #177d4e;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 10px;
+        min-width: 50%;
+    }
+
+.Cusanimation:hover {
+    /* -webkit-animation: shake 0s; */
+    animation-name: pulse;
+    animation-duration: 300ms;
+}
+
+.animationLi:hover {
+    /* -webkit-animation: shake 0s; */
+    animation-name: pulse;
+    animation-duration: 500ms
+}
+
+ul > li > a:hover {
+    text-decoration: underline !important;
+    cursor: pointer;
+}
+
+.btn-success {
+    background-color: #9dbe79;
+    border-color: #9dbe79
+}
+
+    .btn-success:hover {
+        background-color: #88bd50;
+        border-color: #9dbe79
+    }
+
+.btn-primary {
+    background-color: #9dbe79;
+    border-color: #9dbe79
+}
+
+    .btn-primary:hover {
+        background-color: #88bd50;
+        border-color: #9dbe79
+    }
+
+.atmcard-section {
+    background-image: url(../assets/atmcard.png);
+    background-repeat: no-repeat;
+    height: 100%;
+    background-size: 100%;
+}
+
+.cardname {
+    color: white;
+    font-size: 10px;
+    padding: 100px 60px 0px 0px;
+    text-transform: uppercase;
+}
+
+@media screen and (min-device-width: 414px) and (max-device-width: 424px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 13px;
+        padding: 170px 100px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+@media(width:640px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 12px;
+        padding: 130px 80px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+@media(width:667px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 12px;
+        padding: 135px 80px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+@media(width:375px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 12px;
+        padding: 145px 80px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+@media screen and (min-device-width: 900px) and (max-device-width: 1000px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 12px;
+        padding: 167px 60px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+@media screen and (min-device-width: 1004px) and (max-device-width: 1196px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 15px;
+        padding: 225px 130px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+@media screen and (min-device-width: 1024px) and (max-device-width: 1196px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 15px;
+        padding: 148px 130px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+@media screen and (min-device-width: 1680px) {
+    .atmcard-section {
+        background-image: url(../assets/atmcard.png);
+        background-repeat: no-repeat;
+        height: 100%;
+        background-size: 100%;
+    }
+
+    .cardname {
+        color: white;
+        font-size: 12px;
+        padding: 178px 80px 0px 0px;
+        text-transform: uppercase;
+    }
+}
+
+.counter { 
+}
+
+
+
+/* FORM STYLE */
+.col-12 {
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 100%;
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+.col-lg-6 {
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 50%;
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.card-title {
+    font-size: 19px;
+    margin: 0 0 7px 0;
+    font-weight: 500;
+}
+
+.card-title-desc {
+    color: #74788d;
+    margin-bottom: 24px;
+}
+
+.col-form-label {
+    padding-top: calc(.47rem + 1px);
+    padding-bottom: calc(.47rem + 1px);
+    margin-bottom: 0;
+    font-size: inherit;
+    line-height: 1.5;
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    height: calc(1.5em + .94rem + 2px);
+    padding: .47rem .75rem;
+    font-size: .9rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #505d69;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    -webkit-transition: border-color .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;
+    transition: border-color .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;
+}

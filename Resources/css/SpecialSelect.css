@@ -1,0 +1,1053 @@
+﻿.dxeLoadingDiv {
+    background: White;
+    opacity: 0.85;
+    filter: alpha(opacity=85);
+    cursor: wait;
+}
+
+.dxeLoadingDivWithContent {
+    background: White;
+    opacity: 0.01;
+    filter: alpha(opacity=1);
+}
+
+.dxeLoadingPanel {
+    font: 9pt Tahoma;
+    color: #303030;
+}
+
+.dxeLoadingPanelWithContent {
+    font: 9pt Tahoma;
+    color: #303030;
+    background: #FFFFFF;
+    border: 1px solid #D6D6D6;
+}
+
+    .dxeLoadingPanel td.dx,
+    .dxeLoadingPanelWithContent td.dx {
+        white-space: nowrap;
+        text-align: center;
+        padding: 12px 12px 12px 12px;
+    }
+
+.dxeReadOnly {
+}
+
+.dxeBase {
+    font-family: Tahoma;
+    font-size: 9pt;
+}
+
+td.dxic {
+    font-size: 0;
+}
+/* InternalCheckBox */
+.dxeIRBFocused {
+    border: 1px dotted #ffb100;
+    margin: 0px !important;
+}
+
+.dxeIRadioButton {
+    margin: 1px;
+    display: inline-block;
+    vertical-align: middle;
+}
+/* -- ErrorFrame -- */
+.dxeErrorCell,
+.dxeErrorCell td {
+    font-family: Tahoma;
+    font-size: 9pt;
+    color: Red;
+}
+
+.dxeErrorCell {
+    padding-left: 4px;
+    padding-right: 5px;
+}
+
+.dxeErrorFrameWithoutError {
+    border: 1px solid Red;
+}
+
+    .dxeErrorFrameWithoutError .dxeControlsCell {
+        padding: 2px;
+    }
+
+.dxeEditArea {
+    font-family: Tahoma;
+    font-size: 9pt;
+    border: 1px solid #A0A0A0;
+}
+/* -- ValidationSummary -- */
+
+.dxvsValidationSummary {
+    font-family: Tahoma;
+    font-size: 9pt;
+    color: Red;
+}
+
+    .dxvsValidationSummary td.dxvsRC {
+        vertical-align: top;
+        padding: 2px 5px 4px 6px;
+    }
+
+    .dxvsValidationSummary .dxvsE {
+    }
+
+    /* ValidationSummary - Header */
+
+    .dxvsValidationSummary table.dxvsHT {
+        width: 100%;
+    }
+
+    .dxvsValidationSummary td.dxvsH {
+        padding: 2px 0 2px 0;
+    }
+
+    /* ValidationSummary - Hyperlink */
+
+    .dxvsValidationSummary a.dxvsHL,
+    .dxvsValidationSummary a.dxvsHL:visited {
+        color: red;
+    }
+
+    .dxvsValidationSummary a.dxvsHL {
+        text-decoration: none;
+        border-bottom: 1px dashed #f70;
+    }
+
+        .dxvsValidationSummary a.dxvsHL:hover {
+            color: #f70;
+        }
+
+    /* ValidationSummary - Table Layout */
+
+    .dxvsValidationSummary table.dxvsT {
+    }
+
+    .dxvsValidationSummary tr.dxvsE {
+    }
+
+    .dxvsValidationSummary td.dxvsETC {
+        padding: 2px 0;
+    }
+
+    /* ValidationSummary - List Layout */
+
+    .dxvsValidationSummary ul.dxvsL {
+    }
+
+    .dxvsValidationSummary ol.dxvsL {
+    }
+
+    .dxvsValidationSummary li.dxvsE {
+        padding: 2px 0;
+    }
+
+/* -- Buttons -- */
+.dxeButtonEditButton,
+.dxeCalendarButton,
+.dxeSpinIncButton,
+.dxeSpinDecButton,
+.dxeSpinLargeIncButton,
+.dxeSpinLargeDecButton {
+    vertical-align: middle;
+    /* border: solid 1px #7f7f7f; */
+    cursor: pointer;
+}
+
+    .dxeButtonEditButton,
+    .dxeCalendarButton,
+    .dxeButtonEditButton td.dx,
+    .dxeCalendarButton td.dx,
+    .dxeSpinIncButton,
+    .dxeSpinDecButton,
+    .dxeSpinLargeIncButton,
+    .dxeSpinLargeDecButton,
+    .dxeSpinIncButton td.dx,
+    .dxeSpinDecButton td.dx,
+    .dxeSpinLargeIncButton td.dx,
+    .dxeSpinLargeDecButton td.dx {
+        font-family: Tahoma;
+        font-size: 11px;
+        font-weight: normal;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+.dxeButtonEditButton,
+.dxeSpinIncButton,
+.dxeSpinDecButton,
+.dxeSpinLargeIncButton,
+.dxeSpinLargeDecButton {
+    padding: 0px 2px 0px 3px;
+    background-image: url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtDropDownBack.gif")%>');
+    background-repeat: repeat-x;
+    background-position: top;
+    background-color: #e6e6e6;
+}
+
+.dxeSpinIncButton {
+    background-image: url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtSpinIncBtnBack.gif")%>');
+    background-repeat: repeat-x;
+    background-position: top;
+    background-color: #F0F0F0;
+}
+
+.dxeSpinDecButton {
+    background-image: url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtSpinDecBtnBack.gif")%>');
+    background-repeat: repeat-x;
+    background-position: top;
+    background-color: #E6E6E6;
+}
+
+    .dxeButtonEditButton table.dxbebt,
+    .dxeSpinIncButton table.dxbebt,
+    .dxeSpinDecButton table.dxbebt,
+    .dxeSpinLargeIncButton table.dxbebt,
+    .dxeSpinLargeDecButton table.dxbebt {
+        width: 10px;
+    }
+
+.dxeCalendarButton {
+    font-size: 9pt;
+    background-image: url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtCalendarButtonBack.gif")%>');
+    background-repeat: repeat-x;
+    background-position: top;
+    background-color: #e5e5e5;
+    padding: 4px 11px;
+    padding-top: 3px;
+    width: 32px;
+}
+
+    .dxeCalendarButton td.dx {
+        font-size: 9pt;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .dxeCalendarButton table.dxbebt {
+        width: 100%;
+    }
+
+/* -- Pressed -- */
+.dxeCalendarButtonPressed,
+.dxeButtonEditButtonPressed,
+.dxeSpinIncButtonPressed,
+.dxeSpinDecButtonPressed,
+.dxeSpinLargeIncButtonPressed,
+.dxeSpinLargeDecButtonPressed {
+    background-image: none;
+    background-color: #D5D5D5;
+    border: Solid 1px #7F7F7F;
+}
+/* -- Hover -- */
+.dxeCalendarButtonHover,
+.dxeButtonEditButtonHover,
+.dxeSpinIncButtonHover,
+.dxeSpinDecButtonHover,
+.dxeSpinLargeIncButtonHover,
+.dxeSpinLargeDecButtonHover {
+    background-image: url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtDropDownButtonHoverBack.gif")%>');
+    background-repeat: repeat-x;
+    background-position: top;
+    background-color: #F2F2F2;
+    border: Solid 1px #606060;
+}
+
+.dxeCalendarButtonHover {
+    background-image: url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtCalendarButtonHBack.gif")%>');
+    background-repeat: repeat-x;
+    background-position: top;
+}
+
+.dxeEditAreaSys {
+    height: 28px !important;
+}
+
+.dxeEditAreaSysHover {
+    height: 28px !important;
+    border: 0px !important;
+}
+
+.dxeEditAreaSys:hover {
+    height: 28px !important;
+    border: 0px !important
+}
+
+.dxeEditAreaNotStrechSys {
+    border: 0px !important
+}
+
+    .dxeEditAreaNotStrechSys:hover {
+        border: 0px !important
+    }
+
+.dxeButtonEdit {
+    background-color: white;
+    border: solid 1px #9F9F9F;
+    width: 170px;
+}
+
+    .dxeButtonEdit .dxeEditArea {
+        background-color: white;
+    }
+
+    .dxeButtonEdit .dxeEditArea,
+    .dxeButtonEdit td.dxic {
+        width: 100%;
+    }
+
+    .dxeButtonEdit td.dxic {
+        padding: 0px 2px 0px 1px;
+    }
+
+    .dxeButtonEdit .dxeIIC img {
+        padding-left: 3px;
+    }
+
+.dxeTextBox,
+.dxeMemo {
+    background-color: white;
+    border: solid 1px #9f9f9f;
+}
+
+    .dxeTextBox td.dxic {
+        padding: 1px 2px;
+        width: 100%;
+    }
+
+    .dxeTextBox .dxeEditArea {
+        background-color: white;
+    }
+
+.dxeRadioButtonList {
+    border: Solid 1px #9F9F9F;
+}
+
+    .dxeRadioButtonList,
+    .dxeRadioButtonList table {
+        font-family: Tahoma;
+        font-size: 9pt;
+    }
+
+        .dxeRadioButtonList td.dxe {
+            padding: 7px 5px 6px 11px;
+        }
+
+        .dxeRadioButtonList label {
+            margin-right: 6px;
+        }
+
+/* -- Memo -- */
+.dxeMemo {
+}
+
+.dxeMemoEditArea {
+    background-color: white;
+    font-family: Tahoma;
+    font-size: 9pt;
+    outline: none;
+}
+
+.dxeMemo td {
+    padding: 0 0 0 1px;
+    width: 100%;
+}
+
+/* -- Hyperlink -- */
+.dxeHyperlink {
+    font-family: Tahoma;
+    font-size: 9pt;
+    font-weight: normal;
+    color: #0d45b7;
+}
+
+a.dxeHyperlink:hover {
+    color: #5494ea;
+}
+
+a.dxeHyperlink:visited {
+    color: #ab59a6;
+}
+
+/* -- ListBox -- */
+.dxeListBox {
+    background-color: white;
+    border: solid 1px #A0A0A0;
+    font-family: Tahoma;
+    font-size: 9pt;
+    width: 70px;
+    height: 109px;
+}
+
+    .dxeListBox div.dxlbd {
+        padding-top: 1px;
+        padding-bottom: 1px;
+        height: 107px;
+    }
+
+.dxeListBoxItemRow {
+    cursor: default;
+}
+
+.dxeListBoxItem {
+    border-left: solid 1px white;
+    border-right: solid 1px white;
+    font-family: Tahoma;
+    font-size: 9pt;
+    padding: 3px 2px 4px 3px;
+    white-space: nowrap;
+    text-align: left;
+    color: Black;
+    font-weight: normal;
+}
+
+    .dxeListBoxItem em {
+        background: none repeat scroll 0 0 #CFCFCF;
+        color: #333333;
+        font-weight: bold;
+        font-style: normal;
+    }
+
+.dxeListBox td.dxeI,
+.dxeListBox td.dxeIM,
+.dxeListBox .dxeHIC,
+.dxeListBox td.dxeFTM,
+.dxeListBox td.dxeTM,
+.dxeListBox td.dxeC,
+.dxeListBox td.dxeCM,
+.dxeListBox td.dxeHCC,
+.dxeListBox td.dxeMI,
+.dxeListBox td.dxeMIM {
+    border-right: 0 !important;
+}
+
+.dxeListBox td.dxeIR,
+.dxeListBox td.dxeIMR,
+.dxeListBox .dxeHICR,
+.dxeListBox td.dxeFTMR,
+.dxeListBox td.dxeTMR,
+.dxeListBox td.dxeCR,
+.dxeListBox td.dxeCMR,
+.dxeListBox td.dxeHCCR,
+.dxeListBox td.dxeMIR,
+.dxeListBox td.dxeMIMR {
+    border-left: 0 !important;
+}
+
+.dxeListBox td.dxeCM,
+.dxeListBox td.dxeHCC,
+.dxeListBox td.dxeCMR,
+.dxeListBox td.dxeHCCR {
+    width: 25px;
+}
+
+.dxeListBox td.dxeIM,
+.dxeListBox td.dxeIMR {
+    width: 0;
+}
+
+.dxeListBox td.dxeT {
+    width: 100%;
+    padding-left: 0 !important;
+}
+
+.dxeListBox td.dxeTR {
+    width: 100%;
+    padding-right: 0 !important;
+}
+
+
+.dxeListBox td.dxeT,
+.dxeListBox td.dxeMI {
+    border-left: 0 !important;
+}
+
+.dxeListBox td.dxeTR,
+.dxeListBox td.dxeMIR {
+    border-right: 0 !important;
+}
+
+
+.dxeListBox td.dxeFTM,
+.dxeListBox td.dxeTM,
+.dxeListBox td.dxeLTM,
+.dxeListBox .dxeHFC,
+.dxeListBox .dxeHC,
+.dxeListBox .dxeHLC,
+.dxeListBox td.dxeFTMR,
+.dxeListBox td.dxeTMR,
+.dxeListBox td.dxeLTMR,
+.dxeListBox .dxeHFCR,
+.dxeListBox .dxeHCR,
+.dxeListBox .dxeHLCR {
+    overflow: hidden;
+}
+
+.dxeListBox td.dxeFTM,
+.dxeListBox td.dxeTM,
+.dxeListBox .dxeHFC,
+.dxeListBox .dxeHC {
+    padding-right: 6px !important;
+}
+
+.dxeListBox td.dxeFTMR,
+.dxeListBox td.dxeTMR,
+.dxeListBox .dxeHFCR,
+.dxeListBox .dxeHCR {
+    padding-left: 6px !important;
+}
+
+
+.dxeListBox td.dxeLTM,
+.dxeListBox td.dxeTM,
+.dxeListBox .dxeHC,
+.dxeListBox .dxeHLC {
+    padding-left: 6px !important;
+}
+
+.dxeListBox td.dxeLTMR,
+.dxeListBox td.dxeTMR,
+.dxeListBox .dxeHCR,
+.dxeListBox .dxeHLCR {
+    padding-right: 6px !important;
+}
+
+/*Grid lines*/
+
+.dxeListBox td.dxeLTM,
+.dxeListBox td.dxeTM,
+.dxeListBox td.dxeMIM {
+    border-left: 1px solid #cfcfcf !important;
+}
+
+.dxeListBox td.dxeLTMR,
+.dxeListBox td.dxeTMR,
+.dxeListBox td.dxeMIMR {
+    border-right: 1px solid #cfcfcf !important;
+}
+
+.dxeListBox td.dxeIM,
+.dxeListBox td.dxeFTM,
+.dxeListBox td.dxeTM,
+.dxeListBox td.dxeLTM,
+.dxeListBox td.dxeCM,
+.dxeListBox td.dxeMIM,
+.dxeListBox td.dxeIMR,
+.dxeListBox td.dxeFTMR,
+.dxeListBox td.dxeTMR,
+.dxeListBox td.dxeLTMR,
+.dxeListBox td.dxeCMR,
+.dxeListBox td.dxeMIMR {
+    border-bottom: solid 1px #cfcfcf;
+}
+
+.dxeListBoxItemSelected /* inherits dxeListBoxItem */ {
+    color: White;
+    background-color: #A0A0A0;
+}
+
+.dxeListBoxItemHover /* inherits dxeListBoxItem */ {
+    background-color: #cfcfcf;
+    color: black;
+}
+
+    .dxeListBoxItemHover em,
+    .dxeListBoxItemSelected em {
+        background: none;
+    }
+
+/*Header*/
+
+.dxeListBox .dxeHD {
+    background-color: #dcdcdc;
+    border-bottom: solid 1px #A0A0A0;
+}
+
+.dxeListBox .dxeHC,
+.dxeListBox .dxeHLC,
+.dxeListBox td.dxeHMIC {
+    border-left: solid 1px #A0A0A0;
+}
+
+.dxeListBox .dxeHCR,
+.dxeListBox .dxeHLCR,
+.dxeListBox td.dxeHMICR {
+    border-right: solid 1px #A0A0A0;
+    text-align: right;
+}
+
+.dxeListBox .dxeHIC,
+.dxeListBox .dxeHFC,
+.dxeListBox .dxeHCC {
+    border-left: solid 1px #dcdcdc;
+}
+
+.dxeListBox .dxeHICR,
+.dxeListBox .dxeHFCR,
+.dxeListBox .dxeHCCR {
+    border-right: solid 1px #dcdcdc;
+    text-align: right;
+}
+
+.dxeListBox .dxeHFC,
+.dxeListBox .dxeHC,
+.dxeListBox .dxeHMIC {
+    border-right: 0;
+}
+
+.dxeListBox .dxeHFCR,
+.dxeListBox .dxeHCR,
+.dxeListBox .dxeHMICR {
+    border-left: 0;
+    text-align: right;
+}
+
+.dxeListBox .dxeHLC {
+    border-right: solid 1px #dcdcdc;
+}
+
+.dxeListBox .dxeHLCR {
+    border-left: solid 1px #dcdcdc;
+    text-align: right;
+}
+
+/* -- Calendar -- */
+.dxeCalendar {
+    border: solid 1px #9f9f9f;
+    background-color: White;
+    color: Black;
+    font-weight: normal;
+    cursor: default;
+}
+
+    .dxeCalendar td.dxMonthGrid {
+        padding: 8px 20px;
+    }
+
+    .dxeCalendar td.dxMonthGridWithWeekNumbers {
+        padding: 5px 20px 8px 8px;
+    }
+
+    .dxeCalendar td.dxMonthGridWithWeekNumbersRtl {
+        padding: 5px 8px 8px 20px;
+    }
+
+.dxeCalendarDayHeader {
+    font-family: Tahoma;
+    font-size: 9pt;
+    padding: 2px 4px 5px;
+    border-bottom: solid 1px #cfcfcf;
+}
+
+.dxeCalendarWeekNumber {
+    font-family: Tahoma;
+    font-size: 7pt;
+    text-align: right;
+    padding: 6px 8px 6px 4px;
+    color: #bfbfbf;
+}
+
+.dxeCalendarDay {
+    font-family: Tahoma;
+    font-size: 9pt;
+    padding: 4px 6px;
+    text-align: center;
+}
+
+.dxeCalendarWeekend /* inherits dxeCalendarDay */ {
+    color: #c00000;
+}
+
+.dxeCalendarOtherMonth /* inherits dxeCalendarDay */ {
+    color: #888;
+}
+
+.dxeCalendarOutOfRange /* inherits dxeCalendarDay */ {
+    color: #d0d0d0;
+}
+
+.dxeCalendarSelected /* inherits dxeCalendarDay */ {
+    color: White;
+    background-color: #8d8d8d;
+}
+
+.dxeCalendarToday /* inherits dxeCalendarDay */ {
+    padding: 3px 3px 2px;
+    border: solid 1px #c00000;
+}
+
+.dxeCalendarHeader {
+    background-color: #dcdcdc;
+    border: solid 1px #c9c9c9;
+    border-width: 1px 0;
+    padding: 4px 7px;
+}
+
+    .dxeCalendarHeader td.dxe {
+        font-family: Tahoma;
+        font-size: 9pt;
+        text-align: center;
+        cursor: pointer;
+    }
+
+.dxeCalendarFooter {
+    background-color: #ededed;
+    padding: 8px 0px;
+    border-top: solid 1px #d6d6d6;
+}
+
+.dxeCalendarFastNav {
+    color: Black;
+    background: White;
+    border: solid 1px #9f9f9f;
+    border-bottom: 0px;
+    padding: 12px 8px;
+}
+
+.dxeCalendarFastNavMonthArea {
+    padding: 0px 9px;
+}
+
+.dxeCalendarFastNavYearArea {
+}
+
+.dxeCalendarFastNavFooter {
+    color: Black;
+    background-color: #ededed;
+    padding: 8px 0px;
+    border: solid 1px #9f9f9f;
+    border-top: solid 1px #d6d6d6;
+}
+
+.dxeCalendarFastNavMonth,
+.dxeCalendarFastNavYear {
+    font: normal 9pt Tahoma;
+    color: Black;
+    padding: 3px 5px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.dxeCalendarFastNavMonth {
+    padding: 6px;
+}
+
+.dxeCalendarFastNavMonthSelected,
+.dxeCalendarFastNavYearSelected {
+    color: White;
+    background: #8d8d8d;
+}
+
+.dxeCalendarFastNavMonthHover,
+.dxeCalendarFastNavYearHover {
+    color: Black;
+    background: #e5e5e5;
+    padding: 2px 4px;
+    border: solid 1px #d6d6d6;
+}
+
+.dxeCalendarFastNavMonthHover {
+    padding: 5px;
+}
+/* Disabled */
+.dxeDisabled,
+.dxeDisabled td.dxe {
+    color: #acacac;
+    cursor: default;
+}
+
+a.dxeDisabled:hover {
+    color: #acacac;
+}
+
+.dxeButtonDisabled,
+.dxeButtonDisabled td.dxe {
+    border-color: #c3c3c3;
+    color: #808080;
+    cursor: default;
+}
+/* -- Button -- */
+.dxbButton {
+    color: #000000;
+    font-weight: normal;
+    font-size: 9pt;
+    font-family: Tahoma;
+    vertical-align: middle;
+    border: solid 1px #7F7F7F;
+    background: #E0DFDF url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtButtonBack.gif")%>') top;
+    background-repeat: repeat-x;
+    padding: 1px 1px 1px 1px;
+    cursor: pointer;
+}
+
+.dxbButtonHover {
+    color: #000000;
+    background: #F2F2F2 url('<%=WebResource("DevExpress.Web.ASPxEditors.Images.edtButtonHoverBack.gif")%>') top;
+    background-repeat: repeat-x;
+    border: solid 1px #606060;
+}
+
+.dxbButtonChecked {
+    color: #FFFFFF;
+    background-image: none;
+    background-color: #8D8D8D;
+}
+
+.dxbButtonPressed {
+    color: #000000;
+    background-image: none;
+    background-color: #D5D5D5;
+}
+
+.dxbButton div.dxb {
+    padding: 3px 8px 4px 8px;
+    border: 0px;
+}
+
+.dxbButton div.dxbf {
+    padding: 2px 7px 3px 7px;
+    border: dotted 1px black;
+}
+
+.dxbButton div.dxb table {
+    color: #000000;
+    font-size: 9pt;
+    font-family: Tahoma;
+}
+
+.dxbButton div.dxb td.dxb {
+    background-color: transparent !important;
+    background-image: url('') !important;
+    border-width: 0px !important;
+    padding: 0px !important;
+}
+/* Disabled */
+.dxbDisabled {
+    border-color: #c3c3c3;
+    color: #808080;
+    cursor: default;
+}
+
+    .dxbDisabled td.dxb {
+        color: #808080;
+    }
+/* -- FilterControl -- */
+.dxfcTable {
+    border-collapse: separate !important;
+}
+
+    .dxfcTable td.dxfc {
+        padding: 0px 0px 0px 3px;
+        vertical-align: middle;
+        font: 9pt Tahoma;
+        color: Black;
+    }
+
+a.dxfcPropertyName {
+    white-space: nowrap !important;
+    color: Blue !important;
+}
+
+a.dxfcGroupType {
+    white-space: nowrap !important;
+    padding: 0px 3px 0px 3px !important;
+    color: Red !important;
+}
+
+a.dxfcOperation {
+    white-space: nowrap !important;
+    color: Green !important;
+}
+
+a.dxfcValue {
+    white-space: nowrap !important;
+    color: Gray !important;
+}
+
+.dxfcLoadingDiv {
+    background: white;
+    opacity: 0.01;
+    filter: alpha(opacity=1);
+}
+
+.dxfcLoadingPanel {
+    font: 9pt Tahoma;
+    color: #303030;
+    border: solid 1px #9F9F9F;
+    background: white;
+}
+
+    .dxfcLoadingPanel td.dx {
+        white-space: nowrap;
+        text-align: center;
+        padding: 12px 12px 12px 12px;
+    }
+
+.dxeMaskHint {
+    background: #ffffe1;
+    border: solid 1px black;
+    padding: 2px 5px 3px;
+    color: Black;
+    font: 9pt Tahoma;
+}
+
+/* -- ProgressBar -- */
+.dxeProgressBar {
+    border: Solid 1px #696969;
+    background-color: #FFFFFF;
+}
+
+    .dxeProgressBar,
+    .dxeProgressBar td.dxe {
+        font-family: Tahoma, Verdana, Arial;
+        font-size: 9pt;
+        color: Black;
+    }
+
+        .dxeProgressBar .dxePBMainCell,
+        .dxeProgressBar td.dxe {
+            padding: 0;
+        }
+
+.dxeProgressBarIndicator {
+    background-color: #E0DFDF;
+}
+
+/* -- DropDownWindow -- */
+.dxeDropDownWindow {
+    background-color: white;
+    border: solid 1px #9F9F9F;
+}
+
+/*----------------- ColorTable -----------------*/
+.dxeColorIndicator {
+    border: solid 1px #9F9F9F;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.dxeColorTable,
+.dxeItemPicker {
+    background-color: #ffffff;
+    border: solid 1px #9F9F9F;
+}
+
+    .dxeColorTable td.dx,
+    .dxeItemPicker td.dx {
+        padding: 4px 4px;
+    }
+
+.dxeColorTableCell,
+.dxeItemPickerCell {
+    padding-left: 3px;
+    padding-bottom: 3px;
+    padding-top: 3px;
+    padding-right: 3px;
+    cursor: pointer;
+}
+
+.dxeColorTableCellDiv {
+    border: solid 1px #808080;
+    width: 12px;
+    height: 12px;
+    font-size: 0px;
+}
+
+.dxeColorTableCellSelected {
+    padding-left: 2px !important;
+    padding-bottom: 2px !important;
+    padding-top: 2px !important;
+    padding-right: 2px !important;
+    background-color: #CBCBCB;
+    border: solid 1px #888888;
+}
+
+.dxeColorTableCellHover,
+.dxeItemPickerCellHover {
+    padding-left: 2px !important;
+    padding-bottom: 2px !important;
+    padding-top: 2px !important;
+    padding-right: 2px !important;
+    background-color: #F2F2F2;
+    border: solid 1px #888888;
+}
+
+/* -- Invalid Style -- */
+.dxeInvalid {
+}
+
+    .dxeInvalid .dxeEditArea,
+    .dxeInvalid .dxeMemoEditArea {
+    }
+
+/* -- Focused Style -- */
+.dxeFocused {
+    border: solid 1px #3d3d3d;
+}
+
+/* -- Null Text Style -- */
+.dxeNullText .dxeEditArea,
+.dxeNullText .dxeMemoEditArea {
+    color: #818181;
+}
+
+/* -- Captcha -- */
+.dxcaRefreshButton {
+    font-family: Tahoma, Verdana, Arial;
+    text-decoration: none;
+    font-size: 10pt;
+    color: #1e3695;
+}
+
+.dxcaDisabledRefreshButton {
+    color: #acacac;
+}
+
+.dxcaRefreshButtonCell {
+    padding-left: 4px;
+}
+
+.dxcaRefreshButtonText {
+}
+
+.dxcaDisabledRefreshButtonText {
+}
+
+.dxcaTextBoxCell {
+    font-family: Tahoma, Verdana, Arial;
+    font-size: 9pt;
+}
+
+.dxcaTextBoxCell,
+.dxcaTextBoxCellNoIndent {
+    font-family: Tahoma, Verdana, Arial;
+    font-size: 9pt;
+}
+
+    .dxcaTextBoxCell .dxeErrorCell {
+    }
+
+    .dxcaTextBoxCellNoIndent .dxeErrorCell {
+        padding-left: 0px;
+        padding-top: 4px;
+        color: Red;
+    }
+
+.dxcaTextBoxLabel {
+    padding-bottom: 4px;
+    display: block;
+}
+
+.dxcaLoadingPanel {
+    font: 9pt Tahoma;
+    color: #303030;
+}
+
+    .dxcaLoadingPanel td.dx {
+        white-space: nowrap;
+        text-align: center;
+        padding: 12px 12px 12px 12px;
+    }

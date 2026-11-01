@@ -1,0 +1,1744 @@
+﻿using NETClass;
+using Microsoft.VisualBasic;
+//using Microsoft.VisualBasic.CompilerServices;
+//using Retail;
+using System;
+using System.Collections;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.IO;
+using System.Net;
+using System.Runtime.CompilerServices;
+using System.Web;
+using System.Web.Profile;
+using System.Web.SessionState;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+using System.Xml;
+
+public partial class eOperations_TransImportsExtcPlus : System.Web.UI.Page
+{
+   public string luser ;
+  public string   StrLocation ;
+   public string  struser;
+   public string guser ;
+    
+    protected void Button1_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            string str = this.UploadMultipleFiles_Clicked();
+            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(str, (string)null, false) == 0)
+                return;
+            if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 2.0)
+                this.InsertAllRecords(str);
+            else if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 3.0)
+                this.InsertAllRecordsPromo(str);
+            else if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 4.0)
+                this.InsertAllRecordsPromoAccts(str);
+            else if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 7.0)
+                this.InsertAllRecords(str);
+            else if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 11.0)
+                this.InsertAllRecordsTrans(str);
+            else
+                this.InsertAllRecordHr(str);
+        }
+        catch (Exception ex)
+        {
+            ProjectData.SetProjectError(ex);
+            this.Response.Write("<script>alert('Invalid file format " + ex.Message + "') </script>");
+            ProjectData.ClearProjectError();
+        }
+    }
+    public void InsertAllRecords(string m_strFileName)
+    {
+        luser = this.Context.User.Identity.Name;
+        StrLocation = luser.Substring(checked(luser.LastIndexOf("?") + 1));
+        struser = Strings.Mid(luser, 1, luser.LastIndexOf("?"));
+        guser = struser;
+        StreamReader streamReader = new StreamReader("C:\\TempMultipleFiles\\" + m_strFileName);
+        DataSet dataSet = new DataSet();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add(new DataColumn(" Post Date   ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("TransDate  ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Account No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Transaction Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Narrative", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Cheque No ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Debit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Credit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Contra", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Instr No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Reference Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Remarks", typeof(string)));
+        string str1;
+        do
+        {
+            str1 = streamReader.ReadLine();
+            Strings.Len(str1);
+            int Length1 = Strings.InStr(str1, ",", CompareMethod.Binary);
+            string str2 = Strings.Mid(str1, 1, Length1);
+            string str3 = Strings.Mid(str1, checked(Length1 + 1));
+            int Length2 = Strings.InStr(str3, ",", CompareMethod.Binary);
+            string str4 = Strings.Mid(str3, 1, Length2);
+            string str5 = Strings.Mid(str1, checked(Length1 + Length2 + 1));
+            int Length3 = Strings.InStr(str5, ",", CompareMethod.Binary);
+            Strings.Mid(str5, 1, Length3);
+            string str6 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + 1));
+            int Length4 = Strings.InStr(str6, ",", CompareMethod.Binary);
+            string str7 = Strings.Mid(str6, 1, Length4);
+            string str8 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + 1));
+            int Length5 = Strings.InStr(str8, ",", CompareMethod.Binary);
+            string str9 = Strings.Mid(str8, 1, Length5);
+            string str10 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + 1));
+            int Length6 = Strings.InStr(str10, ",", CompareMethod.Binary);
+            string str11 = Strings.Mid(str10, 1, Length6);
+            string str12 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + 1));
+            int Length7 = Strings.InStr(str12, ",", CompareMethod.Binary);
+            string str13 = Strings.Mid(str12, 1, Length7);
+            string str14 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + 1));
+            int Length8 = Strings.InStr(str14, ",", CompareMethod.Binary);
+            string str15 = Strings.Mid(str14, 1, Length8);
+            string str16 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + 1));
+            int Length9 = Strings.InStr(str16, ",", CompareMethod.Binary);
+            string str17 = Strings.Mid(str16, 1, Length9);
+            string str18 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + 1));
+            int Length10 = Strings.InStr(str18, ",", CompareMethod.Binary);
+            string str19 = Strings.Mid(str18, 1, Length10);
+            string str20 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + Length10 + 1));
+            string str21 = str4;
+            string str22 = str2;
+            string str23 = str19;
+            string Expression = str20;
+            string str24 = str7;
+            string str25 = str9;
+            string str26 = str11;
+            string str27 = str13;
+            string str28 = str15;
+            string str29 = str17;
+            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str21), (string)null, false) != 0)
+            {
+                DataRow row = dataTable.NewRow();
+                string str30 = DateAndTime.DateAdd(DateInterval.Day, 3.0, Conversions.ToDate(Strings.Replace(Strings.Replace(str21, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary))).ToShortDateString();
+                row[0] = (object)Strings.Replace(Strings.Replace(str21, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[1] = (object)Strings.Format((object)Conversions.ToDate(str30.Replace(",", "").Replace(",", "")), "dd-MMM-yyyy");
+                string str31;
+                if (EazyBankNet.EazyClass.AccountExist(Strings.Trim(str22.Replace(",", ""))))
+                {
+                    str31 = Strings.Trim(str22.Replace(",", ""));
+                }
+                else
+                {
+                    string sString = "t" + Strings.Trim(str22.Replace(",", ""));
+                    str31 = !EazyBankNet.EazyClass.AccountExist(EazyBankNet.EazyClass.FullAccount(StrLocation, sString)) ? Strings.Trim(str22.Replace(",", "")) : EazyBankNet.EazyClass.FullAccount(StrLocation, sString);
+                }
+                row[2] = (object)str31;
+                row[3] = (object)Strings.Trim(str23.Replace(",", ""));
+                row[4] = (object)Strings.Replace(Strings.Replace(Expression, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[5] = (object)str24.Replace(",", "").Replace(",", "");
+                row[6] = (object)Strings.Trim(str25.Replace(",", ""));
+                row[7] = (object)Strings.Trim(str26.Replace(",", ""));
+                row[8] = (object)Strings.Trim(str27.Replace(",", ""));
+                row[9] = (object)Strings.Trim(str28.Replace(",", ""));
+                row[10] = (object)Strings.Trim(str29.Replace(",", ""));
+                row[11] = (object)"Pass";
+                dataTable.Rows.Add(row);
+            }
+        }
+        while (str1 != null);
+        streamReader.Close();
+        this.DataGrid1.DataSource = (object)dataTable;
+        this.DataGrid1.DataBind();
+        string Left = this.ValidateEntriesCheques();
+        if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, (string)null, false) == 0)
+            return;
+        this.Response.Write("<script>alert(' The following entries are with errors !!" + Left + "') </script>");
+    }
+
+    public void InsertAllRecordsTrans(string m_strFileName)
+    {
+        luser = this.Context.User.Identity.Name;
+        StrLocation = luser.Substring(checked(luser.LastIndexOf("?") + 1));
+        struser = Strings.Mid(luser, 1, luser.LastIndexOf("?"));
+        guser = struser;
+        StreamReader streamReader = new StreamReader("C:\\TempMultipleFiles\\" + m_strFileName);
+        DataSet dataSet = new DataSet();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add(new DataColumn(" Post Date   ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("TransDate  ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Account No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Transaction Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Narrative", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Cheque No ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Debit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Credit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Contra", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Instr No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Reference Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Remarks", typeof(string)));
+        string str1;
+        do
+        {
+            str1 = streamReader.ReadLine();
+            Strings.Len(str1);
+            int Length1 = Strings.InStr(str1, ",", CompareMethod.Binary);
+            string str2 = Strings.Mid(str1, 1, Length1);
+            string str3 = Strings.Mid(str1, checked(Length1 + 1));
+            int Length2 = Strings.InStr(str3, ",", CompareMethod.Binary);
+            string str4 = Strings.Mid(str3, 1, Length2);
+            string str5 = Strings.Mid(str1, checked(Length1 + Length2 + 1));
+            int Length3 = Strings.InStr(str5, ",", CompareMethod.Binary);
+            string str6 = Strings.Mid(str5, 1, Length3);
+            string str7 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + 1));
+            int Length4 = Strings.InStr(str7, ",", CompareMethod.Binary);
+            string str8 = Strings.Mid(str7, 1, Length4);
+            string str9 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + 1));
+            int Length5 = Strings.InStr(str9, ",", CompareMethod.Binary);
+            string str10 = Strings.Mid(str9, 1, Length5);
+            string str11 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + 1));
+            int Length6 = Strings.InStr(str11, ",", CompareMethod.Binary);
+            string str12 = Strings.Mid(str11, 1, Length6);
+            string str13 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + 1));
+            int Length7 = Strings.InStr(str13, ",", CompareMethod.Binary);
+            string str14 = Strings.Mid(str13, 1, Length7);
+            string str15 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + 1));
+            int Length8 = Strings.InStr(str15, ",", CompareMethod.Binary);
+            string str16 = Strings.Mid(str15, 1, Length8);
+            string str17 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + 1));
+            int Length9 = Strings.InStr(str17, ",", CompareMethod.Binary);
+            string str18 = Strings.Mid(str17, 1, Length9);
+            string str19 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + 1));
+            int Length10 = Strings.InStr(str19, ",", CompareMethod.Binary);
+            string str20 = Strings.Mid(str19, 1, Length10);
+            string str21 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + Length10 + 1));
+            string str22 = str4;
+            string str23 = str6;
+            string str24 = str2;
+            string str25 = str20;
+            string Expression = str21;
+            string str26 = str8;
+            string str27 = str10;
+            string str28 = str12;
+            string str29 = str14;
+            string str30 = str16;
+            string str31 = str18;
+            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str22), (string)null, false) != 0)
+            {
+                DataRow row = dataTable.NewRow();
+                row[0] = (object)Strings.Replace(Strings.Replace(str22, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[1] = (object)Strings.Format((object)Conversions.ToDate(str23.Replace(",", "").Replace(",", "")), "dd-MMM-yyyy");
+                string str32;
+                if (EazyBankNet.EazyClass.AccountExist(Strings.Trim(str24.Replace(",", ""))))
+                {
+                    str32 = Strings.Trim(str24.Replace(",", ""));
+                }
+                else
+                {
+                    string sString = "t" + Strings.Trim(str24.Replace(",", ""));
+                    str32 = !EazyBankNet.EazyClass.AccountExist(EazyBankNet.EazyClass.FullAccount(StrLocation, sString)) ? Strings.Trim(str24.Replace(",", "")) : EazyBankNet.EazyClass.FullAccount(StrLocation, sString);
+                }
+                row[2] = (object)str32;
+                row[3] = (object)Strings.Trim(str25.Replace(",", ""));
+                row[4] = (object)Strings.Replace(Strings.Replace(Expression, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[5] = (object)str26.Replace(",", "").Replace(",", "");
+                row[6] = (object)Strings.Trim(str27.Replace(",", ""));
+                row[7] = (object)Strings.Trim(str28.Replace(",", ""));
+                row[8] = (object)Strings.Trim(str29.Replace(",", ""));
+                row[9] = (object)Strings.Trim(str30.Replace(",", ""));
+                row[10] = (object)Strings.Trim(str31.Replace(",", ""));
+                row[11] = (object)"Pass";
+                dataTable.Rows.Add(row);
+            }
+        }
+        while (str1 != null);
+        streamReader.Close();
+        this.DataGrid1.DataSource = (object)dataTable;
+        this.DataGrid1.DataBind();
+        string Left = this.ValidateEntriesCheques();
+        if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, (string)null, false) == 0)
+            return;
+        this.Response.Write("<script>alert(' The following entries are with errors !!" + Left + "') </script>");
+    }
+
+    public void InsertAllRecordSources(string m_strFileName)
+    {
+        luser = this.Context.User.Identity.Name;
+        StrLocation = luser.Substring(checked(luser.LastIndexOf("?") + 1));
+        struser = Strings.Mid(luser, 1, luser.LastIndexOf("?"));
+        guser = struser;
+        StreamReader streamReader = new StreamReader("C:\\TempMultipleFiles\\" + m_strFileName);
+        DataSet dataSet = new DataSet();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add(new DataColumn(" Post Date   ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("TransDate  ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Account No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Transaction Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Narrative", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Cheque No ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Debit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Credit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Contra", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Instr No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Reference Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Remarks", typeof(string)));
+        string str1;
+        do
+        {
+            str1 = streamReader.ReadLine();
+            Strings.Len(str1);
+            int Length1 = Strings.InStr(str1, ",", CompareMethod.Binary);
+            string str2 = Strings.Mid(str1, 1, Length1);
+            string str3 = Strings.Mid(str1, checked(Length1 + 1));
+            int Length2 = Strings.InStr(str3, ",", CompareMethod.Binary);
+            string str4 = Strings.Mid(str3, 1, Length2);
+            string str5 = Strings.Mid(str1, checked(Length1 + Length2 + 1));
+            int Length3 = Strings.InStr(str5, ",", CompareMethod.Binary);
+            string str6 = Strings.Mid(str5, 1, Length3);
+            string str7 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + 1));
+            int Length4 = Strings.InStr(str7, ",", CompareMethod.Binary);
+            string str8 = Strings.Mid(str7, 1, Length4);
+            string str9 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + 1));
+            int Length5 = Strings.InStr(str9, ",", CompareMethod.Binary);
+            string str10 = Strings.Mid(str9, 1, Length5);
+            string str11 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + 1));
+            int Length6 = Strings.InStr(str11, ",", CompareMethod.Binary);
+            string str12 = Strings.Mid(str11, 1, Length6);
+            string str13 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + 1));
+            int Length7 = Strings.InStr(str13, ",", CompareMethod.Binary);
+            string str14 = Strings.Mid(str13, 1, Length7);
+            string str15 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + 1));
+            int Length8 = Strings.InStr(str15, ",", CompareMethod.Binary);
+            string str16 = Strings.Mid(str15, 1, Length8);
+            string str17 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + 1));
+            int Length9 = Strings.InStr(str17, ",", CompareMethod.Binary);
+            string str18 = Strings.Mid(str17, 1, Length9);
+            string str19 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + 1));
+            int Length10 = Strings.InStr(str19, ",", CompareMethod.Binary);
+            string str20 = Strings.Mid(str19, 1, Length10);
+            string str21 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + Length10 + 1));
+            string str22 = str4;
+            string str23 = str6;
+            string str24 = str2;
+            string str25 = str20;
+            string Expression = str21;
+            string str26 = str8;
+            string str27 = str10;
+            string str28 = str12;
+            string str29 = str14;
+            string str30 = str16;
+            string str31 = str18;
+            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str22), (string)null, false) != 0)
+            {
+                DataRow row = dataTable.NewRow();
+                row[0] = (object)Strings.Replace(Strings.Replace(str22, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[1] = (object)str23.Replace(",", "").Replace(",", "");
+                string str32 = !EazyBankNet.EazyClass.AccountExist(Strings.Trim(str24.Replace(",", ""))) ? EazyBankNet.EazyClass.FullAccount(StrLocation, Strings.Trim(str24.Replace(",", ""))) : Strings.Trim(str24.Replace(",", ""));
+                if (EazyBankNet.EazyClass.AccountExist(Strings.Trim(str29.Replace(",", ""))))
+                    str32 = Strings.Trim(str29.Replace(",", ""));
+                else
+                    str29 = EazyBankNet.EazyClass.FullAccount(StrLocation, Strings.Trim(str29.Replace(",", "")));
+                row[2] = (object)str32;
+                row[3] = (object)Strings.Trim(str25.Replace(",", ""));
+                row[4] = (object)Strings.Replace(Strings.Replace(Expression, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[5] = (object)str26.Replace(",", "").Replace(",", "");
+                row[6] = (object)Strings.Trim(str27.Replace(",", ""));
+                row[7] = (object)Strings.Trim(str28.Replace(",", ""));
+                row[8] = (object)Strings.Trim(str29.Replace(",", ""));
+                row[9] = (object)Strings.Trim(str30.Replace(",", ""));
+                row[10] = (object)Strings.Trim(str31.Replace(",", ""));
+                row[11] = (object)"Pass";
+                dataTable.Rows.Add(row);
+            }
+        }
+        while (str1 != null);
+        streamReader.Close();
+        this.DataGrid1.DataSource = (object)dataTable;
+        this.DataGrid1.DataBind();
+        string Left = this.ValidateEntriesSources();
+        if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, (string)null, false) == 0)
+            return;
+        this.Response.Write("<script>alert(' The following entries are with errors !!" + Left + "') </script>");
+    }
+
+    public void InsertAllRecordsPromo(string m_strFileName)
+    {
+        luser = this.Context.User.Identity.Name;
+        StrLocation = luser.Substring(checked(luser.LastIndexOf("?") + 1));
+        struser = Strings.Mid(luser, 1, luser.LastIndexOf("?"));
+        guser = struser;
+        StreamReader streamReader = new StreamReader("C:\\TempMultipleFiles\\" + m_strFileName);
+        DataSet dataSet = new DataSet();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add(new DataColumn("Account RefNo", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Post Date", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Trans Date  ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Account RefName", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Customer ContactAddress", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Telephone", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Deposit SlipNo", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Amount", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Promo Remarks", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Product Description", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("SystemRemarks", typeof(string)));
+        string str1;
+        do
+        {
+            str1 = streamReader.ReadLine();
+            Strings.Len(str1);
+            int Length1 = Strings.InStr(str1, ",", CompareMethod.Binary);
+            string str2 = Strings.Mid(str1, 1, Length1);
+            string str3 = Strings.Mid(str1, checked(Length1 + 1));
+            int Length2 = Strings.InStr(str3, ",", CompareMethod.Binary);
+            string str4 = Strings.Mid(str3, 1, Length2);
+            string str5 = Strings.Mid(str1, checked(Length1 + Length2 + 1));
+            int Length3 = Strings.InStr(str5, ",", CompareMethod.Binary);
+            string str6 = Strings.Mid(str5, 1, Length3);
+            string str7 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + 1));
+            int Length4 = Strings.InStr(str7, ",", CompareMethod.Binary);
+            string str8 = Strings.Mid(str7, 1, Length4);
+            string str9 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + 1));
+            int Length5 = Strings.InStr(str9, ",", CompareMethod.Binary);
+            string str10 = Strings.Mid(str9, 1, Length5);
+            string str11 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + 1));
+            int Length6 = Strings.InStr(str11, ",", CompareMethod.Binary);
+            string str12 = Strings.Mid(str11, 1, Length6);
+            string str13 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + 1));
+            int Length7 = Strings.InStr(str13, ",", CompareMethod.Binary);
+            string str14 = Strings.Mid(str13, 1, Length7);
+            string str15 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + 1));
+            int Length8 = Strings.InStr(str15, ",", CompareMethod.Binary);
+            string str16 = Strings.Mid(str15, 1, Length8);
+            string str17 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + 1));
+            int Length9 = Strings.InStr(str17, ",", CompareMethod.Binary);
+            string str18 = Strings.Mid(str17, 1, Length9);
+            string str19 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + 1));
+            int Length10 = Strings.InStr(str19, ",", CompareMethod.Binary);
+            string str20 = Strings.Mid(str19, 1, Length10);
+            Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + Length10 + 1));
+            string str21 = str2;
+            string str22 = str4;
+            string str23 = str6;
+            string str24 = str8;
+            string Expression = str10;
+            string str25 = str12;
+            string str26 = str14;
+            string str27 = str16;
+            string str28 = str18;
+            string str29 = str20;
+            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str22), (string)null, false) != 0)
+            {
+                DataRow row = dataTable.NewRow();
+                string str30;
+                if (EazyBankNet.EazyClass.AccountExist(Strings.Trim(str21.Replace(",", ""))))
+                {
+                    str30 = Strings.Trim(str21.Replace(",", ""));
+                }
+                else
+                {
+                    string sString = "t" + Strings.Trim(str21.Replace(",", ""));
+                    str30 = !EazyBankNet.EazyClass.AccountExist(EazyBankNet.EazyClass.FullAccount(StrLocation, sString)) ? Strings.Trim(str21.Replace(",", "")) : EazyBankNet.EazyClass.FullAccount(StrLocation, sString);
+                }
+                row[0] = (object)str30;
+                row[1] = (object)Strings.Replace(Strings.Replace(str22, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[2] = (object)str23.Replace(",", "").Replace(",", "");
+                row[3] = (object)Strings.Trim(str24.Replace(",", ""));
+                row[4] = (object)Strings.Replace(Strings.Replace(Expression, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[5] = (object)str25.Replace(",", "").Replace(",", "");
+                row[6] = (object)Strings.Trim(str26.Replace(",", ""));
+                row[7] = (object)Strings.Trim(str27.Replace(",", ""));
+                row[8] = (object)Strings.Trim(str28.Replace(",", ""));
+                row[9] = (object)Strings.Trim(str29.Replace(",", ""));
+                row[10] = (object)"Pass";
+                dataTable.Rows.Add(row);
+            }
+        }
+        while (str1 != null);
+        streamReader.Close();
+        this.DataGrid1.DataSource = (object)dataTable;
+        this.DataGrid1.DataBind();
+        string Left = this.ValidateEntriesPromo();
+        if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, (string)null, false) == 0)
+            return;
+        this.Response.Write("<script>alert(' The following entries are with errors !!" + Left + "') </script>");
+    }
+
+    public void InsertAllRecordsPromoAccts(string m_strFileName)
+    {
+        luser = this.Context.User.Identity.Name;
+        StrLocation = luser.Substring(checked(luser.LastIndexOf("?") + 1));
+        struser = Strings.Mid(luser, 1, luser.LastIndexOf("?"));
+        guser = struser;
+        DataSet dataSet1 = new DataSet();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add(new DataColumn("Account RefNo ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Post Date", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Trans Date", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("CustomerNo", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Title ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Customer ProfileName  ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Sex", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("DateOfBirth", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Old NETAcctNo  ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Old NETAcctRefName", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Customer ContactAddress", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Telephone", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Product Description", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("BranchCode", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("SystemRemarks", typeof(string)));
+        DataSet dataSet2 = new DataSet();
+        XmlTextReader xmlTextReader = new XmlTextReader((Stream)new FileStream("C:\\TempMultipleFiles\\" + m_strFileName, FileMode.Open));
+        int num = (int)dataSet2.ReadXml((XmlReader)xmlTextReader);
+        xmlTextReader.Close();
+        try
+        {
+            foreach (DataRow dataRow in dataSet2.Tables[0].Rows)
+            {
+                DataRow row = dataTable.NewRow();
+                row[0] = RuntimeHelpers.GetObjectValue(dataRow["old_account_no"]);
+                row[1] = (object)Strings.Format((object)EazyClass.GetPostingDate(), "dd-MMM-yyyy");
+                row[2] = (object)Strings.Format((object)Conversions.ToDate(dataRow["post_date"]), "dd-MMM-yyyy");
+                row[3] = RuntimeHelpers.GetObjectValue(dataRow["cust_no"]);
+                row[4] = RuntimeHelpers.GetObjectValue(dataRow["title_code"]);
+                row[5] = RuntimeHelpers.GetObjectValue(dataRow["names"]);
+                row[6] = RuntimeHelpers.GetObjectValue(dataRow["sex"]);
+                row[7] = (object)dataRow["birthdate"].ToString();
+                row[8] = RuntimeHelpers.GetObjectValue(dataRow["account_no"]);
+                row[9] = RuntimeHelpers.GetObjectValue(dataRow["account_desc"]);
+                row[10] = RuntimeHelpers.GetObjectValue(dataRow["address"]);
+                row[11] = RuntimeHelpers.GetObjectValue(dataRow["telephone"]);
+                row[12] = RuntimeHelpers.GetObjectValue(dataRow["prod_code"]);
+                row[13] = RuntimeHelpers.GetObjectValue(dataRow["headsub_code"]);
+                row[14] = (object)"Pass";
+                dataTable.Rows.Add(row);
+            }
+        }
+        finally
+        {
+            IEnumerator enumerator;
+            if (enumerator is IDisposable)
+                (enumerator as IDisposable).Dispose();
+        }
+        this.DataGrid1.DataSource = (object)dataTable;
+        this.DataGrid1.DataBind();
+        this.DataGrid1.Columns[2].HeaderStyle.Wrap = false;
+        this.DataGrid1.Columns[2].ItemStyle.Wrap = false;
+        this.DataGrid1.Columns[1].HeaderStyle.Wrap = false;
+        this.DataGrid1.Columns[1].ItemStyle.Wrap = false;
+    }
+
+    public void InsertAllRecordHr(string m_strFileName)
+    {
+        StreamReader streamReader = new StreamReader("C:\\TempMultipleFiles\\" + m_strFileName);
+        DataSet dataSet = new DataSet();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add(new DataColumn(" Post Date   ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("TransDate  ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Account No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Transaction Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Narrative", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Description ", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Debit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Credit", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Bank Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Cheque No", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Reference Code", typeof(string)));
+        dataTable.Columns.Add(new DataColumn("Remarks", typeof(string)));
+        string str1;
+        do
+        {
+            str1 = streamReader.ReadLine();
+            Strings.Len(str1);
+            int Length1 = Strings.InStr(str1, ",", CompareMethod.Binary);
+            string str2 = Strings.Mid(str1, 1, Length1);
+            string str3 = Strings.Mid(str1, checked(Length1 + 1));
+            int Length2 = Strings.InStr(str3, ",", CompareMethod.Binary);
+            string str4 = Strings.Mid(str3, 1, Length2);
+            string str5 = Strings.Mid(str1, checked(Length1 + Length2 + 1));
+            int Length3 = Strings.InStr(str5, ",", CompareMethod.Binary);
+            string str6 = Strings.Mid(str5, 1, Length3);
+            string str7 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + 1));
+            int Length4 = Strings.InStr(str7, ",", CompareMethod.Binary);
+            string str8 = Strings.Mid(str7, 1, Length4);
+            string str9 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + 1));
+            int Length5 = Strings.InStr(str9, ",", CompareMethod.Binary);
+            string str10 = Strings.Mid(str9, 1, Length5);
+            string str11 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + 1));
+            int Length6 = Strings.InStr(str11, ",", CompareMethod.Binary);
+            string str12 = Strings.Mid(str11, 1, Length6);
+            string str13 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + 1));
+            int Length7 = Strings.InStr(str13, ",", CompareMethod.Binary);
+            string str14 = Strings.Mid(str13, 1, Length7);
+            string str15 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + 1));
+            int Length8 = Strings.InStr(str15, ",", CompareMethod.Binary);
+            string str16 = Strings.Mid(str15, 1, Length8);
+            string str17 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + 1));
+            int Length9 = Strings.InStr(str17, ",", CompareMethod.Binary);
+            string str18 = Strings.Mid(str17, 1, Length9);
+            string str19 = Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + 1));
+            int Length10 = Strings.InStr(str19, ",", CompareMethod.Binary);
+            Strings.Mid(str19, 1, Length10);
+            Strings.Mid(str1, checked(Length1 + Length2 + Length3 + Length4 + Length5 + Length6 + Length7 + Length8 + Length9 + Length10 + 1));
+            string Expression1 = Strings.Format((object)EazyBankNet.EazyClass.GetPostingDate(), "dd-MMM-yyy");
+            string str20 = str2;
+            string str21 = str4;
+            string str22 = "016";
+            string Expression2 = str6;
+            string str23 = str8;
+            string str24 = str10;
+            string str25 = str12;
+            string str26 = str14;
+            string str27 = str16;
+            string str28 = str18;
+            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str20), (string)null, false) != 0)
+            {
+                DataRow row = dataTable.NewRow();
+                row[0] = (object)Strings.Replace(Strings.Replace(Expression1, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[1] = (object)str20.Replace(",", "").Replace(",", "");
+                row[2] = (object)Strings.Trim(str21.Replace(",", ""));
+                row[3] = (object)Strings.Trim(str22.Replace(",", ""));
+                row[4] = (object)Strings.Replace(Strings.Replace(Expression2, ",", "", 1, -1, CompareMethod.Binary), ",", "", 1, -1, CompareMethod.Binary);
+                row[5] = (object)str23.Replace(",", "").Replace(",", "");
+                row[6] = (object)Strings.Trim(str24.Replace(",", ""));
+                row[7] = (object)Strings.Trim(str25.Replace(",", ""));
+                row[8] = (object)Strings.Trim(str26.Replace(",", ""));
+                row[9] = (object)Strings.Trim(str27.Replace(",", ""));
+                row[10] = (object)Strings.Trim(str28.Replace(",", ""));
+                row[11] = (object)"Pass";
+                dataTable.Rows.Add(row);
+            }
+        }
+        while (str1 != null);
+        streamReader.Close();
+        this.DataGrid1.DataSource = (object)dataTable;
+        this.DataGrid1.DataBind();
+        string Left = this.ValidateEntriesHr();
+        if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, (string)null, false) == 0)
+            return;
+        this.Response.Write("<script>alert(' The following entries are with errors !!" + Left + "') </script>");
+    }
+
+    public string ValidateEntries()
+    {
+        DataSet dataSet = new DataSet();
+        Decimal num = new Decimal();
+        Decimal d1 = new Decimal();
+        string str1;
+        try
+        {
+            foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+            {
+                string str2 = Strings.Trim(dataGridItem.Cells[0].Text);
+                string str3 = Strings.Trim(dataGridItem.Cells[1].Text);
+                string str4 = Strings.Trim(dataGridItem.Cells[2].Text);
+                string str5 = Strings.Trim(dataGridItem.Cells[3].Text);
+                Strings.Trim(dataGridItem.Cells[4].Text);
+                Strings.Trim(dataGridItem.Cells[5].Text);
+                string str6 = Strings.Trim(dataGridItem.Cells[6].Text);
+                string str7 = Strings.Trim(dataGridItem.Cells[7].Text);
+                Strings.Trim(dataGridItem.Cells[8].Text);
+                Strings.Trim(dataGridItem.Cells[10].Text);
+                string str8 = Strings.Trim(dataGridItem.Cells[10].Text);
+                Strings.Trim(dataGridItem.Cells[11].Text);
+                if (!EazyClass.AccountExist(str4))
+                    str4 = EazyBankNet.EazyClass.FullAccount(StrLocation, str4);
+                dataGridItem.Cells[11].CssClass = Conversions.ToString(1);
+                if (DateTime.Compare(Conversions.ToDate(str2), Conversions.ToDate(Classes.GetDataset("SELECT PostingDate FROM PrmPostingDates WHERE Record = 1").Tables[0].Rows[0]["PostingDate"].ToString())) > 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "Entry Postdate is greater than EazybankAx posting Date";
+                    dataGridItem.Cells[11].Text = "( Passed )on Later date";
+                }
+                if (!Information.IsDate((object)Conversions.ToDate(Strings.Trim(str2))))
+                {
+                    str1 = str1 + dataGridItem.Cells[0].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "invalid Posting Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Posting Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Information.IsDate((object)Strings.Trim(str3)))
+                {
+                    str1 = str1 + dataGridItem.Cells[1].Text + "<br>,";
+                    dataGridItem.Cells[1].BackColor = Color.Red;
+                    dataGridItem.Cells[1].ToolTip = "invalid Transaction Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Transaction Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Classes.GetBitField("Sproc_GetExtRefNumExist '" + Strings.Trim(str8) + "'"))
+                {
+                    str1 = str1 + dataGridItem.Cells[10].Text + "<br>,";
+                    dataGridItem.Cells[10].BackColor = Color.Red;
+                    dataGridItem.Cells[10].ToolTip = "Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].Text = "(Failed)- Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                string rString1 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}'", (object)str4);
+                string rString2 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND AccountStatus = 1 ", (object)str4);
+                string rString3 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND ProdCatCode IN ('1','2','Z')", (object)str4);
+                string rString4 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND PostingDateAdded > {1} ", (object)str4, (object)Conversions.ToDate(str2));
+                if (!Classes.GetBitField(rString1))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Invalid EazybankAx Account ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid EazybankAx Account";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Classes.GetBitField(rString2))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Account is either dormant, closed or unapproved ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Account is either dormant, closed or unapproved";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Classes.GetBitField(rString3))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Only Retail and GL Accounts are allowed in this posting screen ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Only Retail and GL Accounts are allowed in this posting screen";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Classes.GetBitField(rString4))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Account Opening Date cannot be later than current Posting Date ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Account Opening Date cannot be later than current Posting Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Strings.Len(Classes.GetField("Sproc_GetExtTransCodesExist '" + Strings.Trim(str5) + "'")) <= 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[3].Text + "<br>,";
+                    dataGridItem.Cells[3].BackColor = Color.Red;
+                    dataGridItem.Cells[3].ToolTip = "Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].Text = "(Failed)- Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str7)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[7].BackColor = Color.Red;
+                    dataGridItem.Cells[7].ToolTip = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str6)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[6].BackColor = Color.Red;
+                    dataGridItem.Cells[6].ToolTip = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str4), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Entry already posted before upload";
+                    dataGridItem.Cells[11].Text = "(Failed)- Entry already posted before upload";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                Decimal d2 = Conversions.ToDecimal(str7);
+                if (Decimal.Compare(d1, d2) < 0)
+                    d1 = d2;
+            }
+        }
+        finally
+        {
+            IEnumerator enumerator;
+            if (enumerator is IDisposable)
+                (enumerator as IDisposable).Dispose();
+        }
+        return str1;
+    }
+
+    public string ValidateEntriesCheques()
+    {
+        DataSet dataSet = new DataSet();
+        Decimal num = new Decimal();
+        Decimal d1 = new Decimal();
+        string str1;
+        try
+        {
+            foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+            {
+                string str2 = Strings.Trim(dataGridItem.Cells[0].Text);
+                string str3 = Strings.Trim(dataGridItem.Cells[1].Text);
+                string str4 = Strings.Trim(dataGridItem.Cells[2].Text);
+                string str5 = Strings.Trim(dataGridItem.Cells[3].Text);
+                Strings.Trim(dataGridItem.Cells[4].Text);
+                Strings.Trim(dataGridItem.Cells[5].Text);
+                string str6 = Strings.Trim(dataGridItem.Cells[6].Text);
+                string str7 = Strings.Trim(dataGridItem.Cells[7].Text);
+                string str8 = Strings.Trim(dataGridItem.Cells[8].Text);
+                Strings.Trim(dataGridItem.Cells[10].Text);
+                string str9 = Strings.Trim(dataGridItem.Cells[10].Text);
+                Strings.Trim(dataGridItem.Cells[11].Text);
+                if (!EazyClass.AccountExist(str4))
+                    str4 = EazyBankNet.EazyClass.FullAccount(StrLocation, str4);
+                if (!EazyClass.AccountExist(str8))
+                    str8 = EazyBankNet.EazyClass.FullAccount(StrLocation, str8);
+                dataGridItem.Cells[11].CssClass = Conversions.ToString(1);
+                if (DateTime.Compare(Conversions.ToDate(str2), Conversions.ToDate(Classes.GetDataset("SELECT PostingDate FROM PrmPostingDates WHERE Record = 1").Tables[0].Rows[0]["PostingDate"].ToString())) > 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "Entry Postdate is greater than EazybankAx posting Date";
+                    dataGridItem.Cells[11].Text = "( Passed )on Later date";
+                }
+                if (!Information.IsDate((object)Conversions.ToDate(Strings.Trim(str2))))
+                {
+                    str1 = str1 + dataGridItem.Cells[0].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "invalid Posting Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Posting Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Information.IsDate((object)Strings.Trim(str3)))
+                {
+                    str1 = str1 + dataGridItem.Cells[1].Text + "<br>,";
+                    dataGridItem.Cells[1].BackColor = Color.Red;
+                    dataGridItem.Cells[1].ToolTip = "invalid Transaction Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Transaction Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Classes.GetBitField("Sproc_GetExtRefNumExist '" + Strings.Trim(str9) + "'"))
+                {
+                    str1 = str1 + dataGridItem.Cells[10].Text + "<br>,";
+                    dataGridItem.Cells[10].BackColor = Color.Red;
+                    dataGridItem.Cells[10].ToolTip = "Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].Text = "(Failed)- Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                string rString1 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}'", (object)str4);
+                string rString2 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}'", (object)str8);
+                string rString3 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND AccountStatus = '1' ", (object)str4);
+                string rString4 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND ProdCatCode IN ('1','2','Z')", (object)str4);
+                string rString5 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND ProdCatCode IN ('1','2','Z')", (object)str8);
+                string rString6 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND PostingDateAdded <  '{1}' ", (object)str4, (object)Conversions.ToDate(str2));
+                if (!Classes.GetBitField(rString1))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Invalid EazybankAx Account ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid EazybankAx Account";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString2))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[8].BackColor = Color.Red;
+                    dataGridItem.Cells[8].ToolTip = "Invalid EazybankAx ContraAccount ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid EazybankAx ContraAccount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString3))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Account is either dormant, closed or unapproved ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Account is either dormant, closed or unapproved";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString4))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Only Retail and GL Accounts are allowed in this posting screen ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Only Retail and GL Accounts are allowed in this posting screen";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString5))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[8].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Only Retail and GL Accounts are allowed in this posting screen  ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Only Retail and GL Accounts are allowed in this posting screen/Contra";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString6))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Account Opening Date cannot be later than current Posting Date ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Account Opening Date cannot be later than current Posting Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Strings.Len(Classes.GetField("Sproc_GetExtTransCodesExist '" + Strings.Trim(str5) + "'")) <= 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[3].Text + "<br>,";
+                    dataGridItem.Cells[3].BackColor = Color.Red;
+                    dataGridItem.Cells[3].ToolTip = "Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].Text = "(Failed)- Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str7)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[7].BackColor = Color.Red;
+                    dataGridItem.Cells[7].ToolTip = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str6)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[6].BackColor = Color.Red;
+                    dataGridItem.Cells[6].ToolTip = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str4), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Entry already posted before upload";
+                    dataGridItem.Cells[11].Text = "(Failed)- Entry already posted before upload";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                Decimal d2 = Conversions.ToDecimal(str7);
+                if (Decimal.Compare(d1, d2) < 0)
+                    d1 = d2;
+            }
+        }
+        finally
+        {
+            IEnumerator enumerator;
+            if (enumerator is IDisposable)
+                (enumerator as IDisposable).Dispose();
+        }
+        return str1;
+    }
+
+    public string ValidateEntriesSources()
+    {
+        DataSet dataSet = new DataSet();
+        Decimal num = new Decimal();
+        Decimal d1 = new Decimal();
+        string str1;
+        try
+        {
+            foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+            {
+                string str2 = Strings.Trim(dataGridItem.Cells[0].Text);
+                string str3 = Strings.Trim(dataGridItem.Cells[1].Text);
+                string str4 = Strings.Trim(dataGridItem.Cells[2].Text);
+                string str5 = Strings.Trim(dataGridItem.Cells[3].Text);
+                Strings.Trim(dataGridItem.Cells[4].Text);
+                Strings.Trim(dataGridItem.Cells[5].Text);
+                string str6 = Strings.Trim(dataGridItem.Cells[6].Text);
+                string str7 = Strings.Trim(dataGridItem.Cells[7].Text);
+                string str8 = Strings.Trim(dataGridItem.Cells[8].Text);
+                Strings.Trim(dataGridItem.Cells[10].Text);
+                string str9 = Strings.Trim(dataGridItem.Cells[10].Text);
+                Strings.Trim(dataGridItem.Cells[11].Text);
+                if (!EazyClass.AccountExist(str4))
+                    str4 = EazyBankNet.EazyClass.FullAccount(StrLocation, str4);
+                if (!EazyClass.AccountExist(str8))
+                    str8 = EazyBankNet.EazyClass.FullAccount(StrLocation, str8);
+                dataGridItem.Cells[11].CssClass = Conversions.ToString(1);
+                if (DateTime.Compare(Conversions.ToDate(str2), Conversions.ToDate(Classes.GetDataset("SELECT PostingDate FROM PrmPostingDates WHERE Record = 1").Tables[0].Rows[0]["PostingDate"].ToString())) > 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "Entry Postdate is greater than EazybankAx posting Date";
+                    dataGridItem.Cells[11].Text = "( Passed )on Later date";
+                }
+                if (!Information.IsDate((object)Conversions.ToDate(Strings.Trim(str2))))
+                {
+                    str1 = str1 + dataGridItem.Cells[0].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "invalid Posting Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Posting Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Information.IsDate((object)Strings.Trim(str3)))
+                {
+                    str1 = str1 + dataGridItem.Cells[1].Text + "<br>,";
+                    dataGridItem.Cells[1].BackColor = Color.Red;
+                    dataGridItem.Cells[1].ToolTip = "invalid Transaction Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Transaction Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Classes.GetBitField("Sproc_GetExtRefNumExist '" + Strings.Trim(str9) + "'"))
+                {
+                    str1 = str1 + dataGridItem.Cells[10].Text + "<br>,";
+                    dataGridItem.Cells[10].BackColor = Color.Red;
+                    dataGridItem.Cells[10].ToolTip = "Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].Text = "(Failed)- Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                string rString1 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}'", (object)str4);
+                string rString2 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}'", (object)str8);
+                string rString3 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND AccountStatus = '1' ", (object)str4);
+                string rString4 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND ProdCatCode IN ('1','2','Z')", (object)str4);
+                string rString5 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND ProdCatCode IN ('1','2','Z')", (object)str8);
+                string rString6 = string.Format("SELECT AccountNo FROM VwAccMaster WHERE AccountNo = '{0}' AND PostingDateAdded <  '{1}' ", (object)str4, (object)Conversions.ToDate(str2));
+                if (!Classes.GetBitField(rString1))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Invalid EazybankAx Account ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid EazybankAx Account";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString2))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[8].BackColor = Color.Red;
+                    dataGridItem.Cells[8].ToolTip = "Invalid EazybankAx ContraAccount ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid EazybankAx ContraAccount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString3))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Account is either dormant, closed or unapproved ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Account is either dormant, closed or unapproved";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString4))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Only Retail and GL Accounts are allowed in this posting screen ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Only Retail and GL Accounts are allowed in this posting screen";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString5))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[8].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Only Retail and GL Accounts are allowed in this posting screen  ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Only Retail and GL Accounts are allowed in this posting screen/Contra";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField(rString6))
+                {
+                    str1 = string.Format("{0}{1}<br>,", (object)str1, (object)dataGridItem.Cells[2].Text);
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Account Opening Date cannot be later than current Posting Date ";
+                    dataGridItem.Cells[11].Text = "(Failed)- Account Opening Date cannot be later than current Posting Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Strings.Len(Classes.GetField("Sproc_GetExtTransCodesExist '" + Strings.Trim(str5) + "'")) <= 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[3].Text + "<br>,";
+                    dataGridItem.Cells[3].BackColor = Color.Red;
+                    dataGridItem.Cells[3].ToolTip = "Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].Text = "(Failed)- Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str7)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[7].BackColor = Color.Red;
+                    dataGridItem.Cells[7].ToolTip = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str6)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[6].BackColor = Color.Red;
+                    dataGridItem.Cells[6].ToolTip = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str4), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Entry already posted before upload";
+                    dataGridItem.Cells[11].Text = "(Failed)- Entry already posted before upload";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                Decimal d2 = Conversions.ToDecimal(str7);
+                if (Decimal.Compare(d1, d2) < 0)
+                    d1 = d2;
+            }
+        }
+        finally
+        {
+            IEnumerator enumerator;
+            if (enumerator is IDisposable)
+                (enumerator as IDisposable).Dispose();
+        }
+        return str1;
+    }
+
+    public string ValidateEntriesHr()
+    {
+        DataSet dataSet = new DataSet();
+        Decimal num = new Decimal();
+        Decimal d1 = new Decimal();
+        string str1;
+        try
+        {
+            foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+            {
+                string str2 = Strings.Trim(dataGridItem.Cells[0].Text);
+                string str3 = Strings.Trim(dataGridItem.Cells[1].Text);
+                string str4 = Strings.Trim(dataGridItem.Cells[2].Text);
+                string str5 = Strings.Trim(dataGridItem.Cells[3].Text);
+                Strings.Trim(dataGridItem.Cells[4].Text);
+                Strings.Trim(dataGridItem.Cells[5].Text);
+                string str6 = Strings.Trim(dataGridItem.Cells[6].Text);
+                string str7 = Strings.Trim(dataGridItem.Cells[7].Text);
+                Strings.Trim(dataGridItem.Cells[8].Text);
+                Strings.Trim(dataGridItem.Cells[10].Text);
+                string str8 = Strings.Trim(dataGridItem.Cells[10].Text);
+                Strings.Trim(dataGridItem.Cells[11].Text);
+                dataGridItem.Cells[11].CssClass = Conversions.ToString(1);
+                if (!Information.IsDate((object)Conversions.ToDate(Strings.Trim(str2))))
+                {
+                    str1 = str1 + dataGridItem.Cells[0].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "invalid Posting Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Posting Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Information.IsDate((object)Strings.Trim(str3)))
+                {
+                    str1 = str1 + dataGridItem.Cells[1].Text + "<br>,";
+                    dataGridItem.Cells[1].BackColor = Color.Red;
+                    dataGridItem.Cells[1].ToolTip = "invalid Transaction Date";
+                    dataGridItem.Cells[11].Text = "(Failed)- invalid Transaction Date";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Classes.GetBitField("Sproc_GetExtRefNumExist '" + str8 + "'"))
+                {
+                    str1 = str1 + dataGridItem.Cells[10].Text + "<br>,";
+                    dataGridItem.Cells[10].BackColor = Color.Red;
+                    dataGridItem.Cells[10].ToolTip = "Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].Text = "(Failed)- Transaction Sequence Code alreday Exist";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Classes.GetBitField("Sproc_GetExtTransCodesExist '" + str5 + "'"))
+                {
+                    str1 = str1 + dataGridItem.Cells[3].Text + "<br>,";
+                    dataGridItem.Cells[3].BackColor = Color.Red;
+                    dataGridItem.Cells[3].ToolTip = "Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].Text = "(Failed)- Explanation Code description is not yet mapped";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str7)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[7].BackColor = Color.Red;
+                    dataGridItem.Cells[7].ToolTip = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid credit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str6)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[6].BackColor = Color.Red;
+                    dataGridItem.Cells[6].ToolTip = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid debit amount";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str4), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Entry already posted before upload";
+                    dataGridItem.Cells[11].Text = "(Failed)- Entry already posted before upload";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                if (DateTime.Compare(Conversions.ToDate(str2), EazyBankNet.Globals.gPeriodDate) > 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "Entry Postdate is greater than EazybancNET posting Date";
+                    dataGridItem.Cells[11].Text = "( Passed )on Later date";
+                }
+                string rString = "SELECT mini_account_no FROM ChartCodes WHERE mini_account_no ='" + str4 + "'";
+                if (!EazyClass.AccountExist(str4) && Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Classes.GetField(rString), str4, false) != 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "Invalid Account No";
+                    dataGridItem.Cells[11].Text = "(Failed)- Invalid Account No";
+                    dataGridItem.Cells[11].CssClass = Conversions.ToString(0);
+                }
+                Decimal d2 = Conversions.ToDecimal(str7);
+                if (Decimal.Compare(d1, d2) < 0)
+                    d1 = d2;
+            }
+        }
+        finally
+        {
+            IEnumerator enumerator;
+            if (enumerator is IDisposable)
+                (enumerator as IDisposable).Dispose();
+        }
+        return str1;
+    }
+
+    public string ValidateEntriesPromo()
+    {
+        DataSet dataSet = new DataSet();
+        Decimal d2 = new Decimal();
+        Decimal d1 = new Decimal();
+        string str1;
+        try
+        {
+            foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+            {
+                this.DataGrid1.Attributes["GenErrors"] = "N";
+                string str2 = Strings.Trim(dataGridItem.Cells[0].Text);
+                string str3 = Strings.Trim(dataGridItem.Cells[1].Text);
+                string str4 = Strings.Trim(dataGridItem.Cells[2].Text);
+                string str5 = Strings.Trim(dataGridItem.Cells[3].Text);
+                Strings.Trim(dataGridItem.Cells[4].Text);
+                string str6 = Strings.Trim(dataGridItem.Cells[5].Text);
+                string str7 = Strings.Trim(dataGridItem.Cells[6].Text);
+                string str8 = Strings.Trim(dataGridItem.Cells[7].Text);
+                string account = Strings.Trim(dataGridItem.Cells[8].Text);
+                string Right = Strings.Trim(dataGridItem.Cells[9].Text);
+                Strings.Trim(dataGridItem.Cells[10].Text);
+                dataGridItem.Cells[10].CssClass = Conversions.ToString(1);
+                if (!Information.IsDate((object)Conversions.ToDate(Strings.Trim(str3))))
+                {
+                    str1 = str1 + dataGridItem.Cells[1].Text + "<br>,";
+                    dataGridItem.Cells[1].BackColor = Color.Red;
+                    dataGridItem.Cells[1].ToolTip = "invalid Posting Date";
+                    dataGridItem.Cells[10].Text = "(Failed)- invalid Posting Date";
+                    dataGridItem.Cells[10].CssClass = Conversions.ToString(0);
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                if (!Information.IsDate((object)Strings.Trim(str4)))
+                {
+                    str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                    dataGridItem.Cells[2].BackColor = Color.Red;
+                    dataGridItem.Cells[2].ToolTip = "invalid Transaction Date";
+                    dataGridItem.Cells[10].Text = "(Failed)- invalid Transaction Date";
+                    dataGridItem.Cells[10].CssClass = Conversions.ToString(0);
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str5), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[3].Text + "<br>,";
+                    dataGridItem.Cells[3].BackColor = Color.Red;
+                    dataGridItem.Cells[3].ToolTip = "invalid Account  Name or Reference Name ";
+                    dataGridItem.Cells[10].Text = "(Failed)- invalid Account  Name or Reference Name ";
+                    dataGridItem.Cells[10].CssClass = Conversions.ToString(0);
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                if (!EazyClass.IsPostingAccount(str2))
+                {
+                    str1 = str1 + dataGridItem.Cells[0].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "Invalid Account for Posting";
+                    dataGridItem.Cells[10].Text = "( Failed ) Invalid Account for Postings Pls check account status";
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                if (!Versioned.IsNumeric((object)Strings.Trim(str8)))
+                {
+                    str1 = str1 + dataGridItem.Cells[7].Text + "<br>,";
+                    dataGridItem.Cells[7].BackColor = Color.Red;
+                    dataGridItem.Cells[7].ToolTip = "(Failed)- Invalid amount for Upload";
+                    dataGridItem.Cells[10].Text = "(Failed)- Invalid  amount for Upload";
+                    dataGridItem.Cells[10].CssClass = Conversions.ToString(0);
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str2), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[0].Text + "<br>,";
+                    dataGridItem.Cells[0].BackColor = Color.Red;
+                    dataGridItem.Cells[0].ToolTip = "Entry already posted before upload";
+                    dataGridItem.Cells[10].Text = "(Failed)- Entry already posted before upload";
+                    dataGridItem.Cells[10].CssClass = Conversions.ToString(0);
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                if (DateTime.Compare(Conversions.ToDate(str3), EazyBankNet.Globals.gPeriodDate) > 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[1].Text + "<br>,";
+                    dataGridItem.Cells[1].BackColor = Color.Red;
+                    dataGridItem.Cells[1].ToolTip = "Entry Postdate is greater than EazybancNET posting Date";
+                    dataGridItem.Cells[10].Text = "( Passed )on Later date";
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str6), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[5].Text + "<br>,";
+                    dataGridItem.Cells[5].BackColor = Color.Blue;
+                    dataGridItem.Cells[5].ToolTip = "Customer PhoneNo missing, he might not receive alerts";
+                    dataGridItem.Cells[10].Text = "( Passed ) In valid ContactPhone";
+                }
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(str7), "", false) == 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[6].Text + "<br>,";
+                    dataGridItem.Cells[6].BackColor = Color.Red;
+                    dataGridItem.Cells[6].ToolTip = "Deposit SlipNo missing";
+                    dataGridItem.Cells[10].Text = "( Failed ) Deposit SlipNo missing";
+                    dataGridItem.Cells[10].CssClass = Conversions.ToString(0);
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                string str9 = "SELECT mini_account_no FROM ChartCodes WHERE mini_account_no ='" + str2 + "'";
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Classes.GetField("SELECT Prod_code From Products WHERE prod_code  ='" + Right + "'"), Right, false) != 0)
+                {
+                    str1 = str1 + dataGridItem.Cells[9].Text + "<br>,";
+                    dataGridItem.Cells[9].BackColor = Color.Red;
+                    dataGridItem.Cells[9].ToolTip = "Invalid Product code";
+                    dataGridItem.Cells[10].Text = "(failed)- Invalid Product code";
+                    dataGridItem.Cells[10].CssClass = Conversions.ToString(0);
+                    this.DataGrid1.Attributes["GenErrors"] = "Y";
+                }
+                if (!EazyClass.AccountExist(str2))
+                {
+                    if (!EazyClass.AccountExist(account))
+                    {
+                        str1 = str1 + dataGridItem.Cells[2].Text + "<br>,";
+                        dataGridItem.Cells[0].BackColor = Color.Blue;
+                        dataGridItem.Cells[0].ToolTip = "New AccountNo to be Opened";
+                        dataGridItem.Cells[10].Text = "(Passed)- Invalid Account No";
+                    }
+                }
+                if (Decimal.Compare(d1, d2) < 0)
+                    d1 = d2;
+            }
+        }
+        finally
+        {
+            IEnumerator enumerator;
+            if (enumerator is IDisposable)
+                (enumerator as IDisposable).Dispose();
+        }
+        return str1;
+    }
+
+    public string UploadMultipleFiles_Clicked()
+    {
+        string path = "C:\\TempMultipleFiles\\";
+        string str1;
+        try
+        {
+            int num1 = 0;
+            int num2 = checked(this.Request.Files.Count - 1);
+            int index = num1;
+            string str2;
+            string Left;
+            while (index <= num2)
+            {
+                HttpPostedFile httpPostedFile = this.Request.Files[index];
+                if (!(httpPostedFile == null | Microsoft.VisualBasic.CompilerServices.Operators.CompareString(httpPostedFile.FileName, "", false) == 0 | httpPostedFile.ContentLength < 1))
+                {
+                    str2 = Path.GetFileName(httpPostedFile.FileName);
+                    if (!Directory.Exists(path))
+                        Directory.CreateDirectory(path);
+                    httpPostedFile.SaveAs(path + str2);
+                    Left = Left + "Uploaded File: " + httpPostedFile.FileName + " of type " + httpPostedFile.ContentType + " <br> ";
+                }
+                checked { ++index; }
+            }
+            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, "", false) == 0)
+            {
+                Left = "Select the file to upload or import.";
+                str2 = (string)null;
+            }
+            this.Response.Write("<script>alert('" + Left + "') </script>");
+            str1 = str2;
+        }
+        catch (Exception ex)
+        {
+            ProjectData.SetProjectError(ex);
+            ex.ToString();
+            ProjectData.ClearProjectError();
+        }
+        return str1;
+    }
+
+    protected void Button3_Click(object sender, EventArgs e)
+    {
+        luser = this.Context.User.Identity.Name;
+        StrLocation = luser.Substring(checked(luser.LastIndexOf("?") + 1));
+        struser = Strings.Mid(luser, 1, luser.LastIndexOf("?"));
+        guser = struser;
+        if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Strings.Trim(struser), "", false) != 0)
+        {
+            if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 2.0)
+            {
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.txtref_no.Text, (string)null, false) == 0)
+                {
+                    this.txtref_no.Text = RetailDepTransMethods.GenerateRetailTransNumber();
+                    string str1 = this.Request.ServerVariables["REMOTE_ADDR"];
+                    string hostName = Dns.GetHostName();
+                    string userHostAddress = this.Request.UserHostAddress;
+                    string str2 = Dns.GetHostAddresses(hostName).GetValue(1).ToString();
+                    Classes.alertwindow(this.Page, "A New Batch Reference Generated : - " + this.txtref_no.Text, "Halt");
+                    Classes.RecordOp(string.Format("Sproc_AddJournal '{0}','Data Upload Transaction',{1},'N','{2}','{3}',0,'{4}','{5}','{6}'", (object)this.txtref_no.Text, (object)Decimal.Zero, (object)struser, (object)StrLocation, (object)this.offr2.SelectedValue, (object)hostName, (object)str2));
+                    try
+                    {
+                        foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+                        {
+                            string str3 = Strings.Trim(dataGridItem.Cells[0].Text);
+                            string str4 = Strings.Trim(dataGridItem.Cells[1].Text);
+                            string str5 = Strings.Trim(dataGridItem.Cells[2].Text);
+                            string str6 = Strings.Trim(dataGridItem.Cells[3].Text);
+                            string str7 = Strings.Trim(dataGridItem.Cells[4].Text);
+                            string str8 = Strings.Trim(dataGridItem.Cells[5].Text);
+                            string str9 = Strings.Trim(dataGridItem.Cells[6].Text);
+                            string str10 = Strings.Trim(dataGridItem.Cells[7].Text);
+                            string str11 = Strings.Trim(dataGridItem.Cells[8].Text);
+                            string str12 = Strings.Trim(dataGridItem.Cells[10].Text);
+                            string str13 = Strings.Trim(dataGridItem.Cells[11].Text);
+                            string str14 = Conversions.ToString(1);
+                            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(str11, "", false) == 0)
+                                str11 = str12;
+                            if (!EazyClass.AccountExist(str5))
+                                str5 = EazyBankNet.EazyClass.FullAccount(StrLocation, str5);
+                            if (!EazyClass.AccountExist(str11))
+                                str11 = EazyBankNet.EazyClass.FullAccount(StrLocation, str11);
+                            Classes.RecordOp("Sproc_AddExtTransHistJornal '" + Strings.Format((object)Conversions.ToDate(str3), "MM-dd-yyyy") + "','" + Strings.Format((object)Conversions.ToDate(str4), "MM-dd-yyyy") + "','" + str5 + "','" + str6 + "','" + str7 + "','" + str8 + "'," + str9 + " ," + str10 + ",'" + str11 + "','" + str12 + "','" + str13 + "','" + this.txtref_no.Text + "','" + struser + "'," + Conversions.ToString(Conversions.ToInteger(str14)) + ",'" + this.offr2.SelectedValue + "','" + StrLocation + "'");
+                        }
+                    }
+                    finally
+                    {
+                        IEnumerator enumerator;
+                        if (enumerator is IDisposable)
+                            (enumerator as IDisposable).Dispose();
+                    }
+                }
+            }
+            else if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 3.0)
+            {
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.txtref_no.Text, (string)null, false) == 0)
+                {
+                    this.txtref_no.Text = EazyClass.GetExtJournalNum(StrLocation);
+                    Classes.alertwindow(this.Page, "A New Batch Reference Generated : - " + this.txtref_no.Text, "Halt");
+                    if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.DataGrid1.Attributes["GenErrors"], "Y", false) != 0)
+                    {
+                        try
+                        {
+                            foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+                            {
+                                string str1 = Strings.Trim(dataGridItem.Cells[0].Text);
+                                string str2 = Strings.Trim(dataGridItem.Cells[1].Text);
+                                string str3 = Strings.Trim(dataGridItem.Cells[2].Text);
+                                string str4 = Strings.Trim(dataGridItem.Cells[3].Text);
+                                string str5 = Strings.Trim(dataGridItem.Cells[4].Text);
+                                string str6 = Strings.Trim(dataGridItem.Cells[5].Text);
+                                string str7 = Strings.Trim(dataGridItem.Cells[6].Text);
+                                string str8 = Strings.Trim(dataGridItem.Cells[7].Text);
+                                string str9 = Strings.Trim(dataGridItem.Cells[8].Text);
+                                string str10 = Strings.Trim(dataGridItem.Cells[9].Text);
+                                Strings.Trim(dataGridItem.Cells[10].Text);
+                                string connectionString = ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
+                                SqlCommand sqlCommand = new SqlCommand();
+                                SqlConnection sqlConnection = new SqlConnection(connectionString);
+                                sqlCommand.CommandText = "Sproc_AddExtTransPromo";
+                                sqlCommand.Connection = sqlConnection;
+                                sqlCommand.CommandType = CommandType.StoredProcedure;
+                                sqlCommand.Parameters.Add(new SqlParameter("@ExtRefNo", (object)str1));
+                                sqlCommand.Parameters.Add(new SqlParameter("@ExtBatchNo", (object)this.txtref_no.Text));
+                                sqlCommand.Parameters.Add(new SqlParameter("@PostDate", (object)Strings.Format((object)Conversions.ToDate(str2), "MM-dd-yyyy")));
+                                sqlCommand.Parameters.Add(new SqlParameter("@TransDate", (object)Strings.Format((object)Conversions.ToDate(str3), "MM-dd-yyyy")));
+                                sqlCommand.Parameters.Add(new SqlParameter("@TransCode", (object)"Promo"));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefName", (object)str4));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefDepositNo", (object)str7));
+                                sqlCommand.Parameters.Add(new SqlParameter("@Amount", (object)str8));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefAddress", (object)str5));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefRemarks", (object)str9));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefAddedBy", (object)guser));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefApprovedBy", (object)this.offr2.SelectedValue));
+                                sqlCommand.Parameters.Add(new SqlParameter("@Validatecheck", (object)dataGridItem.Cells[10].CssClass));
+                                sqlCommand.Parameters.Add(new SqlParameter("@Telephone", (object)str6));
+                                sqlCommand.Parameters.Add(new SqlParameter("@ProdCode", (object)str10));
+                                sqlCommand.ExecuteNonQuery();
+                                sqlConnection.Close();
+                            }
+                        }
+                        finally
+                        {
+                            IEnumerator enumerator;
+                            if (enumerator is IDisposable)
+                                (enumerator as IDisposable).Dispose();
+                        }
+                    }
+                    else
+                    {
+                        this.Response.Write("<script>alert('Upload Batch entries has some errors!!!, Pls correct Batch') </script>");
+                        return;
+                    }
+                }
+            }
+            else if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.drptranstype.SelectedValue, "4", false) == 0)
+            {
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.txtref_no.Text, (string)null, false) == 0)
+                {
+                    this.txtref_no.Text = EazyClass.GetExtJournalNum(StrLocation);
+                    Classes.alertwindow(this.Page, "A New Batch Reference Generated : - " + this.txtref_no.Text, "Halt");
+                    if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.DataGrid1.Attributes["GenErrors"], "Y", false) != 0)
+                    {
+                        try
+                        {
+                            foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+                            {
+                                string str1 = Strings.Trim(dataGridItem.Cells[0].Text);
+                                string str2 = Strings.Trim(dataGridItem.Cells[1].Text);
+                                string str3 = Strings.Trim(dataGridItem.Cells[2].Text);
+                                string str4 = Strings.Trim(dataGridItem.Cells[3].Text);
+                                string str5 = Strings.Trim(dataGridItem.Cells[4].Text);
+                                string str6 = Strings.Trim(dataGridItem.Cells[5].Text);
+                                string str7 = Strings.Trim(dataGridItem.Cells[6].Text);
+                                string Left = Strings.Trim(dataGridItem.Cells[7].Text);
+                                string str8 = Strings.Trim(dataGridItem.Cells[8].Text);
+                                string str9 = Strings.Trim(dataGridItem.Cells[9].Text);
+                                string str10 = Strings.Trim(dataGridItem.Cells[10].Text);
+                                string str11 = Strings.Trim(dataGridItem.Cells[11].Text);
+                                string str12 = Strings.Trim(dataGridItem.Cells[12].Text);
+                                string str13 = Strings.Trim(dataGridItem.Cells[13].Text);
+                                string str14 = Strings.Trim(dataGridItem.Cells[14].Text);
+                                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, "&nbsp;", false) == 0)
+                                    Left = "1900-01-01";
+                                string connectionString = ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
+                                SqlCommand sqlCommand = new SqlCommand();
+                                SqlConnection sqlConnection = new SqlConnection(connectionString);
+                                sqlCommand.CommandText = "Sproc_AddExtTransPromoAccts";
+                                sqlCommand.Connection = sqlConnection;
+                                sqlCommand.CommandType = CommandType.StoredProcedure;
+                                sqlCommand.Connection.Open();
+                                sqlCommand.Parameters.Add(new SqlParameter("@ExtRefNo", (object)str1));
+                                sqlCommand.Parameters.Add(new SqlParameter("@ExtBatchNo", (object)this.txtref_no.Text));
+                                sqlCommand.Parameters.Add(new SqlParameter("@PostDate", (object)Strings.Format((object)Conversions.ToDate(str2), "MM-dd-yyyy")));
+                                sqlCommand.Parameters.Add(new SqlParameter("@TransDate", (object)Strings.Format((object)Conversions.ToDate(str3), "MM-dd-yyyy")));
+                                sqlCommand.Parameters.Add(new SqlParameter("@TransCode", (object)"Promo"));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefCust_No", (object)str4));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefCustnames", (object)str6));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefTitle_Code", (object)str5));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefCust_Type", (object)""));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefSex", (object)str7));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefBirtDate", (object)Strings.Format((object)Conversions.ToDate(Left), "MM-dd-yyyy")));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefOldAccountNo", (object)str8));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefOldAccountName", (object)str9));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefAddress", (object)str10));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefRemarks", (object)str14));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefAddedBy", (object)guser));
+                                sqlCommand.Parameters.Add(new SqlParameter("@RefApprovedBy", (object)this.offr2.SelectedValue));
+                                sqlCommand.Parameters.Add(new SqlParameter("@Validatecheck", (object)dataGridItem.Cells[10].CssClass));
+                                sqlCommand.Parameters.Add(new SqlParameter("@Telephone", (object)str11));
+                                sqlCommand.Parameters.Add(new SqlParameter("@ProdCode", (object)str12));
+                                sqlCommand.Parameters.Add(new SqlParameter("@headsub_code", (object)str13));
+                                sqlCommand.ExecuteNonQuery();
+                                sqlConnection.Close();
+                            }
+                        }
+                        finally
+                        {
+                            IEnumerator enumerator;
+                            if (enumerator is IDisposable)
+                                (enumerator as IDisposable).Dispose();
+                        }
+                    }
+                    else
+                    {
+                        this.Response.Write("<script>alert('Upload Batch entries has some errors!!!, Pls correct Batch') </script>");
+                        return;
+                    }
+                }
+            }
+            else if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 7.0)
+            {
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.txtref_no.Text, (string)null, false) == 0)
+                {
+                    this.txtref_no.Text = Guid.NewGuid().ToString();
+                    Classes.alertwindow(this.Page, "A New Batch Reference Generated : - " + this.txtref_no.Text, "Halt");
+                    try
+                    {
+                        foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+                        {
+                            string str1 = Strings.Trim(dataGridItem.Cells[0].Text);
+                            string str2 = Strings.Trim(dataGridItem.Cells[1].Text);
+                            string str3 = Strings.Trim(dataGridItem.Cells[2].Text);
+                            string str4 = Strings.Trim(dataGridItem.Cells[3].Text);
+                            string str5 = Strings.Trim(dataGridItem.Cells[4].Text);
+                            string str6 = Strings.Trim(dataGridItem.Cells[5].Text);
+                            string str7 = Strings.Trim(dataGridItem.Cells[6].Text);
+                            string str8 = Strings.Trim(dataGridItem.Cells[7].Text);
+                            string str9 = Strings.Trim(dataGridItem.Cells[8].Text);
+                            string str10 = Strings.Trim(dataGridItem.Cells[10].Text);
+                            string str11 = Strings.Trim(dataGridItem.Cells[11].Text);
+                            string str12 = Conversions.ToString(1);
+                            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(str9, "", false) == 0)
+                                str9 = str10;
+                            if (!EazyClass.AccountExist(str3))
+                                str3 = EazyBankNet.EazyClass.FullAccount(StrLocation, str3);
+                            if (!EazyClass.AccountExist(str9))
+                                str9 = EazyBankNet.EazyClass.FullAccount(StrLocation, str9);
+                            string str13 = this.Request.ServerVariables["REMOTE_ADDR"];
+                            string hostName = Dns.GetHostName();
+                            string userHostAddress = this.Request.UserHostAddress;
+                            string str14 = Dns.GetHostAddresses(hostName).GetValue(1).ToString();
+                            string connectionString = ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
+                            SqlCommand sqlCommand = new SqlCommand();
+                            SqlConnection sqlConnection = new SqlConnection(connectionString);
+                            sqlCommand.CommandText = "sproc_AddExtTransHistByBranch";
+                            sqlCommand.Connection = sqlConnection;
+                            sqlCommand.CommandType = CommandType.StoredProcedure;
+                            sqlCommand.Connection.Open();
+                            sqlCommand.Parameters.Add(new SqlParameter("@PostDate", (object)Strings.Format((object)Conversions.ToDate(str1), "MM-dd-yyyy")));
+                            sqlCommand.Parameters.Add(new SqlParameter("@TransDate", (object)Strings.Format((object)Conversions.ToDate(str2), "MM-dd-yyyy")));
+                            sqlCommand.Parameters.Add(new SqlParameter("@account_no", (object)str3));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ext_transcode", (object)str4));
+                            sqlCommand.Parameters.Add(new SqlParameter("@narrative", (object)str5));
+                            sqlCommand.Parameters.Add(new SqlParameter("@description", (object)str6));
+                            sqlCommand.Parameters.Add(new SqlParameter("@debit", (object)str7));
+                            sqlCommand.Parameters.Add(new SqlParameter("@Credit", (object)str8));
+                            sqlCommand.Parameters.Add(new SqlParameter("@bank_code", (object)str9));
+                            sqlCommand.Parameters.Add(new SqlParameter("@cheque_no", (object)str10));
+                            sqlCommand.Parameters.Add(new SqlParameter("@extRefNo", (object)str11));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ExtBatchNo", (object)this.txtref_no.Text));
+                            sqlCommand.Parameters.Add(new SqlParameter("@entered_by", (object)guser));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ApprovingOffr", (object)this.offr2.SelectedValue));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ValidateCheck", (object)Conversions.ToInteger(str12)));
+                            sqlCommand.Parameters.Add(new SqlParameter("@WorkstationAdded", (object)hostName));
+                            sqlCommand.Parameters.Add(new SqlParameter("@WorkstationIPAdded", (object)str14));
+                            sqlCommand.Parameters.Add(new SqlParameter("@headsub_code", (object)StrLocation));
+                            sqlCommand.ExecuteNonQuery();
+                            sqlConnection.Close();
+                        }
+                    }
+                    finally
+                    {
+                        IEnumerator enumerator;
+                        if (enumerator is IDisposable)
+                            (enumerator as IDisposable).Dispose();
+                    }
+                    Classes.RecordOp(string.Format("Sproc_ExtUploadTransChequesByBranch '{0}'", (object)this.txtref_no.Text));
+                }
+            }
+            else if (Conversions.ToDouble(this.drptranstype.SelectedValue) == 11.0)
+            {
+                if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(this.txtref_no.Text, (string)null, false) == 0)
+                {
+                    this.txtref_no.Text = Guid.NewGuid().ToString();
+                    Classes.alertwindow(this.Page, "A New Batch Reference Generated : - " + this.txtref_no.Text, "Halt");
+                    try
+                    {
+                        foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+                        {
+                            string str1 = Strings.Trim(dataGridItem.Cells[0].Text);
+                            string str2 = Strings.Trim(dataGridItem.Cells[1].Text);
+                            string str3 = Strings.Trim(dataGridItem.Cells[2].Text);
+                            string str4 = Strings.Trim(dataGridItem.Cells[3].Text);
+                            string str5 = Strings.Trim(dataGridItem.Cells[4].Text);
+                            string str6 = Strings.Trim(dataGridItem.Cells[5].Text);
+                            string str7 = Strings.Trim(dataGridItem.Cells[6].Text);
+                            string str8 = Strings.Trim(dataGridItem.Cells[7].Text);
+                            string str9 = Strings.Trim(dataGridItem.Cells[8].Text);
+                            string str10 = Strings.Trim(dataGridItem.Cells[10].Text);
+                            string str11 = Strings.Trim(dataGridItem.Cells[11].Text);
+                            string str12 = Conversions.ToString(1);
+                            if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(str9, "", false) == 0)
+                                str9 = str10;
+                            if (!EazyClass.AccountExist(str3))
+                                str3 = EazyBankNet.EazyClass.FullAccount(StrLocation, str3);
+                            if (!EazyClass.AccountExist(str9))
+                                str9 = EazyBankNet.EazyClass.FullAccount(StrLocation, str9);
+                            string str13 = this.Request.ServerVariables["REMOTE_ADDR"];
+                            string hostName = Dns.GetHostName();
+                            string userHostAddress = this.Request.UserHostAddress;
+                            string str14 = Dns.GetHostAddresses(hostName).GetValue(1).ToString();
+                            string connectionString = ConfigurationManager.ConnectionStrings["EazyConnect"].ConnectionString;
+                            SqlCommand sqlCommand = new SqlCommand();
+                            SqlConnection sqlConnection = new SqlConnection(connectionString);
+                            sqlCommand.CommandText = "sproc_AddExtTransHistByBranch";
+                            sqlCommand.Connection = sqlConnection;
+                            sqlCommand.CommandType = CommandType.StoredProcedure;
+                            sqlCommand.Connection.Open();
+                            sqlCommand.Parameters.Add(new SqlParameter("@PostDate", (object)Strings.Format((object)Conversions.ToDate(str1), "MM-dd-yyyy")));
+                            sqlCommand.Parameters.Add(new SqlParameter("@TransDate", (object)Strings.Format((object)Conversions.ToDate(str2), "MM-dd-yyyy")));
+                            sqlCommand.Parameters.Add(new SqlParameter("@account_no", (object)str3));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ext_transcode", (object)str4));
+                            sqlCommand.Parameters.Add(new SqlParameter("@narrative", (object)str5));
+                            sqlCommand.Parameters.Add(new SqlParameter("@description", (object)str6));
+                            sqlCommand.Parameters.Add(new SqlParameter("@debit", (object)str7));
+                            sqlCommand.Parameters.Add(new SqlParameter("@Credit", (object)str8));
+                            sqlCommand.Parameters.Add(new SqlParameter("@bank_code", (object)str9));
+                            sqlCommand.Parameters.Add(new SqlParameter("@cheque_no", (object)str10));
+                            sqlCommand.Parameters.Add(new SqlParameter("@extRefNo", (object)str11));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ExtBatchNo", (object)this.txtref_no.Text));
+                            sqlCommand.Parameters.Add(new SqlParameter("@entered_by", (object)guser));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ApprovingOffr", (object)this.offr2.SelectedValue));
+                            sqlCommand.Parameters.Add(new SqlParameter("@ValidateCheck", (object)Conversions.ToInteger(str12)));
+                            sqlCommand.Parameters.Add(new SqlParameter("@WorkstationAdded", (object)hostName));
+                            sqlCommand.Parameters.Add(new SqlParameter("@WorkstationIPAdded", (object)str14));
+                            sqlCommand.Parameters.Add(new SqlParameter("@headsub_code", (object)StrLocation));
+                            sqlCommand.ExecuteNonQuery();
+                            sqlConnection.Close();
+                        }
+                    }
+                    finally
+                    {
+                        IEnumerator enumerator;
+                        if (enumerator is IDisposable)
+                            (enumerator as IDisposable).Dispose();
+                    }
+                    Classes.RecordOp(string.Format("Sproc_ExtUploadTransChequesByBranch '{0}'", (object)this.txtref_no.Text));
+                }
+            }
+            else
+            {
+                this.txtref_no.Text = EazyClass.GetExtJournalNum(StrLocation);
+                Classes.alertwindow(this.Page, "A New Batch Reference Generated : - " + this.txtref_no.Text, "Halt");
+                Classes.RecordOp(string.Format("Sproc_AddJournal '{0}','Monthly Salaries',{1},'N','{2}','{3}',0", (object)this.txtref_no.Text, (object)Decimal.Zero, (object)struser, (object)StrLocation));
+                try
+                {
+                    foreach (DataGridItem dataGridItem in this.DataGrid1.Items)
+                    {
+                        string str1 = Strings.Trim(dataGridItem.Cells[0].Text);
+                        string str2 = Strings.Trim(dataGridItem.Cells[1].Text);
+                        string str3 = Strings.Trim(dataGridItem.Cells[2].Text);
+                        string str4 = Strings.Trim(dataGridItem.Cells[3].Text);
+                        string str5 = Strings.Trim(dataGridItem.Cells[4].Text);
+                        string str6 = Strings.Trim(dataGridItem.Cells[5].Text);
+                        string str7 = Strings.Trim(dataGridItem.Cells[6].Text);
+                        string str8 = Strings.Trim(dataGridItem.Cells[7].Text);
+                        string Left = Strings.Trim(dataGridItem.Cells[8].Text);
+                        string str9 = Strings.Trim(dataGridItem.Cells[10].Text);
+                        string str10 = Strings.Trim(dataGridItem.Cells[10].Text);
+                        string str11 = Conversions.ToString(1);
+                        if (Microsoft.VisualBasic.CompilerServices.Operators.CompareString(Left, "", false) == 0)
+                            Left = str9;
+                        string str12 = "Sproc_AddExtTransHistJornal '" + Strings.Format((object)Conversions.ToDate(str1), "MM-dd-yyyy") + "','" + Strings.Format((object)Conversions.ToDate(str2), "MM-dd-yyyy") + "','" + str3 + "','" + str4 + "','" + str5 + "','" + str6 + "'," + str7 + " ," + str8 + ",'" + Left + "','" + str9 + "','" + str10 + "','" + this.txtref_no.Text + "','" + struser + "'," + Conversions.ToString(Conversions.ToInteger(str11)) + ",'" + this.offr2.SelectedValue + "','" + StrLocation + "'";
+                        Classes.RecordOp(str12);
+                        this.Response.Write(str12);
+                    }
+                }
+                finally
+                {
+                    IEnumerator enumerator;
+                    if (enumerator is IDisposable)
+                        (enumerator as IDisposable).Dispose();
+                }
+            }
+            this.Response.Write("<script>alert('Upload Completed') </script>");
+            this.txtref_no.Text = (string)null;
+            this.DataGrid1.DataSource = (object)null;
+            this.DataGrid1.DataBind();
+        }
+        else
+            this.Response.Write("<script>alert(' Your user section has expired, please logout and try the upload again ') </script>");
+    }
+
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (this.IsPostBack)
+            return;
+        this.LoadApprovingOfficers();
+    }
+
+    protected void Button4_Click(object sender, EventArgs e)
+    {
+        this.Response.Redirect("TransImportsExt.aspx");
+    }
+}

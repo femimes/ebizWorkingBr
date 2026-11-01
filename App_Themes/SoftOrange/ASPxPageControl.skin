@@ -1,0 +1,12 @@
+<%@ Register TagPrefix="dx" Namespace="DevExpress.Data" Assembly="DevExpress.Data.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %>
+<%@ Register TagPrefix="dxtc" Namespace="DevExpress.Web" Assembly="DevExpress.Web.v19.1, Version=19.1.4.0,   Culture=neutral, PublicKeyToken=b88d1754d700e49a" %> 
+
+<dxtc:ASPxPageControl runat="server" TabSpacing="0px" CssFilePath="{0}/styles.css" CssPostfix="Office2010Silver">
+    <Paddings PaddingLeft="0px"></Paddings>
+
+    <ContentStyle>
+	    <Border BorderColor="#4986A2"></Border>
+    </ContentStyle>
+    <LoadingPanelImage Url="Web/Loading.gif"></LoadingPanelImage>
+</dxtc:ASPxPageControl>
+

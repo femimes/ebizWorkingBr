@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://services.pitch.nibss.com/" targetNamespace="http://services.pitch.nibss.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="deleteVendors" type="tns:deleteVendors" />
+  <xs:element name="deleteVendorsResponse" type="tns:deleteVendorsResponse" />
+  <xs:element name="getPaymentScheduleStatus" type="tns:getPaymentScheduleStatus" />
+  <xs:element name="getPaymentScheduleStatusResponse" type="tns:getPaymentScheduleStatusResponse" />
+  <xs:element name="getVendorUpdateStatus" type="tns:getVendorUpdateStatus" />
+  <xs:element name="getVendorUpdateStatusResponse" type="tns:getVendorUpdateStatusResponse" />
+  <xs:element name="getVendorUploadStatus" type="tns:getVendorUploadStatus" />
+  <xs:element name="getVendorUploadStatusResponse" type="tns:getVendorUploadStatusResponse" />
+  <xs:element name="updateVendors" type="tns:updateVendors" />
+  <xs:element name="updateVendorsResponse" type="tns:updateVendorsResponse" />
+  <xs:element name="uploadNewVendors" type="tns:uploadNewVendors" />
+  <xs:element name="uploadNewVendorsResponse" type="tns:uploadNewVendorsResponse" />
+  <xs:element name="uploadPaymentSchedule" type="tns:uploadPaymentSchedule" />
+  <xs:element name="uploadPaymentScheduleResponse" type="tns:uploadPaymentScheduleResponse" />
+  <xs:element name="uploadSupportingDocument" type="tns:uploadSupportingDocument" />
+  <xs:element name="uploadSupportingDocumentResponse" type="tns:uploadSupportingDocumentResponse" />
+  <xs:complexType name="getVendorUpdateStatus">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="getVendorUpdateStatusResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="uploadNewVendors">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="uploadNewVendorsResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="uploadPaymentSchedule">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="uploadPaymentScheduleResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="deleteVendors">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="deleteVendorsResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="getPaymentScheduleStatus">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="getPaymentScheduleStatusResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="uploadSupportingDocument">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="uploadSupportingDocumentResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="getVendorUploadStatus">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="getVendorUploadStatusResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="updateVendors">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="request" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="updateVendorsResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

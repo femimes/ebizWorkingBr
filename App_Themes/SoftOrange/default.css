@@ -1,0 +1,72 @@
+﻿html { margin: 0px; padding: 0px; }
+
+body {
+	margin: 0px; 
+	padding: 0px;
+	color: #000000;
+	background: #fff;
+	font: .7em Verdana, Arial, Helvetica, sans-serif;
+}
+img { border: 0px; }
+hr { color: #ccc; height: 1px; }
+table { font-size: 100%; }
+code { color: #6c0; font: 100% "Courier New", Courier, monospace }
+form { margin: 0px; padding: 0px; }
+input, textarea, select { font: 100% Verdana, Arial, Helvetica, sans-serif; border:1px solid #666666;}
+#leftcontent 
+	{
+		position: absolute;
+		top:120px;
+		left:10px;
+		width:180px;
+		background:#fff;
+			z-index:100;
+
+		}
+
+	#rightcontent {
+		position: absolute;
+		right:5px;
+		top:140px;
+		width:180px;
+		background:#fff;
+		margin-right:10px;
+			z-index:100;
+
+		}
+	#centercontent 
+	{
+		margin-top:20px;
+		background:#fff;
+		voice-family: "\"}\"";
+		voice-family: inherit;
+   		margin-left: 200px;
+   		margin-right:205px;
+   			z-index:100;
+
+		}
+
+	html>body #centercontent {
+   		margin-left: 200px;
+   		margin-right:205px;
+   			z-index:100;
+
+		}
+	#centercontentwide 
+	{
+		margin-top:20px;
+		background:#fff;
+		voice-family: "\"}\"";
+		voice-family: inherit;
+   		margin-left: 200px;
+   		margin-right:10px;
+   			z-index:100;
+
+		}
+
+	html>body #centercontentwide {
+   		margin-left: 200px;
+   		margin-right:10px;
+   			z-index:100;
+
+		}

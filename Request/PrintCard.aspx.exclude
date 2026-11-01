@@ -1,0 +1,43 @@
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="PrintCard.aspx.cs" Inherits="Request_PrintCard" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title></title>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div>
+            <br />
+            <br />
+            <asp:DropDownList ID="comboBoxPrinter" runat="server">
+            </asp:DropDownList>
+&nbsp;
+            <asp:Button ID="Button1" runat="server" OnClick="Button1_Click" Text="Load Card" />
+            <br />
+
+            <div>
+                <div>Track 1</div>
+                 <div><asp:CheckBox ID="checkBoxT1" runat="server"></asp:CheckBox></div>
+                 <div><asp:TextBox ID="textBoxT1W" runat="server"></asp:TextBox></div>
+                <div><asp:TextBox ID="textBoxT1R" runat="server"></asp:TextBox></div>
+            </div>
+
+              <div>
+                <div>Track 2</div>
+                 <div><asp:CheckBox ID="checkBoxT2" runat="server"></asp:CheckBox></div>
+                 <div><asp:TextBox ID="textBoxT2W" runat="server"></asp:TextBox></div>
+                <div><asp:TextBox ID="textBoxT2R" runat="server"></asp:TextBox></div>
+            </div>
+
+            <div>
+                <div>Track 3</div>
+                 <div><asp:CheckBox ID="checkBoxT3" runat="server"></asp:CheckBox></div>
+                 <div><asp:TextBox ID="textBoxT3W" runat="server"></asp:TextBox></div>
+                <div><asp:TextBox ID="textBoxT3R" runat="server"></asp:TextBox></div>
+            </div>
+        </div>
+    </form>
+</body>
+</html>
