@@ -247,6 +247,9 @@
                             <asp:ListItem Value="60" Text="60 minutes" Selected="True" />
                             <asp:ListItem Value="120" Text="2 hours" />
                             <asp:ListItem Value="240" Text="4 hours" />
+                            <asp:ListItem Value="360" Text="6 hours" />
+                            <asp:ListItem Value="480" Text="8 hours" />
+                            <asp:ListItem Value="720" Text="12 hours" />
                         </asp:DropDownList>
                     </span>
                     <asp:Button ID="btnSaveSchedule" runat="server" Text="Save" CssClass="btn btn-primary" CausesValidation="false"
