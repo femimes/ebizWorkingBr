@@ -330,10 +330,10 @@
                     </div>
                     <div>
                         <asp:Label runat="server" AssociatedControlID="txtFrequency" CssClass="form-label">Frequency (months) <span class="req">*</span></asp:Label>
-                        <asp:TextBox ID="txtFrequency" runat="server" CssClass="form-control" TextMode="Number" min="1" max="120" Text="1" AutoPostBack="true" CausesValidation="false"
+                        <asp:TextBox ID="txtFrequency" runat="server" CssClass="form-control" TextMode="Number" min="1" max="1000" Text="1" AutoPostBack="true" CausesValidation="false"
                             OnTextChanged="Period_Changed" />
                         <asp:RangeValidator runat="server" ControlToValidate="txtFrequency" ValidationGroup="mandate" Display="Dynamic" CssClass="field-error"
-                            MinimumValue="1" MaximumValue="120" Type="Integer" ErrorMessage="Frequency must be a whole number of months from 1 to 120." />
+                            MinimumValue="1" MaximumValue="1000" Type="Integer" ErrorMessage="Frequency must be a whole number of months from 1 to 1000." />
                         <asp:RequiredFieldValidator runat="server" ControlToValidate="txtFrequency" ValidationGroup="mandate" Display="Dynamic" CssClass="field-error" ErrorMessage="Frequency is required." />
                     </div>
                     <div>

@@ -121,7 +121,7 @@ public partial class NDD_NDDeMandate : System.Web.UI.Page
 
         decimal amount; int months; DateTime start;
         if (!decimal.TryParse(txtAmount.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out amount) || amount <= 0) { ShowError("Enter an amount greater than zero."); return; }
-        if (!TryMonths(txtFrequency.Text, out months)) { ShowError("Frequency must be a whole number of months from 1 to 120."); return; }
+        if (!TryMonths(txtFrequency.Text, out months)) { ShowError("Frequency must be a whole number of months from 1 to 1000."); return; }
         if (!TryDate(txtStartDate.Text, out start)) { ShowError("Enter a valid start date."); return; }
         DateTime end = EndDate(start, months);
 
@@ -349,7 +349,7 @@ public partial class NDD_NDDeMandate : System.Web.UI.Page
 
     private static bool TryMonths(string value, out int months)
     {
-        return int.TryParse((value ?? "").Trim(), out months) && months >= 1 && months <= 120;
+        return int.TryParse((value ?? "").Trim(), out months) && months >= 1 && months <= 1000;
     }
 
     // =====================================================================
