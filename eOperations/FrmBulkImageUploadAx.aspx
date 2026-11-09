@@ -262,12 +262,12 @@
                 </div>
                 <div class="table-wrap scroll-y">
                     <asp:GridView ID="gvAvailable" runat="server" CssClass="data-grid" GridLines="None" AutoGenerateColumns="false"
-                        DataKeyNames="AccountNo,SerialNo,FilePath" ShowHeaderWhenEmpty="false" data-picker="avail">
+                        EnableViewState="false" ShowHeaderWhenEmpty="false" data-picker="avail">
                         <HeaderStyle CssClass="grid-head" />
                         <Columns>
                             <asp:TemplateField ItemStyle-CssClass="c row-select" HeaderStyle-CssClass="c" ItemStyle-Width="40px">
                                 <HeaderTemplate><input type="checkbox" class="all-select" data-for="avail" aria-label="Tick every waiting account" /></HeaderTemplate>
-                                <ItemTemplate><asp:CheckBox ID="chkSelect" runat="server" /></ItemTemplate>
+                                <ItemTemplate><input type="checkbox" name="pickAvail" value="<%# HttpUtility.HtmlAttributeEncode(Convert.ToString(Eval("PickKey"))) %>" aria-label="Tick account <%# HttpUtility.HtmlAttributeEncode(Convert.ToString(Eval("AccountNo"))) %>" /></ItemTemplate>
                             </asp:TemplateField>
                             <asp:BoundField DataField="AccountNo" HeaderText="Account no" ItemStyle-CssClass="nowrap strong" />
                             <asp:BoundField DataField="SerialNo" HeaderText="Serial" ItemStyle-CssClass="nowrap" />
@@ -289,12 +289,12 @@
                 </div>
                 <div class="table-wrap scroll-y">
                     <asp:GridView ID="gvUploaded" runat="server" CssClass="data-grid" GridLines="None" AutoGenerateColumns="false"
-                        DataKeyNames="account_no" ShowHeaderWhenEmpty="false" data-picker="done">
+                        EnableViewState="false" ShowHeaderWhenEmpty="false" data-picker="done">
                         <HeaderStyle CssClass="grid-head" />
                         <Columns>
                             <asp:TemplateField ItemStyle-CssClass="c row-select" HeaderStyle-CssClass="c" ItemStyle-Width="40px">
                                 <HeaderTemplate><input type="checkbox" class="all-select" data-for="done" aria-label="Tick every uploaded account" /></HeaderTemplate>
-                                <ItemTemplate><asp:CheckBox ID="chkSelect" runat="server" /></ItemTemplate>
+                                <ItemTemplate><input type="checkbox" name="pickDone" value="<%# HttpUtility.HtmlAttributeEncode(Convert.ToString(Eval("account_no"))) %>" aria-label="Tick account <%# HttpUtility.HtmlAttributeEncode(Convert.ToString(Eval("account_no"))) %>" /></ItemTemplate>
                             </asp:TemplateField>
                             <asp:BoundField DataField="account_no" HeaderText="Account no" ItemStyle-CssClass="nowrap strong" />
                         </Columns>

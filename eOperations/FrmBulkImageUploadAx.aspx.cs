@@ -12,6 +12,8 @@ using System.Web.UI.WebControls;
 /// Mandate / signature bulk upload. Images waiting on the server (Sproc_GetAvaliableMandate[ByProd]) are read from
 /// their file path and saved with SpAcctMandatesSave; uploaded mandates (Sproc_GetMandates) can be removed with
 /// Sproc_DeleteMandates. Converted from VB; plain ASP.NET controls and parameterised SQL.
+/// The two lists keep no view state (long lists made the postback exceed the request limit):
+/// ticked rows post back as plain check-box values and both lists are rebound on every postback.
 /// </summary>
 public partial class eOperations_FrmBulkImageUploadAx : System.Web.UI.Page
 {
@@ -97,16 +99,18 @@ public partial class eOperations_FrmBulkImageUploadAx : System.Web.UI.Page
         litError.Text = "";
     }
 
-    private static List<GridViewRow> TickedRows(GridView grid)
+    /// <summary>Values of the ticked plain check boxes with the given name (the grids keep no view state).</summary>
+    private List<string> Picked(string name)
     {
-        List<GridViewRow> rows = new List<GridViewRow>();
-        foreach (GridViewRow row in grid.Rows)
+        List<string> values = new List<string>();
+        string[] posted = Request.Form.GetValues(name);
+        if (posted == null) return values;
+        foreach (string v in posted)
         {
-            if (row.RowType != DataControlRowType.DataRow) continue;
-            CheckBox chk = row.FindControl("chkSelect") as CheckBox;
-            if (chk != null && chk.Checked) rows.Add(row);
+            string value = (v ?? "").Trim();
+            if (value != "" && !values.Contains(value)) values.Add(value);
         }
-        return rows;
+        return values;
     }
 
     // =====================================================================
@@ -138,40 +142,57 @@ public partial class eOperations_FrmBulkImageUploadAx : System.Web.UI.Page
     }
 
     /// <summary>
-    /// Waiting images. Each row carries ManAcct ("account?serial") and filepaths ("path?mandate"),
-    /// which are split into separate columns for the list.
+    /// Waiting images for a product ("" = all). Each row carries ManAcct ("account?serial") and
+    /// filepaths ("path?mandate"), split here into separate columns. PickKey ("account?serial") is
+    /// what the page's check boxes post back; the file path itself never goes to the browser.
     /// </summary>
-    private void BindAvailable()
+    private static DataTable LoadAvailable(string product)
     {
         DataTable list = new DataTable();
+        list.Columns.Add("PickKey", typeof(string));
         list.Columns.Add("AccountNo", typeof(string));
         list.Columns.Add("SerialNo", typeof(string));
         list.Columns.Add("FilePath", typeof(string));
         list.Columns.Add("FileName", typeof(string));
+
+        DataTable source = string.IsNullOrEmpty(product)
+            ? Query("EXEC Sproc_GetAvaliableMandate")
+            : Query("EXEC Sproc_GetAvaliableMandateByProd @prod", P("@prod", product));
+
+        foreach (DataRow r in source.Rows)
+        {
+            string account, serial, path, mandate;
+            Split(Col(r, "ManAcct"), out account, out serial);
+            Split(Col(r, "filepaths"), out path, out mandate);
+            string fileName;
+            try { fileName = Path.GetFileName(path); } catch (ArgumentException) { fileName = path; }
+            list.Rows.Add(account + "?" + serial, account, serial, path, fileName);
+        }
+        return list;
+    }
+
+    private void BindAvailable()
+    {
+        DataTable list;
         try
         {
-            string product = drp_products.SelectedValue;
-            DataTable source = product == ""
-                ? Query("EXEC Sproc_GetAvaliableMandate")
-                : Query("EXEC Sproc_GetAvaliableMandateByProd @prod", P("@prod", product));
-
-            foreach (DataRow r in source.Rows)
-            {
-                string account, serial, path, mandate;
-                Split(Col(r, "ManAcct"), out account, out serial);
-                Split(Col(r, "filepaths"), out path, out mandate);
-                string fileName;
-                try { fileName = Path.GetFileName(path); } catch (ArgumentException) { fileName = path; }
-                list.Rows.Add(account, serial, path, fileName);
-            }
+            list = LoadAvailable(drp_products.SelectedValue);
         }
         catch (Exception ex)
         {
+            list = LoadEmpty();
             ShowError("The waiting images could not be loaded: " + ex.Message);
         }
         gvAvailable.DataSource = list;
         gvAvailable.DataBind();
         litAvailCount.Text = string.Format("{0:N0}", list.Rows.Count);
+    }
+
+    private static DataTable LoadEmpty()
+    {
+        DataTable t = new DataTable();
+        foreach (string c in new[] { "PickKey", "AccountNo", "SerialNo", "FilePath", "FileName" }) t.Columns.Add(c, typeof(string));
+        return t;
     }
 
     private void BindUploaded()
@@ -197,6 +218,7 @@ public partial class eOperations_FrmBulkImageUploadAx : System.Web.UI.Page
     {
         ClearMessages();
         BindAvailable();
+        BindUploaded();
     }
 
     // =====================================================================
@@ -206,19 +228,37 @@ public partial class eOperations_FrmBulkImageUploadAx : System.Web.UI.Page
     protected void btnUpload_Click(object sender, EventArgs e)
     {
         ClearMessages();
-        List<GridViewRow> rows = TickedRows(gvAvailable);
-        if (rows.Count == 0) { ShowError("Tick at least one account to upload."); return; }
+        List<string> picked = Picked("pickAvail");
+        if (picked.Count == 0) { ShowError("Tick at least one account to upload."); BindAvailable(); BindUploaded(); return; }
+
+        // Look the ticked accounts up again on the server, so the image path always comes from the database.
+        Dictionary<string, DataRow> waiting = new Dictionary<string, DataRow>();
+        try
+        {
+            foreach (DataRow r in LoadAvailable("").Rows)
+            {
+                string k = Convert.ToString(r["PickKey"]);
+                if (!waiting.ContainsKey(k)) waiting.Add(k, r);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError("The waiting images could not be loaded: " + ex.Message);
+            BindAvailable(); BindUploaded();
+            return;
+        }
 
         string user = CurrentUser();
         int done = 0;
         List<string> failed = new List<string>();
 
-        foreach (GridViewRow row in rows)
+        foreach (string key in picked)
         {
-            DataKey key = gvAvailable.DataKeys[row.RowIndex];
-            string account = Convert.ToString(key.Values["AccountNo"]);
-            string serial = Convert.ToString(key.Values["SerialNo"]);
-            string path = Convert.ToString(key.Values["FilePath"]);
+            string account, serial;
+            Split(key, out account, out serial);
+            DataRow item;
+            if (!waiting.TryGetValue(key, out item)) { failed.Add(account + ": no longer waiting for upload"); continue; }
+            string path = Convert.ToString(item["FilePath"]);
             try
             {
                 byte[] photo = ReadImage(path);
@@ -276,14 +316,13 @@ public partial class eOperations_FrmBulkImageUploadAx : System.Web.UI.Page
     protected void btnDelete_Click(object sender, EventArgs e)
     {
         ClearMessages();
-        List<GridViewRow> rows = TickedRows(gvUploaded);
-        if (rows.Count == 0) { ShowError("Tick at least one uploaded account to delete."); return; }
+        List<string> picked = Picked("pickDone");
+        if (picked.Count == 0) { ShowError("Tick at least one uploaded account to delete."); BindAvailable(); BindUploaded(); return; }
 
         int done = 0;
         List<string> failed = new List<string>();
-        foreach (GridViewRow row in rows)
+        foreach (string account in picked)
         {
-            string account = Convert.ToString(gvUploaded.DataKeys[row.RowIndex].Values["account_no"]);
             try
             {
                 Query("EXEC Sproc_DeleteMandates @account", P("@account", account));
